@@ -63,7 +63,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="bg-[#f5f7f8] text-[#0f172a] min-h-screen flex items-center justify-center p-0 md:p-4 font-['Inter',sans-serif]">
+    <div className="bg-[#f5f7f8] text-[#0f172a] min-h-screen flex items-center justify-center p-0 md:p-4 font-sans">
       {/* ── Auth Container ────────────────────────────────────── */}
       <main className="w-full max-w-6xl md:min-h-[921px] bg-white flex flex-col md:flex-row shadow-2xl overflow-hidden md:rounded-xl">
         {/* ── Left Column: Branding & Image ───────────────────── */}
