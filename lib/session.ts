@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 type SessionPayload = {
     userId: number;
     email: string;
+    nome: string;
     role: string;
     expiresAt: Date;
 };
@@ -31,9 +32,9 @@ export async function decrypt(session: string | undefined = "") {
     }
 }
 
-export async function createSession(userId: number, email: string, role: string) {
+export async function createSession(userId: number, email: string, nome: string, role: string) {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 dias
-    const session = await encrypt({ userId, email, role, expiresAt });
+    const session = await encrypt({ userId, email, nome, role, expiresAt });
 
     const cookieStore = await cookies();
     cookieStore.set("session", session, {

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getActiveSession, logoutUser } from '../../actions/auth';
 import { getEventoById } from '../../actions/event';
+import Link from 'next/link';
 
 export default function EventDetailsDynamic() {
     const params = useParams();
@@ -54,9 +55,9 @@ export default function EventDetailsDynamic() {
             <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 antialiased">
                 <div className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
                     <div className="flex items-center gap-8">
-                        <span className="text-2xl font-bold tracking-tighter text-[#006837]">
+                        <Link href="/" className="text-2xl font-bold tracking-tighter text-[#006837] hover:opacity-80 transition-opacity">
                             UTAD FastTicket
-                        </span>
+                        </Link>
                         <nav className="hidden md:flex gap-6">
                             <a href="/eventos" className="text-[#006837] border-b-2 border-[#006837] pb-1 font-semibold">Eventos</a>
                         </nav>
@@ -74,10 +75,11 @@ export default function EventDetailsDynamic() {
                         </div>
                         {userSession ? (
                             <div className="flex items-center gap-4">
-                                <span className="text-sm font-semibold text-emerald-900 border border-emerald-200 px-3 py-1.5 rounded-lg whitespace-nowrap bg-emerald-50">
-                                    Olá, {userSession.email.split("@")[0]}
-                                </span>
-                                <button onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:underline">
+                                <Link href="/dashboard/utilizador" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-800 transition-colors flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-sm">person</span>
+                                    {userSession.nome || userSession.email.split("@")[0]}
+                                </Link>
+                                <button onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:text-red-800 transition-colors bg-red-50 px-3 py-2 rounded-lg border border-red-100">
                                     Sair
                                 </button>
                             </div>
