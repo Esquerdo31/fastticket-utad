@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getActiveSession, logoutUser } from "./actions/auth";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -121,6 +122,17 @@ export default function UTADFastTicketPage() {
         category: "Todas as Categorias",
     });
 
+    const [userSession, setUserSession] = useState<any>(null);
+
+    useEffect(() => {
+        getActiveSession().then(setUserSession);
+    }, []);
+
+    const handleLogout = async () => {
+        await logoutUser();
+        setUserSession(null);
+    };
+
     const handleSearchChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
@@ -233,9 +245,20 @@ export default function UTADFastTicketPage() {
                             >
                                 <MaterialIcon name="search" className="text-xl" />
                             </button>
-                            <Link href="/login" className="bg-[#006837] text-white px-6 py-2 rounded-lg font-medium shadow-lg shadow-[#006837]/20 hover:scale-105 active:scale-95 duration-200">
-                                Sign In
-                            </Link>
+                            {userSession ? (
+                                <div className="flex items-center gap-4">
+                                    <span className="text-sm font-semibold text-emerald-900 border px-3 py-1.5 rounded-lg border-emerald-200">
+                                        Olá, {userSession.email.split("@")[0]}
+                                    </span>
+                                    <button onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:underline">
+                                        Sair
+                                    </button>
+                                </div>
+                            ) : (
+                                <Link href="/login" className="bg-[#006837] text-white px-6 py-2 rounded-lg font-medium shadow-lg shadow-[#006837]/20 hover:scale-105 active:scale-95 duration-200">
+                                    Sign In
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </header>
@@ -271,9 +294,11 @@ export default function UTADFastTicketPage() {
                             </p>
 
                             <div className="flex flex-wrap gap-4 mb-16">
-                                <Link href="/login" className="bg-white text-[#006837] px-8 py-4 rounded-lg font-bold text-lg hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center">
-                                    Criar Conta
-                                </Link>
+                                {!userSession && (
+                                    <Link href="/login" className="bg-white text-[#006837] px-8 py-4 rounded-lg font-bold text-lg hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center">
+                                        Criar Conta
+                                    </Link>
+                                )}
                                 <Link href="/eventos" className="bg-[#004d29]/40 backdrop-blur-sm border border-white/20 text-white px-8 py-4 rounded-lg font-medium text-lg hover:bg-[#004d29]/60 transition-all flex items-center justify-center">
                                     Explorar Agenda
                                 </Link>
@@ -440,28 +465,30 @@ export default function UTADFastTicketPage() {
                     {/* ---------------------------------------------------------------- */}
                     {/* CTA Banner                                                         */}
                     {/* ---------------------------------------------------------------- */}
-                    <section className="py-20 bg-[#006837] overflow-hidden relative">
-                        <div className="absolute inset-0 opacity-10">
-                            <MaterialIcon
-                                name="local_activity"
-                                className="text-[300px] absolute -bottom-20 -right-20 text-white"
-                            />
-                        </div>
-                        <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
-                            <div className="text-white">
-                                <h3 className="text-3xl font-bold mb-4 tracking-tight">
-                                    Pronto para a próxima experiência?
-                                </h3>
-                                <p className="text-white/80 text-lg">
-                                    Junta-te a milhares de estudantes e não percas nada do que
-                                    acontece no campus.
-                                </p>
+                    {!userSession && (
+                        <section className="py-20 bg-[#006837] overflow-hidden relative">
+                            <div className="absolute inset-0 opacity-10">
+                                <MaterialIcon
+                                    name="local_activity"
+                                    className="text-[300px] absolute -bottom-20 -right-20 text-white"
+                                />
                             </div>
-                            <Link href="/login" className="bg-white text-[#006837] px-10 py-4 rounded-xl font-bold shadow-2xl hover:bg-[#f5f7f8] transition-all active:scale-95 inline-block text-center">
-                                Criar conta agora
-                            </Link>
-                        </div>
-                    </section>
+                            <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
+                                <div className="text-white">
+                                    <h3 className="text-3xl font-bold mb-4 tracking-tight">
+                                        Pronto para a próxima experiência?
+                                    </h3>
+                                    <p className="text-white/80 text-lg">
+                                        Junta-te a milhares de estudantes e não percas nada do que
+                                        acontece no campus.
+                                    </p>
+                                </div>
+                                <Link href="/login" className="bg-white text-[#006837] px-10 py-4 rounded-xl font-bold shadow-2xl hover:bg-[#f5f7f8] transition-all active:scale-95 inline-block text-center">
+                                    Criar conta agora
+                                </Link>
+                            </div>
+                        </section>
+                    )}
                 </main>
 
                 {/* ------------------------------------------------------------------ */}

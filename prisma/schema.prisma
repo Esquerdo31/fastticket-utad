@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// ==============================
+// ENUMS (Listas de valores fixos)
+// ==============================
+
+enum Role {
+  ORGANIZADOR
+  STAFF
+  PARTICIPANTE
+}
+
+enum EstadoPedido {
+  PENDENTE
+  PAGO
+  CANCELADO
+}
+
+enum EstadoBilhete {
+  PENDENTE
+  PAGO
+  USADO
+}
+
+// ==============================
+// MODELS (Tabelas da Base de Dados)
+// ==============================
+
+model Utilizador {
+  id             Int             @id @default(autoincrement())
+  nome           String
+  email          String          @unique
+  passwordHash   String
+  role           Role            @default(PARTICIPANTE)
+  
+  // Relacionamentos
+  eventos        Evento[]        // (Organiza) 1 Utilizador -> * Eventos
+  pedidos        Pedido[]        // (Efetua)   1 Utilizador -> * Pedidos
+  registosAcesso RegistoAcesso[] // (Regista)  1 Utilizador (Staff) -> * Registos
+}
+
+model Evento {
+  id             Int           @id @default(autoincrement())
+  titulo         String
+  descricao      String        @db.Text
+  dataInicio     DateTime
+  localizacao    String
+  lotacaoMaxima  Int
+  
+  // Chaves Estrangeiras & Relacionamentos
+  organizadorId  Int
+  organizador    Utilizador    @relation(fields: [organizadorId], references: [id])
+  lotes          LoteBilhete[] // (Contém) 1 Evento -> * Lotes de Bilhetes
+}
+
+model LoteBilhete {
+  id                   Int       @id @default(autoincrement())
+  nome                 String
+  descricao            String?
+  preco                Float
+  lotacaoTotal         Int
+  quantidadeDisponivel Int
+  
+  // Chaves Estrangeiras & Relacionamentos
+  eventoId             Int
+  evento               Evento    @relation(fields: [eventoId], references: [id])
+  bilhetes             Bilhete[] // (Gera) 1 Lote -> * Bilhetes
+}
+
+model Pedido {
+  id           Int          @id @default(autoincrement())
+  dataPedido   DateTime     @default(now())
+  valorTotal   Float
+  estado       EstadoPedido @default(PENDENTE)
+  
+  // Chaves Estrangeiras & Relacionamentos
+  utilizadorId Int
+  utilizador   Utilizador   @relation(fields: [utilizadorId], references: [id])
+  bilhetes     Bilhete[]    // (Contém) 1 Pedido -> * Bilhetes
+  pagamento    Pagamento?   // (Possui) 1 Pedido -> 1 Pagamento (Opcional até ser pago)
+}
+
+model Pagamento {
+  id            Int      @id @default(autoincrement())
+  metodo        String
+  transacaoId   String   @unique
+  dataPagamento DateTime @default(now())
+  
+  // Chaves Estrangeiras & Relacionamentos
+  pedidoId      Int      @unique // A restrição @unique garante a relação 1 para 1
+  pedido        Pedido   @relation(fields: [pedidoId], references: [id])
+}
+
+model Bilhete {
+  id             Int             @id @default(autoincrement())
+  qrCodeToken    String          @unique
+  estado         EstadoBilhete   @default(PENDENTE)
+  
+  // Chaves Estrangeiras & Relacionamentos
+  loteId         Int
+  lote           LoteBilhete     @relation(fields: [loteId], references: [id])
+  pedidoId       Int
+  pedido         Pedido          @relation(fields: [pedidoId], references: [id])
+  registosAcesso RegistoAcesso[] // (Tem) 1 Bilhete -> * Registos (Útil para reentradas)
+}
+
+model RegistoAcesso {
+  id              Int        @id @default(autoincrement())
+  dataHoraEntrada DateTime   @default(now())
+  dispositivoId   String
+  
+  // Chaves Estrangeiras & Relacionamentos
+  bilheteId       Int
+  bilhete         Bilhete    @relation(fields: [bilheteId], references: [id])
+  staffId         Int
+  staff           Utilizador @relation(fields: [staffId], references: [id])
+}

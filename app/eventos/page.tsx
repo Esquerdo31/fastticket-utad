@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getActiveSession, logoutUser } from '../actions/auth';
+import { getEventos } from '../actions/event';
 
 const UTADFastTicket = () => {
     // --- Estados para Filtros e Pesquisa ---
@@ -12,63 +14,22 @@ const UTADFastTicket = () => {
     const [sortBy, setSortBy] = useState('Mais Recentes');
     const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
 
-    // --- Mock de Dados dos Eventos ---
-    const events = [
-        {
-            id: 1,
-            title: "Congresso Internacional de Inovação Digital",
-            category: "CONFERÊNCIAS",
-            date: "15 Out, 2024 • 09:00",
-            location: "Aula Magna, Vila Real",
-            price: "12.50€",
-            imgUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80",
-        },
-        {
-            id: 2,
-            title: "Gala de Mérito Académico UTAD 2024",
-            category: "GALAS",
-            date: "22 Out, 2024 • 20:00",
-            location: "Pavilhão Multiusos, Vila Real",
-            price: "25.00€",
-            imgUrl: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80",
-        },
-        {
-            id: 3,
-            title: "Workshop de Inteligência Artificial Generativa",
-            category: "WORKSHOPS",
-            date: "28 Out, 2024 • 14:30",
-            location: "Online (Via Zoom)",
-            price: "Gratuito",
-            imgUrl: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&q=80",
-        },
-        {
-            id: 4,
-            title: "Torneio Inter-Universitário de Atletismo",
-            category: "DESPORTO",
-            date: "02 Nov, 2024 • 10:00",
-            location: "Estádio de Vila Real",
-            price: "5.00€",
-            imgUrl: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80",
-        },
-        {
-            id: 5,
-            title: "Summit Académico: O Futuro da Educação",
-            category: "CONFERÊNCIAS",
-            date: "10 Nov, 2024 • 11:00",
-            location: "Centro de Congressos, Porto",
-            price: "45.00€",
-            imgUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80",
-        },
-        {
-            id: 6,
-            title: "Liderança e Gestão de Equipas Ágeis",
-            category: "WORKSHOPS",
-            date: "15 Nov, 2024 • 14:00",
-            location: "Hub Criativo, Lisboa",
-            price: "15.00€",
-            imgUrl: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&q=80",
-        }
-    ];
+    const [events, setEvents] = useState<any[]>([]);
+    const [userSession, setUserSession] = useState<any>(null);
+
+    useEffect(() => {
+        getActiveSession().then(setUserSession);
+        getEventos().then((res) => {
+            if (res.success && res.data) {
+                setEvents(res.data);
+            }
+        });
+    }, []);
+
+    const handleLogout = async () => {
+        await logoutUser();
+        setUserSession(null);
+    };
 
     // --- Funções de Manipulação ---
     const handleCategoryChange = (category: string) => {
@@ -118,9 +79,20 @@ const UTADFastTicket = () => {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <Link href="/login" className="bg-[#006837] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-800 transition-colors whitespace-nowrap">
-                            Sign In
-                        </Link>
+                        {userSession ? (
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm font-semibold text-emerald-900 border border-emerald-200 px-3 py-1.5 rounded-lg whitespace-nowrap bg-emerald-50">
+                                    Olá, {userSession.email.split("@")[0]}
+                                </span>
+                                <button onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:underline">
+                                    Sair
+                                </button>
+                            </div>
+                        ) : (
+                            <Link href="/login" className="bg-[#006837] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-800 transition-colors whitespace-nowrap">
+                                Sign In
+                            </Link>
+                        )}
                     </div>
                 </div>
             </header>
@@ -248,16 +220,14 @@ const UTADFastTicket = () => {
                         {/* Event Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {events.map((event) => (
-                                <div key={event.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-100 flex flex-col">
-                                    <div className="relative h-44 overflow-hidden">
-                                        <img
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            src={event.imgUrl}
-                                            alt={event.title}
-                                        />
-                                        <div className={`absolute top-4 left-4 bg-[#006837] text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full`}>
+                                <Link href={`/evento/${event.id}`} key={event.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-100 flex flex-col">
+                                    <div className="relative h-44 overflow-hidden bg-gradient-to-br from-[#0b2818] to-[#006837] flex items-center justify-center p-6 text-center">
+                                        <div className={`absolute top-4 left-4 bg-white/20 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md border border-white/30`}>
                                             {event.category}
                                         </div>
+                                        <h2 className="text-2xl font-bold text-white opacity-90 drop-shadow-md">
+                                            {event.title}
+                                        </h2>
                                     </div>
                                     <div className="p-6 flex flex-col flex-1">
                                         <div className="flex items-center gap-1.5 text-[#006837] font-bold text-[11px] mb-3">
@@ -283,7 +253,7 @@ const UTADFastTicket = () => {
                                             </button>
                                         </div>
                                     </div>
-                                </div>
+                                </Link>
                             ))}
                         </div>
 

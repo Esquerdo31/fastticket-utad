@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback, FormEvent } from "react";
+import React, { useState, useRef, useEffect, useCallback, useActionState, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { loginUser, registerUser } from "../actions/auth";
+import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
+  const router = useRouter();
+
   // ─── Mode Toggle ──────────────────────────────────────────────
   const loginRef = useRef<HTMLDivElement>(null);
   const registerRef = useRef<HTMLDivElement>(null);
@@ -16,15 +20,11 @@ export default function AuthPage() {
   const isRecover = mode === "recover";
 
   // ─── Login State ──────────────────────────────────────────────
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
+  const [loginState, loginAction, isLoginPending] = useActionState(loginUser, { success: false, message: "" } as any);
 
   // ─── Register State ───────────────────────────────────────────
   const [profileType, setProfileType] = useState<"participante" | "organizador">("participante");
-  const [regName, setRegName] = useState("");
-  const [regEmail, setRegEmail] = useState("");
-  const [regPassword, setRegPassword] = useState("");
-  const [regConfirmPassword, setRegConfirmPassword] = useState("");
+  const [registerState, registerAction, isRegisterPending] = useActionState(registerUser, { success: false, message: "" } as any);
 
   // ─── Recover State ────────────────────────────────────────────
   const [recoverEmail, setRecoverEmail] = useState("");
@@ -47,20 +47,19 @@ export default function AuthPage() {
     return () => window.removeEventListener("resize", measureHeight);
   }, [measureHeight]);
 
-  const handleLoginSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log("Login submitted", { loginEmail, loginPassword });
-  };
-
-  const handleRegisterSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log("Register submitted", { profileType, regName, regEmail, regPassword, regConfirmPassword });
-  };
+  // Redireciona ao ter sucesso
+  useEffect(() => {
+    if (loginState?.success || registerState?.success) {
+      // Redireciona de volta para a Home (ou dashboard)
+      router.push("/");
+    }
+  }, [loginState, registerState, router]);
 
   const handleRecoverSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Recover submitted", { recoverEmail });
   };
+
 
   return (
     <div className="bg-[#f5f7f8] text-[#0f172a] min-h-screen flex items-center justify-center p-0 md:p-4 font-sans">
@@ -178,7 +177,7 @@ export default function AuthPage() {
                 </p>
               </div>
 
-              <form className="space-y-4 sm:space-y-5" onSubmit={handleLoginSubmit}>
+              <form className="space-y-4 sm:space-y-5" action={loginAction}>
                 {/* Academic Email */}
                 <div className="space-y-1.5">
                   <label
@@ -195,8 +194,8 @@ export default function AuthPage() {
                       id="login-email"
                       type="email"
                       placeholder="exemplo@utad.pt"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
+                      name="login-email"
+                      required
                       className="w-full pl-12 pr-4 py-3 bg-[#f8fafb] border border-[#e2e8f0] rounded-lg focus:ring-2 focus:ring-[#006837]/20 focus:border-[#006837] transition-all outline-none text-[#0f172a]"
                     />
                   </div>
@@ -227,8 +226,8 @@ export default function AuthPage() {
                       id="login-password"
                       type="password"
                       placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
+                      name="login-password"
+                      required
                       className="w-full pl-12 pr-4 py-3 bg-[#f8fafb] border border-[#e2e8f0] rounded-lg focus:ring-2 focus:ring-[#006837]/20 focus:border-[#006837] transition-all outline-none text-[#0f172a]"
                     />
                   </div>
@@ -247,12 +246,18 @@ export default function AuthPage() {
                   </label>
                 </div>
 
+                {/* Error Message */}
+                {loginState?.message && !loginState.success && (
+                  <p className="text-red-600 text-sm">{loginState.message}</p>
+                )}
+
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full bg-[#006837] text-white font-bold py-4 rounded-lg shadow-lg shadow-[#006837]/20 hover:bg-[#004d29] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
+                  disabled={isLoginPending}
+                  className="w-full bg-[#006837] text-white font-bold py-4 rounded-lg shadow-lg shadow-[#006837]/20 hover:bg-[#004d29] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
                 >
-                  Entrar
+                  {isLoginPending ? "A entrar..." : "Entrar"}
                   <span className="material-symbols-outlined text-lg">
                     arrow_forward
                   </span>
@@ -323,7 +328,7 @@ export default function AuthPage() {
                 </p>
               </div>
 
-              <form className="space-y-4 sm:space-y-5" onSubmit={handleRegisterSubmit}>
+              <form className="space-y-4 sm:space-y-5" action={registerAction}>
                 {/* Profile Selector */}
                 <div className="space-y-3">
                   <label className="text-xs font-bold uppercase tracking-widest text-[#475569] ml-1">
@@ -334,6 +339,7 @@ export default function AuthPage() {
                       <input
                         type="radio"
                         name="profile_type"
+                        value="participante"
                         className="hidden peer"
                         checked={profileType === "participante"}
                         onChange={() => setProfileType("participante")}
@@ -352,6 +358,7 @@ export default function AuthPage() {
                       <input
                         type="radio"
                         name="profile_type"
+                        value="organizador"
                         className="hidden peer"
                         checked={profileType === "organizador"}
                         onChange={() => setProfileType("organizador")}
@@ -385,8 +392,8 @@ export default function AuthPage() {
                       id="reg-name"
                       type="text"
                       placeholder="Inserir o seu nome completo"
-                      value={regName}
-                      onChange={(e) => setRegName(e.target.value)}
+                      name="reg-name"
+                      required
                       className="w-full pl-12 pr-4 py-3 bg-[#f8fafb] border border-[#e2e8f0] rounded-lg focus:ring-2 focus:ring-[#006837]/20 focus:border-[#006837] transition-all outline-none text-[#0f172a]"
                     />
                   </div>
@@ -408,8 +415,8 @@ export default function AuthPage() {
                       id="reg-email"
                       type="email"
                       placeholder="exemplo@utad.pt"
-                      value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
+                      name="reg-email"
+                      required
                       className="w-full pl-12 pr-4 py-3 bg-[#f8fafb] border border-[#e2e8f0] rounded-lg focus:ring-2 focus:ring-[#006837]/20 focus:border-[#006837] transition-all outline-none text-[#0f172a]"
                     />
                   </div>
@@ -432,8 +439,8 @@ export default function AuthPage() {
                         id="reg-password"
                         type="password"
                         placeholder="••••••••"
-                        value={regPassword}
-                        onChange={(e) => setRegPassword(e.target.value)}
+                        name="reg-password"
+                        required
                         className="w-full pl-12 pr-4 py-3 bg-[#f8fafb] border border-[#e2e8f0] rounded-lg focus:ring-2 focus:ring-[#006837]/20 focus:border-[#006837] transition-all outline-none text-[#0f172a]"
                       />
                     </div>
@@ -453,20 +460,26 @@ export default function AuthPage() {
                         id="reg-confirm-password"
                         type="password"
                         placeholder="••••••••"
-                        value={regConfirmPassword}
-                        onChange={(e) => setRegConfirmPassword(e.target.value)}
+                        name="reg-confirm-password"
+                        required
                         className="w-full pl-12 pr-4 py-3 bg-[#f8fafb] border border-[#e2e8f0] rounded-lg focus:ring-2 focus:ring-[#006837]/20 focus:border-[#006837] transition-all outline-none text-[#0f172a]"
                       />
                     </div>
                   </div>
                 </div>
 
+                {/* Error Message */}
+                {registerState?.message && !registerState.success && (
+                  <p className="text-red-600 text-sm">{registerState.message}</p>
+                )}
+
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full bg-[#006837] text-white font-bold py-4 rounded-lg shadow-lg shadow-[#006837]/20 hover:bg-[#004d29] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
+                  disabled={isRegisterPending}
+                  className="w-full bg-[#006837] text-white font-bold py-4 rounded-lg shadow-lg shadow-[#006837]/20 hover:bg-[#004d29] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
                 >
-                  Criar Conta
+                  {isRegisterPending ? "A criar conta..." : "Criar Conta"}
                   <span className="material-symbols-outlined text-lg">
                     arrow_forward
                   </span>
