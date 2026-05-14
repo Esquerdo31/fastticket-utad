@@ -97,22 +97,44 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                         </div>
                     </div>
 
-                    {/* Card de Estado Académico */}
-                    <div className="bg-[#004d29] rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
-                        <span className="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl opacity-10 rotate-12 select-none">school</span>
-                        <div className="relative z-10">
-                            <h3 className="font-bold text-lg mb-2">Estado Académico</h3>
-                            <p className="text-emerald-100/90 text-sm mb-6 leading-relaxed">
-                                O seu registo está ativo para o ano letivo 2025/2026.
-                            </p>
-                            <div>
-                                <div className="w-full h-2 bg-emerald-900/50 rounded-full overflow-hidden mb-2">
-                                    <div className="h-full bg-white rounded-full w-[85%]"></div>
+                    {/* Conditional Status Card based on Role */}
+                    {user.role === 'PARTICIPANTE' ? (
+                        <div className="bg-[#004d29] rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+                            <span className="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl opacity-10 rotate-12 select-none">school</span>
+                            <div className="relative z-10">
+                                <h3 className="font-bold text-lg mb-2">Estado Académico</h3>
+                                <p className="text-emerald-100/90 text-sm mb-6 leading-relaxed">
+                                    O seu registo está ativo para o ano letivo 2025/2026.
+                                </p>
+                                <div>
+                                    <div className="w-full h-2 bg-emerald-900/50 rounded-full overflow-hidden mb-2">
+                                        <div className="h-full bg-white rounded-full w-[85%]"></div>
+                                    </div>
+                                    <p className="text-[10px] font-bold tracking-widest uppercase text-emerald-200">85% do curso concluído</p>
                                 </div>
-                                <p className="text-[10px] font-bold tracking-widest uppercase text-emerald-200">85% do curso concluído</p>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="bg-violet-900 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+                            <span className="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl opacity-10 rotate-12 select-none">verified_user</span>
+                            <div className="relative z-10">
+                                <h3 className="font-bold text-lg mb-2">Status de Organização</h3>
+                                <p className="text-violet-200/90 text-sm mb-6 leading-relaxed">
+                                    A sua conta de organizador está verificada e ativa.
+                                </p>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="material-symbols-outlined text-emerald-400 text-sm">check_circle</span>
+                                        <span className="text-xs font-bold text-white">Permissões de Criação</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-emerald-400 text-sm">check_circle</span>
+                                        <span className="text-xs font-bold text-white">Acesso a Faturação</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Coluna da Direita (Formulários e Definições) */}

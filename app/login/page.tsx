@@ -51,7 +51,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (loginState?.success || registerState?.success) {
       // Redireciona de volta para a Home (ou dashboard)
-      router.push("/");
+      router.push("/dashboard");
     }
   }, [loginState, registerState, router]);
 

@@ -57,8 +57,16 @@ model Evento {
   titulo         String
   descricao      String        @db.Text
   dataInicio     DateTime
+  dataFim        DateTime?
   localizacao    String
   lotacaoMaxima  Int
+  formato        String        @default("presencial")
+  categoria      String        @default("Conferência")
+  estado         String        @default("RASCUNHO")
+  bannerUrl      String?
+  thumbnailUrl   String?
+  mostrarBanner  Boolean       @default(true)
+  mostrarLogo    Boolean       @default(true)
   
   // Chaves Estrangeiras & Relacionamentos
   organizadorId  Int

@@ -75,7 +75,7 @@ export default function EventDetailsDynamic() {
                         </div>
                         {userSession ? (
                             <div className="flex items-center gap-4">
-                                <Link href="/dashboard/utilizador" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-800 transition-colors flex items-center gap-2">
+                                <Link href="/dashboard" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-800 transition-colors flex items-center gap-2">
                                     <span className="material-symbols-outlined text-sm">person</span>
                                     {userSession.nome || userSession.email.split("@")[0]}
                                 </Link>
@@ -93,17 +93,31 @@ export default function EventDetailsDynamic() {
             </header>
 
             <main className="min-h-screen">
-                {/* Event Banner Section (Sem imagem, design texturizado Institucional) */}
-                <section className="relative h-[614px] min-h-[450px] w-full overflow-hidden bg-gradient-to-br from-[#0b2818] via-[#004d29] to-[#006837] flex items-center">
-                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(#ffffff 1px, transparent 1px)", backgroundSize: "30px 30px" }}></div>
+                {/* Event Banner Section */}
+                <section className={`relative h-[614px] min-h-[450px] w-full overflow-hidden ${!(evento.bannerUrl && evento.mostrarBanner) ? 'bg-gradient-to-br from-[#0b2818] via-[#004d29] to-[#006837]' : ''} flex items-center`}>
+                    {evento.bannerUrl && evento.mostrarBanner ? (
+                        <>
+                            <img src={evento.bannerUrl} alt={evento.title} className="absolute inset-0 w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+                        </>
+                    ) : (
+                        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(#ffffff 1px, transparent 1px)", backgroundSize: "30px 30px" }}></div>
+                    )}
                     <div className="relative h-full max-w-7xl mx-auto px-6 flex flex-col justify-end pt-32 pb-16 w-full">
                         <div className="max-w-3xl">
-                            <span className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold tracking-widest uppercase mb-6 rounded-full shadow-lg">
-                                {evento.category}
-                            </span>
-                            <h1 className="text-5xl md:text-6xl font-extrabold text-white tracking-tight mb-8 leading-[1.1] drop-shadow-md">
-                                {evento.title}
-                            </h1>
+                            <div className="flex items-end gap-6 mb-6">
+                                {evento.thumbnailUrl && evento.mostrarLogo && (
+                                    <img src={evento.thumbnailUrl} alt="Logo" className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover border-4 border-white/20 shadow-2xl shrink-0 backdrop-blur-sm" />
+                                )}
+                                <div>
+                                    <span className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold tracking-widest uppercase mb-4 rounded-full shadow-lg">
+                                        {evento.category}
+                                    </span>
+                                    <h1 className="text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.1] drop-shadow-md">
+                                        {evento.title}
+                                    </h1>
+                                </div>
+                            </div>
                             <div className="flex flex-wrap gap-8 text-emerald-50 max-w-2xl bg-black/20 backdrop-blur-md p-6 rounded-2xl border border-white/10">
                                 <div className="flex flex-col gap-1">
                                     <span className="text-[10px] uppercase font-bold tracking-widest text-[#a7f3d0]">Data e Hora</span>
@@ -229,8 +243,8 @@ export default function EventDetailsDynamic() {
                                                                     )}
                                                                 </div>
                                                                 <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                                    <div 
-                                                                        className={`h-full rounded-full transition-all duration-1000 ${isSoldOut ? 'bg-red-500' : almostGone ? 'bg-amber-500' : 'bg-[#006837]'}`} 
+                                                                    <div
+                                                                        className={`h-full rounded-full transition-all duration-1000 ${isSoldOut ? 'bg-red-500' : almostGone ? 'bg-amber-500' : 'bg-[#006837]'}`}
                                                                         style={{ width: `${percentagem}%` }}
                                                                     ></div>
                                                                 </div>
@@ -243,7 +257,7 @@ export default function EventDetailsDynamic() {
                                             <p className="text-center text-slate-500 py-4 text-sm font-medium">Sem bilhetes disponíveis de momento.</p>
                                         )}
 
-                                        <button 
+                                        <button
                                             disabled={!selectedTicket}
                                             className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6
                                                 ${selectedTicket ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}

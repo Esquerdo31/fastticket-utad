@@ -36,8 +36,12 @@ export async function getEventos() {
                 date: `${dateStr} • ${timeStr}`,
                 location: ev.localizacao,
                 price: priceStr,
-                category: "EVENTO", // Categorias reais exigem modelo de categoria, vamos usar texto estático ou deduzido para já
-                organizador: ev.organizador.nome
+                category: "EVENTO",
+                organizador: ev.organizador.nome,
+                bannerUrl: ev.bannerUrl || null,
+                thumbnailUrl: ev.thumbnailUrl || null,
+                mostrarBanner: ev.mostrarBanner,
+                mostrarLogo: ev.mostrarLogo,
             };
         });
 
@@ -79,6 +83,10 @@ export async function getEventoById(id: number) {
                 location: ev.localizacao,
                 organizador: ev.organizador.nome,
                 category: "EVENTO",
+                bannerUrl: ev.bannerUrl || null,
+                thumbnailUrl: ev.thumbnailUrl || null,
+                mostrarBanner: ev.mostrarBanner,
+                mostrarLogo: ev.mostrarLogo,
                 lotes: ev.lotes.map(l => ({
                     id: l.id,
                     name: l.nome,

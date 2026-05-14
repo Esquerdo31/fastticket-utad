@@ -226,11 +226,13 @@ const UTADFastTicket = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {events.map((event) => (
                                 <Link href={`/evento/${event.id}`} key={event.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-100 flex flex-col">
-                                    <div className="relative h-44 overflow-hidden bg-gradient-to-br from-[#0b2818] to-[#006837] flex items-center justify-center p-6 text-center">
-                                        <div className={`absolute top-4 left-4 bg-white/20 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md border border-white/30`}>
+                                    <div className={`relative h-44 overflow-hidden ${!event.bannerUrl ? 'bg-gradient-to-br from-[#0b2818] to-[#006837]' : ''} flex items-center justify-center p-6 text-center`}>
+                                        {event.bannerUrl && <img src={event.bannerUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />}
+                                        {event.bannerUrl && <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />}
+                                        <div className={`absolute top-4 left-4 bg-white/20 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md border border-white/30 z-10`}>
                                             {event.category}
                                         </div>
-                                        <h2 className="text-2xl font-bold text-white opacity-90 drop-shadow-md">
+                                        <h2 className="text-2xl font-bold text-white opacity-90 drop-shadow-md relative z-10">
                                             {event.title}
                                         </h2>
                                     </div>
