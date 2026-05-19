@@ -258,19 +258,25 @@ export default function EventDetailsDynamic() {
                                         )}
 
                                         <button
-                                            disabled={!selectedTicket}
+                                            disabled={!selectedTicket || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF"}
                                             onClick={() => {
                                                 const urlParams = new URLSearchParams(window.location.search);
                                                 const ref = urlParams.get('ref');
                                                 router.push(`/checkout/${evento.id}/${selectedTicket}${ref ? `?ref=${ref}` : ''}`);
                                             }}
                                             className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6
-                                                ${selectedTicket ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}
+                                                ${(selectedTicket && userSession?.role !== "ORGANIZADOR" && userSession?.role !== "STAFF") ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}
                                             `}
                                         >
                                             Prosseguir para Checkout
                                             <span className="material-symbols-outlined text-lg">arrow_forward</span>
                                         </button>
+
+                                        {(userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF") && (
+                                            <p className="text-red-600 text-xs font-semibold text-center mt-2">
+                                                Contas de organizador ou staff não podem comprar bilhetes.
+                                            </p>
+                                        )}
 
                                         <p className="text-center text-[10px] text-slate-400 uppercase tracking-widest mt-4 font-semibold pb-2">
                                             Acesso Exclusivo FASTTICKET

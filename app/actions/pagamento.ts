@@ -45,6 +45,10 @@ export async function criarSessaoCheckout(data: {
             return { success: false, message: 'Não autenticado. Faça login primeiro.' };
         }
 
+        if (session.role === 'ORGANIZADOR' || session.role === 'STAFF') {
+            return { success: false, message: 'Contas de organizador ou staff não podem realizar compras de bilhetes.' };
+        }
+
         // 2. Validar dados com Zod (ignoring actualQuantity/promotorSlug for this strict parse or omitting it)
         const parseResult = checkoutSchema.safeParse(data);
         if (!parseResult.success) {

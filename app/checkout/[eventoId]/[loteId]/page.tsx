@@ -27,7 +27,12 @@ export default function CheckoutPage() {
     const universityTax = 0.80;
 
     useEffect(() => {
-        getActiveSession().then(setUserSession);
+        getActiveSession().then(session => {
+            setUserSession(session);
+            if (session?.role === "ORGANIZADOR" || session?.role === "STAFF") {
+                setErrorMsg("Contas de organizador ou staff não podem realizar compras de bilhetes.");
+            }
+        });
 
         if (eventoId && loteId) {
             getEventoById(eventoId).then(res => {
@@ -260,9 +265,9 @@ export default function CheckoutPage() {
 
                                 <button
                                     onClick={handleCheckout}
-                                    disabled={processing}
+                                    disabled={processing || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF"}
                                     className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 
-                                        ${processing ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800'}
+                                        ${(processing || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF") ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800'}
                                     `}
                                 >
                                     {processing ? 'Processing...' : 'Finalize Purchase'}

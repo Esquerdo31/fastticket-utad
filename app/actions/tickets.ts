@@ -154,6 +154,10 @@ export async function emitirBilhete(data: {
             return { success: false, message: 'Não autenticado. Faça login primeiro.' };
         }
 
+        if (session.role === 'ORGANIZADOR' || session.role === 'STAFF') {
+            return { success: false, message: 'Contas de organizador ou staff não podem realizar compras de bilhetes.' };
+        }
+
         // 2. Validar dados com Zod
         const parseResult = emitirBilheteSchema.safeParse(data);
         if (!parseResult.success) {
@@ -292,6 +296,27 @@ export async function validarBilhete(data: {
             return { success: false, message: 'Bilhete não encontrado. QR Code inválido.' };
         }
 
+        // 3.1.5 Verificar autorização (STAFF ou ORGANIZADOR)
+        if (session.role === 'STAFF') {
+            const isLinked = await prisma.eventoStaff.findUnique({
+                where: {
+                    eventoId_staffId: {
+                        eventoId: bilhete.lote.eventoId,
+                        staffId: session.userId
+                    }
+                }
+            });
+            if (!isLinked) {
+                return { success: false, message: 'Não autorizado. Não pertence à equipa staff deste evento.' };
+            }
+        } else if (session.role === 'ORGANIZADOR') {
+            if (bilhete.lote.evento.organizadorId !== session.userId) {
+                return { success: false, message: 'Não autorizado. Este evento pertence a outro organizador.' };
+            }
+        } else {
+            return { success: false, message: 'Não autorizado. Apenas organizadores ou staff podem validar bilhetes.' };
+        }
+
         // 3.2 Verificar se o pedido está pago
         if (bilhete.pedido.estado !== 'PAGO') {
             return { success: false, message: 'Este bilhete ainda não foi pago.' };
@@ -427,5 +452,89 @@ export async function processarPagamentoWebhook(metadata: {
     } catch (error: any) {
         console.error('[Webhook] ❌ Erro ao processar webhook:', error);
         return { success: false, message: error.message };
+    }
+}
+
+export async function getEventCheckins(eventoId: number) {
+    try {
+        const session = await getSession();
+        if (!session) return { success: false, checkins: [] };
+
+        const checkins = await prisma.registoAcesso.findMany({
+            where: {
+                bilhete: {
+                    lote: {
+                        eventoId
+                    }
+                }
+            },
+            include: {
+                bilhete: {
+                    include: {
+                        lote: true,
+                        pedido: {
+                            include: {
+                                utilizador: {
+                                    select: { nome: true, email: true }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                dataHoraEntrada: 'desc'
+            },
+            take: 10
+        });
+
+        const formatted = checkins.map(c => ({
+            id: c.id,
+            data: c.dataHoraEntrada.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            lote: c.bilhete.lote.nome,
+            token: c.bilhete.qrCodeToken,
+            participante: c.bilhete.pedido.utilizador.nome
+        }));
+
+        return { success: true, checkins: formatted };
+    } catch (e: any) {
+        return { success: false, checkins: [] };
+    }
+}
+
+export async function getSimulatedTickets(eventoId: number) {
+    try {
+        const session = await getSession();
+        if (!session) return { success: false, tickets: [] };
+
+        const tickets = await prisma.bilhete.findMany({
+            where: {
+                lote: {
+                    eventoId
+                }
+            },
+            include: {
+                lote: true,
+                pedido: {
+                    include: {
+                        utilizador: {
+                            select: { nome: true }
+                        }
+                    }
+                }
+            },
+            take: 8
+        });
+
+        const formatted = tickets.map(t => ({
+            token: t.qrCodeToken,
+            estado: t.estado,
+            lote: t.lote.nome,
+            participante: t.pedido.utilizador.nome
+        }));
+
+        return { success: true, tickets: formatted };
+    } catch (e: any) {
+        return { success: false, tickets: [] };
     }
 }
