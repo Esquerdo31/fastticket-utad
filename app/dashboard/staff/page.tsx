@@ -34,9 +34,8 @@ export default async function StaffDashboardPage() {
     });
 
     if (staffEvents.length === 0) {
-        // Se por algum motivo o utilizador STAFF não tem eventos vinculados,
-        // redireciona para a administração geral
-        redirect('/dashboard/admin');
+        // Se o utilizador STAFF não tem eventos vinculados, redireciona de volta
+        redirect('/dashboard');
     }
 
     const userName = session.nome || "Staff";

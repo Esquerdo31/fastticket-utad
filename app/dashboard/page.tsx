@@ -11,17 +11,12 @@ export default async function DashboardRouter() {
 
     // Route based on role
     switch (session.role) {
+        case 'ADMIN':
+            redirect('/dashboard/admin');
+        case 'STAFF':
+            redirect('/dashboard/staff');
         case 'ORGANIZADOR':
             redirect('/dashboard/organizador');
-        case 'STAFF': {
-            const associationsCount = await prisma.eventoStaff.count({
-                where: { staffId: session.userId }
-            });
-            if (associationsCount > 0) {
-                redirect('/dashboard/staff');
-            }
-            redirect('/dashboard/admin');
-        }
         case 'PARTICIPANTE':
         default:
             redirect('/dashboard/utilizador');

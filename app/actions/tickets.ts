@@ -154,8 +154,8 @@ export async function emitirBilhete(data: {
             return { success: false, message: 'Não autenticado. Faça login primeiro.' };
         }
 
-        if (session.role === 'ORGANIZADOR' || session.role === 'STAFF') {
-            return { success: false, message: 'Contas de organizador ou staff não podem realizar compras de bilhetes.' };
+        if (session.role === 'ORGANIZADOR' || session.role === 'STAFF' || session.role === 'ADMIN') {
+            return { success: false, message: 'Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.' };
         }
 
         // 2. Validar dados com Zod

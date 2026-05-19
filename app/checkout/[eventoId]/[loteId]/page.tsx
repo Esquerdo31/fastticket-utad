@@ -29,8 +29,8 @@ export default function CheckoutPage() {
     useEffect(() => {
         getActiveSession().then(session => {
             setUserSession(session);
-            if (session?.role === "ORGANIZADOR" || session?.role === "STAFF") {
-                setErrorMsg("Contas de organizador ou staff não podem realizar compras de bilhetes.");
+            if (session?.role === "ORGANIZADOR" || session?.role === "STAFF" || session?.role === "ADMIN") {
+                setErrorMsg("Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.");
             }
         });
 
@@ -55,8 +55,8 @@ export default function CheckoutPage() {
     const handleCheckout = async () => {
         if (!evento || !lote) return;
         
-        if (userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF") {
-            setErrorMsg("Contas de organizador ou staff não podem realizar compras de bilhetes.");
+        if (userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") {
+            setErrorMsg("Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.");
             return;
         }
 
@@ -265,9 +265,9 @@ export default function CheckoutPage() {
 
                                 <button
                                     onClick={handleCheckout}
-                                    disabled={processing || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF"}
+                                    disabled={processing || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
                                     className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 
-                                        ${(processing || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF") ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800'}
+                                        ${(processing || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800'}
                                     `}
                                 >
                                     {processing ? 'Processing...' : 'Finalize Purchase'}

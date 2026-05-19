@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import { logoutUser } from '@/app/actions/auth';
 import AdminDashboard from './AdminDashboard';
 import AdminUsers from './AdminUsers';
-import AdminEvents from './AdminEvents';
-import ProfileContent from '../../utilizador/components/ProfileContent';
+import AdminApprovals from './AdminApprovals';
+import AdminLogs from './AdminLogs';
 
-type ActiveTab = 'dashboard' | 'users' | 'events' | 'profile';
+type ActiveTab = 'dashboard' | 'users' | 'approvals' | 'logs';
 
 interface AdminShellProps {
     userName: string;
@@ -32,6 +32,7 @@ interface AdminShellProps {
 export default function AdminShell({ userName, summary, users, eventos, user }: AdminShellProps) {
     const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
     const [isPending, startTransition] = useTransition();
+    const [searchQuery, setSearchQuery] = useState('');
     const router = useRouter();
 
     const handleTabChange = (tab: ActiveTab) => {
@@ -45,102 +46,162 @@ export default function AdminShell({ userName, summary, users, eventos, user }: 
         });
     };
 
+    const handleRefresh = () => {
+        router.refresh();
+    };
+
     const sideNavItems: { id: ActiveTab; icon: string; label: string }[] = [
-        { id: 'dashboard', icon: 'dashboard', label: 'Painel' },
-        { id: 'users', icon: 'group', label: 'Utilizadores' },
-        { id: 'events', icon: 'event', label: 'Eventos' },
-        { id: 'profile', icon: 'settings', label: 'Configurações' },
+        { id: 'dashboard', icon: 'grid_view', label: 'Geral' },
+        { id: 'users', icon: 'manage_accounts', label: 'Utilizadores' },
+        { id: 'approvals', icon: 'verified', label: 'Aprovações' },
+        { id: 'logs', icon: 'terminal', label: 'Logs do Sistema' },
     ];
 
-    const bottomNavItems: { id: ActiveTab; icon: string; label: string }[] = [
-        { id: 'dashboard', icon: 'dashboard', label: 'Painel' },
-        { id: 'users', icon: 'group', label: 'Users' },
-        { id: 'events', icon: 'event', label: 'Eventos' },
-        { id: 'profile', icon: 'settings', label: 'Config' },
-    ];
+    // Filter data based on search query if necessary
+    const filteredUsers = users.filter(u =>
+        u.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredEvents = eventos.filter(e =>
+        e.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.localizacao.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.organizadorNome.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
-        <div className="bg-[#f8fafc] text-slate-800 min-h-screen font-sans">
-            {/* TopAppBar */}
-            <header className="fixed top-0 z-50 w-full bg-white shadow-sm flex justify-between items-center px-6 py-3 border-b border-slate-200">
-                <div className="flex items-center gap-4">
-                    <Link href="/" className="text-xl font-bold text-slate-900 tracking-tight hover:opacity-80 transition-opacity">UTAD FastTicket</Link>
-                    <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest hidden sm:inline-block">Admin</span>
-                </div>
-                <div className="flex items-center gap-4">
-                    <button className="p-2 text-slate-600 hover:bg-slate-50 rounded-full transition-colors active:scale-95">
-                        <span className="material-symbols-outlined">notifications</span>
-                    </button>
-                    <div onClick={() => handleTabChange('profile')} className="flex items-center gap-2 border-l border-slate-200 pl-4 cursor-pointer hover:opacity-80 transition-opacity">
-                        <span className="text-sm font-semibold text-slate-900">{userName}</span>
-                        <span className="material-symbols-outlined text-slate-900">shield_person</span>
-                    </div>
-                </div>
-            </header>
+        <div className="bg-[#f8fafc] text-slate-800 min-h-screen font-sans flex flex-col md:flex-row">
 
-            <div className="flex min-h-screen pt-16">
-                {/* SideNavBar (Desktop) */}
-                <aside className="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white flex flex-col pt-20 pb-6 hidden md:flex">
-                    <div className="px-6 mb-8">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-lg">
-                                <span className="material-symbols-outlined">shield</span>
-                            </div>
+            {/* SideNavBar (Desktop & Mobile Shell) */}
+            <aside className="w-full md:w-64 bg-[#022c22] text-white flex flex-col justify-between shrink-0 md:fixed md:h-screen z-50">
+                <div className="flex flex-col">
+                    {/* Sidebar Header */}
+                    <div className="px-6 py-6 border-b border-emerald-900/60">
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-emerald-400 text-3xl">shield</span>
                             <div>
-                                <p className="text-lg font-black text-white leading-none">Sistema</p>
-                                <p className="text-[10px] uppercase tracking-widest text-blue-300 mt-1">Administração</p>
+                                <h1 className="text-sm font-black uppercase tracking-wider text-white">FastTicket Admin</h1>
+                                <p className="text-[9px] uppercase tracking-widest text-emerald-400 font-bold">Administração</p>
                             </div>
                         </div>
                     </div>
 
-                    <nav className="flex-1">
+                    {/* Navigation Items */}
+                    <nav className="mt-6 space-y-1 px-3">
                         {sideNavItems.map((item) => {
                             const isActive = activeTab === item.id;
                             return (
                                 <button
                                     key={item.id}
                                     onClick={() => handleTabChange(item.id)}
-                                    className={`w-full flex items-center gap-3 px-6 py-4 transition-all duration-200 text-left cursor-pointer border-l-4 ${
-                                        isActive
-                                            ? 'text-white font-bold border-blue-500 bg-slate-800'
-                                            : 'text-slate-400 hover:text-white hover:bg-slate-800 border-transparent'
-                                    }`}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 text-left cursor-pointer font-semibold text-xs tracking-wide ${isActive
+                                            ? 'text-white bg-emerald-800/80 shadow-sm border border-emerald-700/50'
+                                            : 'text-emerald-300/80 hover:text-white hover:bg-emerald-900/40'
+                                        }`}
                                 >
-                                    <span className="material-symbols-outlined">{item.icon}</span>
-                                    <span className="text-sm tracking-wide">{item.label}</span>
+                                    <span className="material-symbols-outlined text-lg">{item.icon}</span>
+                                    <span>{item.label}</span>
                                 </button>
                             );
                         })}
                     </nav>
-                </aside>
+                </div>
+
+                {/* Sidebar Footer */}
+                <div className="p-4 border-t border-emerald-900/60 space-y-1">
+                    <button
+                        onClick={() => alert('Suporte FastTicket UTAD: admin-support@utad.pt')}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-emerald-300 hover:text-white hover:bg-emerald-900/40 transition-all text-xs font-semibold text-left"
+                    >
+                        <span className="material-symbols-outlined text-lg">help</span>
+                        <span>Support</span>
+                    </button>
+                    <button
+                        disabled={isPending}
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-red-300 hover:text-white hover:bg-red-900/40 transition-all text-xs font-semibold text-left"
+                    >
+                        <span className="material-symbols-outlined text-lg">logout</span>
+                        <span>{isPending ? 'Saindo...' : 'Logout'}</span>
+                    </button>
+                </div>
+            </aside>
+
+            {/* Main Layout Area */}
+            <div className="flex-1 md:pl-64 flex flex-col min-h-screen">
+
+                {/* Top Bar */}
+                <header className="h-16 bg-white border-b border-slate-200/80 px-6 flex justify-between items-center sticky top-0 z-40">
+                    <div className="flex items-center gap-4 flex-1">
+                        <span className="text-sm font-black text-slate-800 hidden sm:inline-block tracking-tight">UTAD FastTicket</span>
+
+                        {/* Search Input */}
+                        <div className="relative max-w-md w-full">
+                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                            <input
+                                type="text"
+                                placeholder="Procurar transações, eventos ou utilizadores..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all text-xs text-slate-700 placeholder:text-slate-400"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Right utilities & Super Admin profile card */}
+                    <div className="flex items-center gap-4 pl-4 border-l border-slate-100">
+                        <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative">
+                            <span className="material-symbols-outlined">notifications</span>
+                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500" />
+                        </button>
+                        <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                            <span className="material-symbols-outlined">settings</span>
+                        </button>
+
+                        {/* Super Admin Badge */}
+                        <div className="flex items-center gap-3">
+                            <div className="text-right hidden md:block">
+                                <p className="text-xs font-black text-slate-900 leading-none">{userName}</p>
+                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">Administrador Central</p>
+                            </div>
+                            <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 relative overflow-hidden">
+                                <span className="material-symbols-outlined text-xl">shield_person</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
 
                 {/* Main Content Canvas */}
-                <main className="flex-1 md:ml-64 p-6 lg:p-10 pb-24 md:pb-10 bg-slate-50">
+                <main className="flex-1 p-6 sm:p-8 bg-[#f8fafc] max-w-6xl mx-auto w-full pb-20">
                     <div key={activeTab} className="animate-fadeIn">
-                        {activeTab === 'dashboard' && <AdminDashboard userName={userName} summary={summary} />}
-                        {activeTab === 'users' && <AdminUsers users={users} />}
-                        {activeTab === 'events' && <AdminEvents eventos={eventos} />}
-                        {activeTab === 'profile' && <ProfileContent user={user} onLogout={handleLogout} />}
+                        {activeTab === 'dashboard' && (
+                            <AdminDashboard
+                                userName={userName}
+                                summary={summary}
+                                onTabChange={handleTabChange}
+                            />
+                        )}
+                        {activeTab === 'users' && (
+                            <AdminUsers
+                                users={filteredUsers}
+                                onRefresh={handleRefresh}
+                            />
+                        )}
+                        {activeTab === 'approvals' && (
+                            <AdminApprovals
+                                eventos={filteredEvents}
+                                onRefresh={handleRefresh}
+                            />
+                        )}
+                        {activeTab === 'logs' && (
+                            <AdminLogs
+                                users={users}
+                                eventos={eventos}
+                            />
+                        )}
                     </div>
                 </main>
             </div>
-
-            {/* BottomNavBar (Mobile only) */}
-            <nav className="md:hidden fixed bottom-0 w-full bg-slate-900 border-t border-slate-800 shadow-lg flex justify-around items-center py-3 px-4 z-50">
-                {bottomNavItems.map((item) => {
-                    const isActive = activeTab === item.id;
-                    return (
-                        <button
-                            key={item.id}
-                            onClick={() => handleTabChange(item.id)}
-                            className={`flex flex-col items-center gap-1 ${isActive ? 'text-blue-400 font-bold' : 'text-slate-400'}`}
-                        >
-                            <span className="material-symbols-outlined">{item.icon}</span>
-                            <span className="text-[10px]">{item.label}</span>
-                        </button>
-                    );
-                })}
-            </nav>
         </div>
     );
 }

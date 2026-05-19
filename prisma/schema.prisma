@@ -20,6 +20,7 @@ enum Role {
   ORGANIZADOR
   STAFF
   PARTICIPANTE
+  ADMIN
 }
 
 enum EstadoPedido {

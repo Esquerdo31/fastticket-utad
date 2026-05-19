@@ -258,23 +258,23 @@ export default function EventDetailsDynamic() {
                                         )}
 
                                         <button
-                                            disabled={!selectedTicket || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF"}
+                                            disabled={!selectedTicket || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
                                             onClick={() => {
                                                 const urlParams = new URLSearchParams(window.location.search);
                                                 const ref = urlParams.get('ref');
                                                 router.push(`/checkout/${evento.id}/${selectedTicket}${ref ? `?ref=${ref}` : ''}`);
                                             }}
                                             className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6
-                                                ${(selectedTicket && userSession?.role !== "ORGANIZADOR" && userSession?.role !== "STAFF") ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}
+                                                ${(selectedTicket && userSession?.role !== "ORGANIZADOR" && userSession?.role !== "STAFF" && userSession?.role !== "ADMIN") ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}
                                             `}
                                         >
                                             Prosseguir para Checkout
                                             <span className="material-symbols-outlined text-lg">arrow_forward</span>
                                         </button>
 
-                                        {(userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF") && (
+                                        {(userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") && (
                                             <p className="text-red-600 text-xs font-semibold text-center mt-2">
-                                                Contas de organizador ou staff não podem comprar bilhetes.
+                                                Contas de organizador, staff ou administradores não podem comprar bilhetes.
                                             </p>
                                         )}
 
