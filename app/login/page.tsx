@@ -50,8 +50,16 @@ export default function AuthPage() {
   // Redireciona ao ter sucesso
   useEffect(() => {
     if (loginState?.success || registerState?.success) {
-      // Redireciona de volta para a Home (ou dashboard)
-      router.push("/dashboard");
+      const userRole = loginState?.role || registerState?.role;
+      
+      if (userRole === "ADMIN") {
+        router.push("/dashboard/admin");
+      } else if (userRole === "STAFF") {
+        router.push("/dashboard/staff");
+      } else {
+        // Redireciona de volta para a Home (Participante / Organizador)
+        router.push("/");
+      }
     }
   }, [loginState, registerState, router]);
 
@@ -106,9 +114,8 @@ export default function AuthPage() {
           <div className="mb-5 sm:mb-8">
             {/* Recover mode: show back button */}
             <div
-              className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                isRecover ? "max-h-20 opacity-100" : "max-h-0 opacity-0"
-              }`}
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${isRecover ? "max-h-20 opacity-100" : "max-h-0 opacity-0"
+                }`}
             >
               <button
                 type="button"
@@ -124,9 +131,8 @@ export default function AuthPage() {
 
             {/* Login/Register tabs */}
             <nav
-              className={`flex bg-[#f1f5f9] rounded-lg p-1.5 w-full relative transition-all duration-300 ease-in-out ${
-                isRecover ? "max-h-0 opacity-0 overflow-hidden" : "max-h-20 opacity-100"
-              }`}
+              className={`flex bg-[#f1f5f9] rounded-lg p-1.5 w-full relative transition-all duration-300 ease-in-out ${isRecover ? "max-h-0 opacity-0 overflow-hidden" : "max-h-20 opacity-100"
+                }`}
             >
               {/* Sliding pill background */}
               <div
@@ -136,18 +142,16 @@ export default function AuthPage() {
               <button
                 type="button"
                 onClick={() => setMode("login")}
-                className={`relative z-10 flex-1 py-3 text-center text-sm font-bold transition-colors duration-300 ${
-                  isLogin ? "text-[#006837]" : "text-[#475569] hover:text-[#0f172a]"
-                }`}
+                className={`relative z-10 flex-1 py-3 text-center text-sm font-bold transition-colors duration-300 ${isLogin ? "text-[#006837]" : "text-[#475569] hover:text-[#0f172a]"
+                  }`}
               >
                 Entrar
               </button>
               <button
                 type="button"
                 onClick={() => setMode("register")}
-                className={`relative z-10 flex-1 py-3 text-center text-sm font-bold transition-colors duration-300 ${
-                  mode === "register" ? "text-[#006837]" : "text-[#475569] hover:text-[#0f172a]"
-                }`}
+                className={`relative z-10 flex-1 py-3 text-center text-sm font-bold transition-colors duration-300 ${mode === "register" ? "text-[#006837]" : "text-[#475569] hover:text-[#0f172a]"
+                  }`}
               >
                 Registar
               </button>
@@ -162,11 +166,10 @@ export default function AuthPage() {
             {/* ─── Login Form ───────────────────────────────────── */}
             <div
               ref={loginRef}
-              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${
-                isLogin
-                  ? "opacity-100 translate-x-0 visible"
-                  : "opacity-0 -translate-x-8 invisible pointer-events-none"
-              }`}
+              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${isLogin
+                ? "opacity-100 translate-x-0 visible"
+                : "opacity-0 -translate-x-8 invisible pointer-events-none"
+                }`}
             >
               <div className="mb-5 sm:mb-8">
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a]">
@@ -313,11 +316,10 @@ export default function AuthPage() {
             {/* ─── Register Form ────────────────────────────────── */}
             <div
               ref={registerRef}
-              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${
-                mode === "register"
-                  ? "opacity-100 translate-x-0 visible"
-                  : "opacity-0 translate-x-8 invisible pointer-events-none"
-              }`}
+              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${mode === "register"
+                ? "opacity-100 translate-x-0 visible"
+                : "opacity-0 translate-x-8 invisible pointer-events-none"
+                }`}
             >
               <div className="mb-5 sm:mb-8">
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a]">
@@ -535,11 +537,10 @@ export default function AuthPage() {
             {/* ─── Recover Password Form ────────────────────────── */}
             <div
               ref={recoverRef}
-              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${
-                isRecover
-                  ? "opacity-100 translate-x-0 visible"
-                  : "opacity-0 translate-x-8 invisible pointer-events-none"
-              }`}
+              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${isRecover
+                ? "opacity-100 translate-x-0 visible"
+                : "opacity-0 translate-x-8 invisible pointer-events-none"
+                }`}
             >
               <div className="mb-5 sm:mb-8">
                 <div className="flex items-center gap-3 mb-4">

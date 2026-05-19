@@ -4,6 +4,7 @@ import { getActiveSession } from '@/app/actions/auth';
 import { getDashboardData } from '@/app/actions/dashboard';
 import { getProfileData } from '@/app/actions/profile';
 import { getTicketsData, getBillingData } from '@/app/actions/tickets';
+import { getParceriasPromotor } from '@/app/actions/promotores';
 import DashboardShell from './components/DashboardShell';
 
 export default async function UserDashboard() {
@@ -13,11 +14,12 @@ export default async function UserDashboard() {
         redirect('/login');
     }
 
-    const [dashboard, profile, ticketsResult, billingResult] = await Promise.all([
+    const [dashboard, profile, ticketsResult, billingResult, parceriasResult] = await Promise.all([
         getDashboardData(session.userId),
         getProfileData(session.userId),
         getTicketsData(session.userId),
         getBillingData(session.userId),
+        getParceriasPromotor(),
     ]);
 
     const nextEvents = dashboard.nextEvents || [];
@@ -34,6 +36,7 @@ export default async function UserDashboard() {
     const tickets = ticketsResult.tickets || [];
     const orders = billingResult.orders || [];
     const billingSummary = billingResult.summary || { totalGasto: 0, totalPedidos: 0, totalBilhetes: 0 };
+    const parcerias = parceriasResult.success ? (parceriasResult.data || []) : [];
 
     return (
         <DashboardShell
@@ -43,6 +46,7 @@ export default async function UserDashboard() {
             user={user}
             tickets={tickets}
             orders={orders}
+            parcerias={parcerias}
             billingSummary={billingSummary}
         />
     );

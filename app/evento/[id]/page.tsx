@@ -20,17 +20,24 @@ export default function EventDetailsDynamic() {
     useEffect(() => {
         getActiveSession().then(setUserSession);
         if (params.id) {
-            getEventoById(Number(params.id)).then(res => {
-                if (res.success && res.data) {
-                    setEvento(res.data);
-                    if (res.data.lotes && res.data.lotes.length > 0) {
-                        setSelectedTicket(res.data.lotes[0].id); // Seleciona o primeiro lote por defeito
+            getEventoById(Number(params.id))
+                .then(res => {
+                    if (res.success && res.data) {
+                        setEvento(res.data);
+                        if (res.data.lotes && res.data.lotes.length > 0) {
+                            setSelectedTicket(res.data.lotes[0].id); // Seleciona o primeiro lote por defeito
+                        }
+                    } else {
+                        router.push('/eventos'); // Cód. não existe, volta pra trás
                     }
-                } else {
-                    router.push('/eventos'); // Cód. não existe, volta pra trás
-                }
-                setLoading(false);
-            });
+                })
+                .catch(err => {
+                    console.error("Erro ao carregar evento:", err);
+                    router.push('/eventos');
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
         }
     }, [params.id, router]);
 

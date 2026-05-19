@@ -152,6 +152,7 @@ model Promotor {
   linkSlug        String     @unique // ex: nucleo-informatica
   comissaoValor   Float?     // Comissão fixa em euros
   comissaoPercent Float?     // Comissão em percentagem (0-100)
+  estado          String     @default("PENDENTE") // PENDENTE, ACEITE, REJEITADO
   
   // Relacionamentos
   eventoId        Int

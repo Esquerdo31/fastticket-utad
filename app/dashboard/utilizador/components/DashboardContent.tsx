@@ -24,11 +24,37 @@ interface DashboardContentProps {
     userName: string;
     nextEvents: EventItem[];
     suggestions: SuggestionItem[];
+    parcerias: any[];
+    onTabChange: (tab: 'dashboard' | 'tickets' | 'billing' | 'profile' | 'promotor') => void;
 }
 
-export default function DashboardContent({ userName, nextEvents, suggestions }: DashboardContentProps) {
+export default function DashboardContent({ userName, nextEvents, suggestions, parcerias = [], onTabChange }: DashboardContentProps) {
+    const pendingInvites = parcerias.filter(p => p.estado === 'PENDENTE');
+
     return (
         <>
+            {/* Notification for Promoter Invitation */}
+            {pendingInvites.length > 0 && (
+                <div className="mb-6 p-4 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent border border-amber-500/30 rounded-2xl flex items-start gap-4 shadow-sm animate-fadeIn">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-700 shrink-0">
+                        <span className="material-symbols-outlined text-[24px]">campaign</span>
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="text-sm font-bold text-slate-900">Novo Convite de Afiliado / Promotor!</h4>
+                        <p className="text-xs text-slate-600 mt-0.5">
+                            Foste convidado para promover o evento <strong className="text-[#006837]">{pendingInvites[0].eventoTitulo}</strong> e ganhar comissões por venda.
+                            {pendingInvites.length > 1 && ` Tens mais ${pendingInvites.length - 1} convite(s) pendente(s).`}
+                        </p>
+                    </div>
+                    <button 
+                        onClick={() => onTabChange('promotor')}
+                        className="bg-[#006837] hover:bg-emerald-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all active:scale-95 shadow-md shadow-emerald-800/10"
+                    >
+                        Ver Convites
+                    </button>
+                </div>
+            )}
+
             {/* Welcome Section */}
             <section className="mb-10">
                 <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#0b2818] via-[#004d29] to-[#006837] p-8 lg:p-12 text-white shadow-xl shadow-[#0b2818]/10">

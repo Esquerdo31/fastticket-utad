@@ -33,13 +33,8 @@ export default async function StaffDashboardPage() {
         }
     });
 
-    if (staffEvents.length === 0) {
-        // Se o utilizador STAFF não tem eventos vinculados, redireciona de volta
-        redirect('/dashboard');
-    }
-
     const userName = session.nome || "Staff";
-    
+
     // Formatar os eventos para passar ao componente
     const eventos = staffEvents.map(se => {
         const ev = se.evento;

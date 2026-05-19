@@ -67,7 +67,7 @@ export async function criarSessaoCheckout(data: {
             const promotor = await prisma.promotor.findUnique({
                 where: { linkSlug: data.promotorSlug },
             });
-            if (promotor && promotor.eventoId === eventoId) {
+            if (promotor && promotor.eventoId === eventoId && promotor.estado === 'ACEITE') {
                 promotorId = promotor.id.toString();
             }
         }
