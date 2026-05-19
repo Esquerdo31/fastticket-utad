@@ -4,8 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -50,6 +49,8 @@ model Utilizador {
   eventos        Evento[]        // (Organiza) 1 Utilizador -> * Eventos
   pedidos        Pedido[]        // (Efetua)   1 Utilizador -> * Pedidos
   registosAcesso RegistoAcesso[] // (Regista)  1 Utilizador (Staff) -> * Registos
+  comoPromotor   Promotor[]      // (Promove)  Núcleo/Parceiro de venda
+  comoStaff      EventoStaff[]   // (Trabalha) Eventos onde é staff
 }
 
 model Evento {
@@ -72,6 +73,8 @@ model Evento {
   organizadorId  Int
   organizador    Utilizador    @relation(fields: [organizadorId], references: [id])
   lotes          LoteBilhete[] // (Contém) 1 Evento -> * Lotes de Bilhetes
+  promotores     Promotor[]    // Parceiros de venda associados ao evento
+  staffs         EventoStaff[] // Equipa que pode validar bilhetes
 }
 
 model LoteBilhete {
@@ -99,6 +102,8 @@ model Pedido {
   utilizador   Utilizador   @relation(fields: [utilizadorId], references: [id])
   bilhetes     Bilhete[]    // (Contém) 1 Pedido -> * Bilhetes
   pagamento    Pagamento?   // (Possui) 1 Pedido -> 1 Pagamento (Opcional até ser pago)
+  promotorId   Int?
+  promotor     Promotor?    @relation(fields: [promotorId], references: [id])
 }
 
 model Pagamento {
@@ -135,4 +140,36 @@ model RegistoAcesso {
   bilhete         Bilhete    @relation(fields: [bilheteId], references: [id])
   staffId         Int
   staff           Utilizador @relation(fields: [staffId], references: [id])
+}
+
+// ==============================
+// SISTEMA DE AFILIADOS E STAFF
+// ==============================
+
+model Promotor {
+  id              Int        @id @default(autoincrement())
+  linkSlug        String     @unique // ex: nucleo-informatica
+  comissaoValor   Float?     // Comissão fixa em euros
+  comissaoPercent Float?     // Comissão em percentagem (0-100)
+  
+  // Relacionamentos
+  eventoId        Int
+  evento          Evento     @relation(fields: [eventoId], references: [id])
+  utilizadorId    Int
+  utilizador      Utilizador @relation(fields: [utilizadorId], references: [id])
+  pedidosGerados  Pedido[]   // Vendas associadas a este promotor
+  
+  @@unique([eventoId, utilizadorId])
+}
+
+model EventoStaff {
+  id              Int        @id @default(autoincrement())
+  
+  // Relacionamentos
+  eventoId        Int
+  evento          Evento     @relation(fields: [eventoId], references: [id])
+  staffId         Int
+  staff           Utilizador @relation(fields: [staffId], references: [id])
+  
+  @@unique([eventoId, staffId])
 }

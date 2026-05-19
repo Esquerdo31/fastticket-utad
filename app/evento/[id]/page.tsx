@@ -21,7 +21,7 @@ export default function EventDetailsDynamic() {
         getActiveSession().then(setUserSession);
         if (params.id) {
             getEventoById(Number(params.id)).then(res => {
-                if (res.success) {
+                if (res.success && res.data) {
                     setEvento(res.data);
                     if (res.data.lotes && res.data.lotes.length > 0) {
                         setSelectedTicket(res.data.lotes[0].id); // Seleciona o primeiro lote por defeito
@@ -259,6 +259,11 @@ export default function EventDetailsDynamic() {
 
                                         <button
                                             disabled={!selectedTicket}
+                                            onClick={() => {
+                                                const urlParams = new URLSearchParams(window.location.search);
+                                                const ref = urlParams.get('ref');
+                                                router.push(`/checkout/${evento.id}/${selectedTicket}${ref ? `?ref=${ref}` : ''}`);
+                                            }}
                                             className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6
                                                 ${selectedTicket ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}
                                             `}

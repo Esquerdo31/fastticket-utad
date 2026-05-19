@@ -9,8 +9,10 @@ import OrganizerEvents from './OrganizerEvents';
 import OrganizerSales from './OrganizerSales';
 import ProfileContent from '../../utilizador/components/ProfileContent';
 import CreateEventWizard from './CreateEventWizard';
+import OrganizerPromoters from './OrganizerPromoters';
+import OrganizerStaff from './OrganizerStaff';
 
-type ActiveTab = 'dashboard' | 'events' | 'sales' | 'profile' | 'create-event' | 'edit-event';
+type ActiveTab = 'dashboard' | 'events' | 'sales' | 'profile' | 'create-event' | 'edit-event' | 'promoters' | 'staff';
 
 interface OrganizerShellProps {
     userName: string;
@@ -55,6 +57,8 @@ export default function OrganizerShell({ userName, summary, eventos, nextEvents,
         { id: 'dashboard', icon: 'dashboard', label: 'Painel' },
         { id: 'events', icon: 'campaign', label: 'Meus Eventos' },
         { id: 'sales', icon: 'analytics', label: 'Vendas' },
+        { id: 'promoters', icon: 'groups', label: 'Núcleos & Promotores' },
+        { id: 'staff', icon: 'badge', label: 'Equipa Staff' },
         { id: 'profile', icon: 'person', label: 'Definições' },
     ];
 
@@ -125,6 +129,8 @@ export default function OrganizerShell({ userName, summary, eventos, nextEvents,
                         {activeTab === 'create-event' && <CreateEventWizard userName={userName} userId={user.id} onEventCreated={() => { handleTabChange('events'); router.refresh(); }} />}
                         {activeTab === 'edit-event' && editEventId && <CreateEventWizard userName={userName} userId={user.id} editEventId={editEventId} onEventCreated={() => { setEditEventId(null); handleTabChange('events'); router.refresh(); }} />}
                         {activeTab === 'sales' && <OrganizerSales eventos={eventos} summary={summary} />}
+                        {activeTab === 'promoters' && <OrganizerPromoters eventos={eventos} />}
+                        {activeTab === 'staff' && <OrganizerStaff eventos={eventos} />}
                         {activeTab === 'profile' && <ProfileContent user={user} onLogout={handleLogout} />}
                     </div>
                 </main>

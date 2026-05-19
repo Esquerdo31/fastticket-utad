@@ -85,7 +85,7 @@ const UTADFastTicket = () => {
                         </div>
                         {userSession ? (
                             <div className="flex items-center gap-4">
-                                <Link href="/dashboard/utilizador" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-800 transition-colors flex items-center gap-2">
+                                <Link href="/dashboard" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-800 transition-colors flex items-center gap-2">
                                     <span className="material-symbols-outlined text-sm">person</span>
                                     {userSession.nome || userSession.email.split("@")[0]}
                                 </Link>

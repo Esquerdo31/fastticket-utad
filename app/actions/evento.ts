@@ -2,60 +2,76 @@
 
 import prisma from "../../lib/prisma";
 import { getSession } from "../../lib/session";
+import { z } from "zod";
 
-interface LoteInput {
-    nome: string;
-    descricao?: string;
-    preco: number;
-    lotacaoTotal: number;
-}
+// ==========================================
+// Schemas de Validação (Zod)
+// Adaptado do eventoController.ts do Rafa + campos do nosso schema
+// ==========================================
 
-interface CreateEventoInput {
-    titulo: string;
-    descricao: string;
-    dataInicio: string;
-    dataFim?: string;
-    localizacao: string;
-    organizadorId: number;
-    lotes: LoteInput[];
-    bannerUrl?: string;
-    thumbnailUrl?: string;
-    formato?: string;
-    categoria?: string;
-    estado?: string;
-    mostrarBanner?: boolean;
-    mostrarLogo?: boolean;
-}
+const loteSchema = z.object({
+    nome: z.string().min(1, 'O nome do lote é obrigatório.'),
+    descricao: z.string().optional(),
+    preco: z.number().min(0, 'O preço não pode ser negativo.'),
+    lotacaoTotal: z.number().int().positive('A lotação total deve ser um número positivo.'),
+});
+
+const criarEventoSchema = z.object({
+    titulo: z.string().min(3, 'O título deve ter pelo menos 3 caracteres.'),
+    descricao: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres.'),
+    dataInicio: z.string().min(1, 'A data de início é obrigatória.'),
+    dataFim: z.string().optional(),
+    localizacao: z.string().min(2, 'A localização é obrigatória.'),
+    organizadorId: z.number().int().positive('O ID do organizador é obrigatório.'),
+    lotes: z.array(loteSchema).min(1, 'É necessário pelo menos um lote de bilhetes.'),
+    bannerUrl: z.string().optional(),
+    thumbnailUrl: z.string().optional(),
+    formato: z.string().optional(),
+    categoria: z.string().optional(),
+    estado: z.string().optional(),
+    mostrarBanner: z.boolean().optional(),
+    mostrarLogo: z.boolean().optional(),
+});
+
+// Tipo inferido do schema para reutilização
+type CreateEventoInput = z.infer<typeof criarEventoSchema>;
+
+// ==========================================
+// Criar Evento
+// ==========================================
 
 export async function createEvento(data: CreateEventoInput) {
     try {
-        if (!data.titulo || !data.descricao || !data.dataInicio || !data.localizacao) {
-            return { success: false, message: "Campos obrigatórios em falta." };
-        }
-        if (!data.lotes || data.lotes.length === 0) {
-            return { success: false, message: "É necessário pelo menos um lote de bilhetes." };
+        // 1. Validar dados com Zod
+        const parseResult = criarEventoSchema.safeParse(data);
+        if (!parseResult.success) {
+            const errors = parseResult.error.flatten().fieldErrors;
+            const firstError = Object.values(errors).flat()[0] || 'Dados inválidos.';
+            return { success: false, message: firstError };
         }
 
-        const lotacaoMaxima = data.lotes.reduce((sum, l) => sum + l.lotacaoTotal, 0);
+        const validated = parseResult.data;
+
+        const lotacaoMaxima = validated.lotes.reduce((sum, l) => sum + l.lotacaoTotal, 0);
 
         const evento = await prisma.evento.create({
             data: {
-                titulo: data.titulo,
-                descricao: data.descricao,
-                dataInicio: new Date(data.dataInicio),
-                dataFim: data.dataFim ? new Date(data.dataFim) : null,
-                localizacao: data.localizacao,
+                titulo: validated.titulo,
+                descricao: validated.descricao,
+                dataInicio: new Date(validated.dataInicio),
+                dataFim: validated.dataFim ? new Date(validated.dataFim) : null,
+                localizacao: validated.localizacao,
                 lotacaoMaxima,
-                formato: data.formato || "presencial",
-                categoria: data.categoria || "Conferência",
-                estado: data.estado || "RASCUNHO",
-                bannerUrl: data.bannerUrl || null,
-                thumbnailUrl: data.thumbnailUrl || null,
-                mostrarBanner: data.mostrarBanner ?? true,
-                mostrarLogo: data.mostrarLogo ?? true,
-                organizadorId: data.organizadorId,
+                formato: validated.formato || "presencial",
+                categoria: validated.categoria || "Conferência",
+                estado: validated.estado || "RASCUNHO",
+                bannerUrl: validated.bannerUrl || null,
+                thumbnailUrl: validated.thumbnailUrl || null,
+                mostrarBanner: validated.mostrarBanner ?? true,
+                mostrarLogo: validated.mostrarLogo ?? true,
+                organizadorId: validated.organizadorId,
                 lotes: {
-                    create: data.lotes.map(lote => ({
+                    create: validated.lotes.map(lote => ({
                         nome: lote.nome,
                         descricao: lote.descricao || null,
                         preco: lote.preco,
@@ -73,8 +89,18 @@ export async function createEvento(data: CreateEventoInput) {
     }
 }
 
+// ==========================================
+// Obter Evento por ID
+// ==========================================
+
 export async function getEventoById(eventoId: number) {
     try {
+        // Validação simples do ID
+        const idResult = z.number().int().positive().safeParse(eventoId);
+        if (!idResult.success) {
+            return { success: false, message: "ID de evento inválido." };
+        }
+
         const evento = await prisma.evento.findUnique({
             where: { id: eventoId },
             include: { lotes: true },
@@ -113,16 +139,29 @@ export async function getEventoById(eventoId: number) {
     }
 }
 
+// ==========================================
+// Atualizar Evento
+// ==========================================
+
 export async function updateEvento(eventoId: number, data: CreateEventoInput) {
     try {
-        if (!data.titulo || !data.descricao || !data.dataInicio || !data.localizacao) {
-            return { success: false, message: "Campos obrigatórios em falta." };
-        }
-        if (!data.lotes || data.lotes.length === 0) {
-            return { success: false, message: "É necessário pelo menos um lote de bilhetes." };
+        // 1. Validar ID
+        const idResult = z.number().int().positive().safeParse(eventoId);
+        if (!idResult.success) {
+            return { success: false, message: "ID de evento inválido." };
         }
 
-        const lotacaoMaxima = data.lotes.reduce((sum, l) => sum + l.lotacaoTotal, 0);
+        // 2. Validar dados com Zod
+        const parseResult = criarEventoSchema.safeParse(data);
+        if (!parseResult.success) {
+            const errors = parseResult.error.flatten().fieldErrors;
+            const firstError = Object.values(errors).flat()[0] || 'Dados inválidos.';
+            return { success: false, message: firstError };
+        }
+
+        const validated = parseResult.data;
+
+        const lotacaoMaxima = validated.lotes.reduce((sum, l) => sum + l.lotacaoTotal, 0);
 
         // Delete existing lots and recreate them
         await prisma.loteBilhete.deleteMany({ where: { eventoId } });
@@ -130,21 +169,21 @@ export async function updateEvento(eventoId: number, data: CreateEventoInput) {
         await prisma.evento.update({
             where: { id: eventoId },
             data: {
-                titulo: data.titulo,
-                descricao: data.descricao,
-                dataInicio: new Date(data.dataInicio),
-                dataFim: data.dataFim ? new Date(data.dataFim) : null,
-                localizacao: data.localizacao,
+                titulo: validated.titulo,
+                descricao: validated.descricao,
+                dataInicio: new Date(validated.dataInicio),
+                dataFim: validated.dataFim ? new Date(validated.dataFim) : null,
+                localizacao: validated.localizacao,
                 lotacaoMaxima,
-                formato: data.formato || "presencial",
-                categoria: data.categoria || "Conferência",
-                estado: data.estado,
-                bannerUrl: data.bannerUrl || null,
-                thumbnailUrl: data.thumbnailUrl || null,
-                mostrarBanner: data.mostrarBanner ?? true,
-                mostrarLogo: data.mostrarLogo ?? true,
+                formato: validated.formato || "presencial",
+                categoria: validated.categoria || "Conferência",
+                estado: validated.estado,
+                bannerUrl: validated.bannerUrl || null,
+                thumbnailUrl: validated.thumbnailUrl || null,
+                mostrarBanner: validated.mostrarBanner ?? true,
+                mostrarLogo: validated.mostrarLogo ?? true,
                 lotes: {
-                    create: data.lotes.map(lote => ({
+                    create: validated.lotes.map(lote => ({
                         nome: lote.nome,
                         descricao: lote.descricao || null,
                         preco: lote.preco,
@@ -162,10 +201,20 @@ export async function updateEvento(eventoId: number, data: CreateEventoInput) {
     }
 }
 
+// ==========================================
+// Apagar Evento
+// ==========================================
+
 export async function deleteEvento(eventoId: number) {
     try {
         const session = await getSession();
         if (!session) return { success: false, message: "Não autenticado." };
+
+        // Validar ID
+        const idResult = z.number().int().positive().safeParse(eventoId);
+        if (!idResult.success) {
+            return { success: false, message: "ID de evento inválido." };
+        }
 
         const evento = await prisma.evento.findUnique({ where: { id: eventoId } });
         if (!evento) return { success: false, message: "Evento não encontrado." };
