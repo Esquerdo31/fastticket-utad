@@ -17,6 +17,8 @@ interface TicketItem {
     ticketCorFundo?: string;
     ticketCorTexto?: string;
     ticketMensagem?: string;
+    ticketBackgroundUrl?: string | null;
+    participanteNome?: string;
 }
 
 const handleDownloadPDF = (ticket: TicketItem) => {
@@ -26,13 +28,16 @@ const handleDownloadPDF = (ticket: TicketItem) => {
     const bgCor = ticket.ticketCorFundo || '#ffffff';
     const textCor = ticket.ticketCorTexto || '#000000';
     const msg = ticket.ticketMensagem || 'Apresente este bilhete impresso ou no telemóvel na entrada do recinto.';
+    const hasBg = !!ticket.ticketBackgroundUrl;
+    const bgUrl = ticket.ticketBackgroundUrl || '';
+    const participante = ticket.participanteNome || 'Participante';
 
     printWindow.document.write(`
         <html>
         <head>
             <title>Bilhete - ${ticket.eventoTitulo}</title>
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
                 
                 body {
                     margin: 0;
@@ -49,6 +54,7 @@ const handleDownloadPDF = (ticket: TicketItem) => {
                 
                 .ticket-container {
                     width: 380px;
+                    min-height: 520px;
                     background-color: ${bgCor};
                     color: ${textCor};
                     border-radius: 24px;
@@ -59,7 +65,17 @@ const handleDownloadPDF = (ticket: TicketItem) => {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
+                    justify-content: space-between;
                     position: relative;
+                    overflow: hidden;
+                }
+                
+                .ticket-container.has-bg {
+                    background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.85)), url('${bgUrl}');
+                    background-size: cover;
+                    background-position: center;
+                    color: #ffffff !important;
+                    border: none;
                 }
                 
                 .cutout-left, .cutout-right {
@@ -68,32 +84,31 @@ const handleDownloadPDF = (ticket: TicketItem) => {
                     border-radius: 50%;
                     background-color: #f1f5f9;
                     position: absolute;
-                    top: 250px;
+                    top: 260px;
+                    z-index: 10;
                 }
                 .cutout-left { left: -10px; }
                 .cutout-right { right: -10px; }
                 
-                .header {
+                /* Layout Clássico */
+                .header-classic {
                     width: 100%;
                     text-align: center;
                     border-bottom: 2px dashed rgba(0, 0, 0, 0.12);
                     padding-bottom: 24px;
                     margin-bottom: 24px;
                 }
-                
-                .header h1 {
+                .header-classic h1 {
                     margin: 8px 0 4px 0;
                     font-size: 20px;
                     font-weight: 800;
                     line-height: 1.3;
                 }
-                
-                .header p {
+                .header-classic p {
                     margin: 0;
                     font-size: 13px;
                     opacity: 0.8;
                 }
-                
                 .logo-text {
                     font-size: 11px;
                     text-transform: uppercase;
@@ -101,8 +116,7 @@ const handleDownloadPDF = (ticket: TicketItem) => {
                     letter-spacing: 2px;
                     opacity: 0.6;
                 }
-                
-                .qr-section {
+                .qr-section-classic {
                     background-color: #ffffff;
                     padding: 12px;
                     border-radius: 16px;
@@ -111,20 +125,18 @@ const handleDownloadPDF = (ticket: TicketItem) => {
                     justify-content: center;
                     align-items: center;
                     margin-bottom: 20px;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
                 }
-                
-                .qr-section img {
+                .qr-section-classic img {
                     width: 180px;
                     height: 180px;
                     display: block;
                 }
-                
-                .details {
+                .details-classic {
                     width: 100%;
                     text-align: center;
                     margin-bottom: 24px;
                 }
-                
                 .lote-name {
                     font-size: 14px;
                     font-weight: 800;
@@ -132,7 +144,6 @@ const handleDownloadPDF = (ticket: TicketItem) => {
                     text-transform: uppercase;
                     margin: 0 0 4px 0;
                 }
-                
                 .token-id {
                     font-family: monospace;
                     font-size: 10px;
@@ -140,8 +151,7 @@ const handleDownloadPDF = (ticket: TicketItem) => {
                     margin: 0;
                     word-break: break-all;
                 }
-                
-                .footer-msg {
+                .footer-msg-classic {
                     width: 100%;
                     border-top: 2px dashed rgba(0, 0, 0, 0.12);
                     padding-top: 20px;
@@ -150,6 +160,98 @@ const handleDownloadPDF = (ticket: TicketItem) => {
                     line-height: 1.5;
                     opacity: 0.85;
                 }
+
+                /* Layout Premium */
+                .header-premium {
+                    text-align: center;
+                    width: 100%;
+                    margin-top: 10px;
+                }
+                .logo-text-premium {
+                    font-size: 10px;
+                    text-transform: uppercase;
+                    font-weight: 800;
+                    letter-spacing: 2px;
+                    opacity: 0.75;
+                    margin: 0;
+                }
+                .attendee-name {
+                    font-size: 24px;
+                    font-weight: 800;
+                    margin: 14px 0 4px 0;
+                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
+                }
+                .event-title-premium {
+                    font-size: 14px;
+                    font-weight: 600;
+                    opacity: 0.9;
+                    margin: 0;
+                }
+                .event-details-premium {
+                    font-size: 10px;
+                    opacity: 0.75;
+                    margin: 4px 0 0 0;
+                }
+                .qr-section-premium {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    margin: 20px 0;
+                    gap: 12px;
+                }
+                .qr-wrapper {
+                    background-color: #ffffff;
+                    padding: 16px;
+                    border-radius: 20px;
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+                }
+                .qr-wrapper img {
+                    width: 160px;
+                    height: 160px;
+                    display: block;
+                }
+                .token-badge {
+                    background-color: #ffffff;
+                    color: #0c0a09;
+                    font-size: 12px;
+                    font-weight: 800;
+                    padding: 6px 14px;
+                    border-radius: 8px;
+                    font-family: monospace;
+                    letter-spacing: 1px;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+                }
+                .qr-label {
+                    background-color: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.25);
+                    color: #ffffff;
+                    font-size: 9px;
+                    font-weight: 700;
+                    padding: 4px 10px;
+                    border-radius: 9999px;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+                .footer-msg-premium {
+                    width: 100%;
+                    border-top: 1px solid rgba(255, 255, 255, 0.2);
+                    padding-top: 16px;
+                    text-align: center;
+                }
+                .lote-name-premium {
+                    font-size: 11px;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    margin: 0 0 4px 0;
+                    letter-spacing: 1px;
+                }
+                .msg-text-premium {
+                    font-size: 9px;
+                    line-height: 1.4;
+                    opacity: 0.8;
+                    margin: 0;
+                }
                 
                 @media print {
                     body {
@@ -157,8 +259,15 @@ const handleDownloadPDF = (ticket: TicketItem) => {
                     }
                     .ticket-container {
                         box-shadow: none;
-                        border: 1px solid rgba(0,0,0,0.15);
                         page-break-inside: avoid;
+                    }
+                    .ticket-container.has-bg {
+                        border: none;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    .ticket-container:not(.has-bg) {
+                        border: 1px solid rgba(0,0,0,0.15);
                     }
                     .cutout-left, .cutout-right {
                         background-color: #ffffff;
@@ -167,30 +276,53 @@ const handleDownloadPDF = (ticket: TicketItem) => {
             </style>
         </head>
         <body>
-            <div class="ticket-container">
-                <div class="cutout-left"></div>
-                <div class="cutout-right"></div>
-                
-                <div class="header">
-                    <div class="logo-text">FASTTICKET</div>
-                    <h1>${ticket.eventoTitulo}</h1>
-                    <p>${ticket.eventoLocal} &bull; ${ticket.eventoHora}</p>
-                    <p style="margin-top: 4px; font-weight: 600;">${ticket.eventoData}</p>
-                </div>
-                
-                <div class="qr-section">
-                    <img src="${ticket.qrCodeBase64 || ''}" alt="QR Code" />
-                </div>
-                
-                <div class="details">
-                    <p class="lote-name">${ticket.loteNome}</p>
-                    <p class="token-id">TOKEN: ${ticket.qrCodeToken}</p>
-                    <p style="margin: 6px 0 0 0; font-size: 12px; font-weight: 600;">Preço: ${ticket.preco.toFixed(2)}€ (PAGO)</p>
-                </div>
-                
-                <div class="footer-msg">
-                    ${msg}
-                </div>
+            <div class="ticket-container ${hasBg ? 'has-bg' : ''}">
+                ${!hasBg ? `
+                    <div class="cutout-left"></div>
+                    <div class="cutout-right"></div>
+                    
+                    <div class="header-classic">
+                        <div class="logo-text">FASTTICKET</div>
+                        <h1>${ticket.eventoTitulo}</h1>
+                        <p>${ticket.eventoLocal} &bull; ${ticket.eventoHora}</p>
+                        <p style="margin-top: 4px; font-weight: 600;">${ticket.eventoData}</p>
+                    </div>
+                    
+                    <div class="qr-section-classic">
+                        <img src="${ticket.qrCodeBase64 || ''}" alt="QR Code" />
+                    </div>
+                    
+                    <div class="details-classic">
+                        <p class="lote-name">${ticket.loteNome}</p>
+                        <p class="token-id">TOKEN: ${ticket.qrCodeToken}</p>
+                        <p style="margin: 6px 0 0 0; font-size: 12px; font-weight: 600;">Preço: ${ticket.preco.toFixed(2)}€ (PAGO)</p>
+                        <p style="margin: 4px 0 0 0; font-size: 11px; opacity: 0.8;">Participante: ${participante}</p>
+                    </div>
+                    
+                    <div class="footer-msg-classic">
+                        ${msg}
+                    </div>
+                ` : `
+                    <div class="header-premium">
+                        <p class="logo-text-premium">FASTTICKET</p>
+                        <h1 class="attendee-name">${participante}</h1>
+                        <p class="event-title-premium">${ticket.eventoTitulo}</p>
+                        <p class="event-details-premium">${ticket.eventoLocal} &bull; ${ticket.eventoHora} &bull; ${ticket.eventoData}</p>
+                    </div>
+                    
+                    <div class="qr-section-premium">
+                        <div class="qr-wrapper">
+                            <img src="${ticket.qrCodeBase64 || ''}" alt="QR Code" />
+                        </div>
+                        <div class="token-badge">${ticket.qrCodeToken.substring(0, 8).toUpperCase()}</div>
+                        <div class="qr-label">[ QR CODE TICKET ]</div>
+                    </div>
+                    
+                    <div class="footer-msg-premium">
+                        <p class="lote-name-premium">${ticket.loteNome} &bull; ${ticket.preco.toFixed(2)}€</p>
+                        <p class="msg-text-premium">${msg}</p>
+                    </div>
+                `}
             </div>
             
             <script>

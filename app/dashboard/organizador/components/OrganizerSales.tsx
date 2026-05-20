@@ -36,17 +36,37 @@ interface RecentPurchase {
     promotorNome: string | null;
 }
 
+interface PromoterLeader {
+    id: number;
+    slug: string;
+    name: string;
+    eventoTitulo: string;
+    salesCount: number;
+    revenue: number;
+    commissionEarned: number;
+}
+
 interface OrganizerSalesProps {
     eventos: EventoStat[];
     summary: {
         totalBilhetesVendidos: number;
         receitaTotal: number;
+        totalCapacity?: number;
     };
     recentPurchases?: RecentPurchase[];
+    salesByDate?: { date: string; count: number; revenue: number }[];
+    promoterLeaderboard?: PromoterLeader[];
 }
 
-export default function OrganizerSales({ eventos, summary, recentPurchases = [] }: OrganizerSalesProps) {
+export default function OrganizerSales({ 
+    eventos, 
+    summary, 
+    recentPurchases = [], 
+    salesByDate = [], 
+    promoterLeaderboard = [] 
+}: OrganizerSalesProps) {
     const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
+    const [filterText, setFilterText] = useState('');
 
     const toggleEventDetails = (id: number) => {
         setExpandedEvent(expandedEvent === id ? null : id);
@@ -56,26 +76,103 @@ export default function OrganizerSales({ eventos, summary, recentPurchases = [] 
         ? (summary.receitaTotal / summary.totalBilhetesVendidos) 
         : 0;
 
+    const totalCapacity = summary.totalCapacity || 0;
+    const ocupacaoGlobal = totalCapacity > 0
+        ? Math.round((summary.totalBilhetesVendidos / totalCapacity) * 100)
+        : 0;
+
+    // Filter recent purchases dynamically
+    const filteredPurchases = recentPurchases.filter(p => 
+        p.compradorNome.toLowerCase().includes(filterText.toLowerCase()) ||
+        p.compradorEmail.toLowerCase().includes(filterText.toLowerCase()) ||
+        p.eventoTitulo.toLowerCase().includes(filterText.toLowerCase()) ||
+        (p.promotorSlug || '').toLowerCase().includes(filterText.toLowerCase())
+    );
+
+    // CSV Export Handler
+    const exportToCSV = () => {
+        const headers = ["ID Pedido", "Comprador", "Email", "Evento", "Bilhetes Adquiridos", "Promotor Referencia", "Valor Pago (EUR)", "Data e Hora"];
+        const rows = filteredPurchases.map(p => [
+            p.id,
+            p.compradorNome,
+            p.compradorEmail,
+            p.eventoTitulo,
+            p.ticketsDesc,
+            p.promotorSlug || "Nenhum",
+            p.valor.toFixed(2),
+            p.data
+        ]);
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+            + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `relatorio_vendas_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // SVG Chart Calculations
+    const chartWidth = 720;
+    const chartHeight = 220;
+    const paddingLeft = 50;
+    const paddingRight = 20;
+    const paddingTop = 20;
+    const paddingBottom = 40;
+
+    const plotWidth = chartWidth - paddingLeft - paddingRight;
+    const plotHeight = chartHeight - paddingTop - paddingBottom;
+
+    const revenues = salesByDate.map(s => s.revenue);
+    const maxRevenue = Math.max(...revenues, 10) * 1.1; // Add 10% headroom
+
+    const points = salesByDate.map((s, idx) => {
+        const x = paddingLeft + (idx / Math.max(salesByDate.length - 1, 1)) * plotWidth;
+        const y = paddingTop + plotHeight - (s.revenue / maxRevenue) * plotHeight;
+        return { x, y, date: s.date, count: s.count, revenue: s.revenue };
+    });
+
+    const pathD = points.length > 0 
+        ? `M ${points[0].x} ${points[0].y} ` + points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')
+        : '';
+    
+    const fillD = points.length > 0
+        ? `${pathD} L ${points[points.length - 1].x} ${paddingTop + plotHeight} L ${points[0].x} ${paddingTop + plotHeight} Z`
+        : '';
+
     return (
         <div className="space-y-10">
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-black tracking-tight text-slate-900 mb-2">Relatório de Vendas</h1>
-                <p className="text-slate-500 text-sm">Acompanhe detalhadamente o desempenho financeiro, vendas de lotes e histórico de compras.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-black tracking-tight text-slate-900 mb-2">Relatório de Vendas</h1>
+                    <p className="text-slate-500 text-sm">Acompanhe detalhadamente o desempenho financeiro, vendas de lotes, promotores e transações.</p>
+                </div>
+                <button 
+                    onClick={exportToCSV}
+                    disabled={filteredPurchases.length === 0}
+                    className="shrink-0 bg-violet-700 hover:bg-violet-800 text-white font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-violet-700/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span className="material-symbols-outlined text-[20px]">download</span>
+                    Exportar CSV
+                </button>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Revenue Card */}
                 <div className="bg-gradient-to-br from-violet-900 via-indigo-950 to-indigo-900 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg shadow-violet-950/20">
                     <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(#ffffff 1px, transparent 1px)", backgroundSize: "16px 16px" }}></div>
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
                             <p className="text-[10px] font-bold uppercase tracking-widest text-violet-300 mb-2">Receita Total</p>
-                            <p className="text-4xl font-black drop-shadow-sm">{summary.receitaTotal.toFixed(2)}€</p>
+                            <p className="text-3xl font-black drop-shadow-sm">{summary.receitaTotal.toFixed(2)}€</p>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <span className="material-symbols-outlined text-[24px]">account_balance</span>
+                        <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm border border-white/20">
+                            <span className="material-symbols-outlined text-[22px]">account_balance</span>
                         </div>
                     </div>
                 </div>
@@ -85,10 +182,10 @@ export default function OrganizerSales({ eventos, summary, recentPurchases = [] 
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></div>
                     <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Bilhetes Vendidos</p>
-                        <p className="text-4xl font-black text-slate-900">{summary.totalBilhetesVendidos}</p>
+                        <p className="text-3xl font-black text-slate-900">{summary.totalBilhetesVendidos}</p>
                     </div>
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                        <span className="material-symbols-outlined text-[24px]">confirmation_number</span>
+                    <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                        <span className="material-symbols-outlined text-[22px]">confirmation_number</span>
                     </div>
                 </div>
 
@@ -96,14 +193,93 @@ export default function OrganizerSales({ eventos, summary, recentPurchases = [] 
                 <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden">
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500"></div>
                     <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Preço Médio do Bilhete</p>
-                        <p className="text-4xl font-black text-slate-900">{precoMedio.toFixed(2)}€</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Preço Médio</p>
+                        <p className="text-3xl font-black text-slate-900">{precoMedio.toFixed(2)}€</p>
                     </div>
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                        <span className="material-symbols-outlined text-[24px]">price_check</span>
+                    <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                        <span className="material-symbols-outlined text-[22px]">price_check</span>
+                    </div>
+                </div>
+
+                {/* Global Occupancy Card */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-500"></div>
+                    <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Ocupação Global</p>
+                        <p className="text-3xl font-black text-slate-900">{ocupacaoGlobal}%</p>
+                    </div>
+                    <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                        <span className="material-symbols-outlined text-[22px]">bar_chart</span>
                     </div>
                 </div>
             </div>
+
+            {/* Sales Chart Card */}
+            {salesByDate.length > 0 && (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                    <div>
+                        <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-violet-700">insights</span>
+                            Tendência de Vendas (Últimos 15 Dias)
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-1">Evolução diária da receita obtida nos seus eventos. Passe o cursor sobre os pontos para ver detalhes.</p>
+                    </div>
+
+                    <div className="w-full overflow-x-auto">
+                        <div className="min-w-[720px] relative">
+                            <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto overflow-visible">
+                                <defs>
+                                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.3" />
+                                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.0" />
+                                    </linearGradient>
+                                </defs>
+
+                                {/* Y-axis guidelines */}
+                                {[0, 0.5, 1].map((ratio, index) => {
+                                    const yVal = paddingTop + plotHeight * ratio;
+                                    const revLabel = (maxRevenue * (1 - ratio)).toFixed(0);
+                                    return (
+                                        <g key={index} className="opacity-40">
+                                            <line x1={paddingLeft} y1={yVal} x2={chartWidth - paddingRight} y2={yVal} stroke="#e2e8f0" strokeDasharray="4 4" />
+                                            <text x={paddingLeft - 10} y={yVal + 4} textAnchor="end" className="text-[10px] font-semibold fill-slate-400">{revLabel}€</text>
+                                        </g>
+                                    );
+                                })}
+
+                                {/* Gradient Fill */}
+                                {fillD && <path d={fillD} fill="url(#chartGradient)" />}
+
+                                {/* Line Stroke */}
+                                {pathD && <path d={pathD} fill="none" stroke="#6d28d9" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
+
+                                {/* X-axis Date Labels */}
+                                {points.filter((_, i) => i % 2 === 0 || i === points.length - 1).map((p, idx) => (
+                                    <text key={idx} x={p.x} y={chartHeight - 12} textAnchor="middle" className="text-[10px] font-bold fill-slate-400">
+                                        {p.date}
+                                    </text>
+                                ))}
+
+                                {/* Interactive Data Circles */}
+                                {points.map((p, idx) => (
+                                    <circle 
+                                        key={idx} 
+                                        cx={p.x} 
+                                        cy={p.y} 
+                                        r="4" 
+                                        fill="#6d28d9" 
+                                        stroke="#ffffff" 
+                                        strokeWidth="2"
+                                        className="cursor-pointer hover:r-[6px] hover:fill-violet-900 transition-all"
+                                    >
+                                        <title>{`${p.date}\nReceita: ${p.revenue.toFixed(2)}€\nBilhetes: ${p.count}`}</title>
+                                    </circle>
+                                ))}
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Sales List with Lot Breakdowns */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -214,14 +390,88 @@ export default function OrganizerSales({ eventos, summary, recentPurchases = [] 
                 </div>
             </div>
 
+            {/* Promoters Leaderboard */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-violet-700">stars</span>
+                        Leaderboard de Promotores
+                    </h3>
+                    <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">{promoterLeaderboard.length} promotores ativos</span>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-bold">
+                                <th className="p-4 pl-6">Promotor / Slug</th>
+                                <th className="p-4">Evento Vinculado</th>
+                                <th className="p-4 text-center">Bilhetes Vendidos</th>
+                                <th className="p-4 text-right">Volume de Vendas</th>
+                                <th className="p-4 text-right pr-6">Comissões Acumuladas</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-sm">
+                            {promoterLeaderboard.length > 0 ? promoterLeaderboard.map((promoter, index) => (
+                                <tr key={promoter.id} className="hover:bg-slate-50/40 transition-colors">
+                                    <td className="p-4 pl-6 flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-violet-100 border border-violet-200 flex items-center justify-center font-extrabold text-violet-700 text-xs">
+                                            #{index + 1}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-slate-800">{promoter.name}</p>
+                                            <p className="text-xs text-slate-400 font-mono flex items-center gap-0.5">
+                                                <span className="material-symbols-outlined text-[12px]">link</span>
+                                                {promoter.slug}
+                                            </p>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <p className="font-semibold text-slate-700">{promoter.eventoTitulo}</p>
+                                    </td>
+                                    <td className="p-4 text-center font-bold text-slate-800">
+                                        {promoter.salesCount}
+                                    </td>
+                                    <td className="p-4 text-right font-extrabold text-slate-900">
+                                        {promoter.revenue.toFixed(2)}€
+                                    </td>
+                                    <td className="p-4 text-right font-extrabold text-violet-700 pr-6">
+                                        {promoter.commissionEarned.toFixed(2)}€
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan={5} className="p-10 text-center text-slate-500 font-medium italic">
+                                        Sem vendas registadas por promotores até ao momento.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             {/* Recent Purchases Log */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
                         <span className="material-symbols-outlined text-blue-600">receipt_long</span>
                         Histórico de Transações Recentes
                     </h3>
-                    <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">Últimas 10 compras</span>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <div className="relative">
+                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+                            <input 
+                                type="text"
+                                placeholder="Procurar transações..."
+                                value={filterText}
+                                onChange={(e) => setFilterText(e.target.value)}
+                                className="pl-9 pr-4 py-2 border border-slate-200 bg-white rounded-lg text-xs font-medium focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none w-full sm:w-60"
+                            />
+                        </div>
+                        <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full flex items-center justify-center shrink-0">
+                            {filteredPurchases.length} encontradas
+                        </span>
+                    </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -236,7 +486,7 @@ export default function OrganizerSales({ eventos, summary, recentPurchases = [] 
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm">
-                            {recentPurchases.length > 0 ? recentPurchases.map(purchase => (
+                            {filteredPurchases.length > 0 ? filteredPurchases.map(purchase => (
                                 <tr key={purchase.id} className="hover:bg-slate-50/40 transition-colors">
                                     <td className="p-4 pl-6">
                                         <p className="font-bold text-slate-800">{purchase.compradorNome}</p>
@@ -272,7 +522,7 @@ export default function OrganizerSales({ eventos, summary, recentPurchases = [] 
                             )) : (
                                 <tr>
                                     <td colSpan={6} className="p-10 text-center text-slate-500 font-medium italic">
-                                        Nenhuma compra recente registada.
+                                        Nenhuma compra recente encontrada correspondente aos filtros.
                                     </td>
                                 </tr>
                             )}

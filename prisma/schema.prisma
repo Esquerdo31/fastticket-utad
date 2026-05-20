@@ -75,6 +75,10 @@ model Evento {
   ticketCorFundo String        @default("#ffffff")
   ticketCorTexto String        @default("#000000")
   ticketMensagem String        @default("Apresente este bilhete impresso ou no telemóvel na entrada do recinto.")
+  ticketBackgroundUrl String?
+  ticketTemplate String        @default("classic")
+  ticketLogoUrl  String?
+  ticketGlow     Boolean       @default(false)
   
   // Chaves Estrangeiras & Relacionamentos
   organizadorId  Int

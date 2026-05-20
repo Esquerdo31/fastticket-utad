@@ -70,6 +70,11 @@ export async function getDashboardData(userId: number) {
                     ticketCorFundo: evDb.ticketCorFundo || "#ffffff",
                     ticketCorTexto: evDb.ticketCorTexto || "#000000",
                     ticketMensagem: evDb.ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto.",
+                    ticketBackgroundUrl: evDb.ticketBackgroundUrl || null,
+                    ticketTemplate: evDb.ticketTemplate || "classic",
+                    ticketLogoUrl: evDb.ticketLogoUrl || null,
+                    ticketGlow: evDb.ticketGlow ?? false,
+                    participanteNome: user?.nome || "Participante",
                 };
             }));
 

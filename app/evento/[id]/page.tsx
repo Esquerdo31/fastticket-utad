@@ -235,7 +235,28 @@ export default function EventDetailsDynamic() {
                                                                     onChange={() => setSelectedTicket(ticket.id)}
                                                                 />
                                                                 <div>
-                                                                    <p className="font-bold text-slate-800 leading-tight">{ticket.name}</p>
+                                                                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                        <p className="font-bold text-slate-800 leading-tight">{ticket.name}</p>
+                                                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                                                            ticket.tipo === 'GERAL' 
+                                                                                ? 'bg-violet-100 text-violet-800 border border-violet-200' 
+                                                                                : 'bg-emerald-100 text-[#006837] border border-emerald-200'
+                                                                        }`}>
+                                                                            {ticket.tipo === 'GERAL' ? 'Passe Geral' : 'Diário'}
+                                                                        </span>
+                                                                    </div>
+                                                                    {ticket.tipo === 'DIARIO' && ticket.diasValidos && (
+                                                                        <p className="text-[10px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                                                                            <span className="material-symbols-outlined text-[12px]">calendar_today</span>
+                                                                            Válido para: {new Date(ticket.diasValidos + 'T00:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                                                        </p>
+                                                                    )}
+                                                                    {ticket.tipo === 'GERAL' && (
+                                                                        <p className="text-[10px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                                                                            <span className="material-symbols-outlined text-[12px]">all_inclusive</span>
+                                                                            Acesso total a todos os dias do evento
+                                                                        </p>
+                                                                    )}
                                                                     {ticket.description && (
                                                                         <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">{ticket.description}</p>
                                                                     )}

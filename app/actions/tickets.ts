@@ -19,7 +19,11 @@ export async function getTicketsData(userId: number) {
                         evento: true
                     }
                 },
-                pedido: true,
+                pedido: {
+                    include: {
+                        utilizador: true
+                    }
+                },
                 registosAcesso: true,
             },
             orderBy: {
@@ -53,6 +57,11 @@ export async function getTicketsData(userId: number) {
                 ticketCorFundo: ev.ticketCorFundo || "#ffffff",
                 ticketCorTexto: ev.ticketCorTexto || "#000000",
                 ticketMensagem: ev.ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto.",
+                ticketBackgroundUrl: ev.ticketBackgroundUrl || null,
+                ticketTemplate: ev.ticketTemplate || "classic",
+                ticketLogoUrl: ev.ticketLogoUrl || null,
+                ticketGlow: ev.ticketGlow ?? false,
+                participanteNome: (b.pedido as any).utilizador?.nome || "Participante",
             };
         }));
 

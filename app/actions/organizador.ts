@@ -8,7 +8,7 @@ export async function getOrganizerDashboardData(userId: number) {
     try {
         const userObj = await prisma.utilizador.findUnique({
             where: { id: userId },
-            select: { pedidoPromotores: true }
+            select: { pedidoPromotores: true } as any
         });
 
         const eventos = await prisma.evento.findMany({
@@ -27,6 +27,7 @@ export async function getOrganizerDashboardData(userId: number) {
 
         let totalBilhetesVendidos = 0;
         let receitaTotal = 0;
+        let totalCapacity = 0;
         
         const eventosStats = eventos.map(evento => {
             let eventoBilhetesVendidos = 0;
@@ -36,11 +37,12 @@ export async function getOrganizerDashboardData(userId: number) {
                 const vendidos = lote.bilhetes.length;
                 eventoBilhetesVendidos += vendidos;
                 eventoReceita += vendidos * lote.preco;
+                totalCapacity += lote.lotacaoTotal;
                 
                 return {
                     id: lote.id,
                     nome: lote.nome,
-                    tipo: lote.tipo,
+                    tipo: (lote as any).tipo,
                     preco: lote.preco,
                     lotacaoTotal: lote.lotacaoTotal,
                     quantidadeDisponivel: lote.quantidadeDisponivel,
@@ -64,15 +66,123 @@ export async function getOrganizerDashboardData(userId: number) {
             };
         });
 
+        // 1. Timezone-robust upcoming events filter
         const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+        const formatter = new Intl.DateTimeFormat('pt-PT', {
+            timeZone: 'Europe/Lisbon',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        const parts = formatter.formatToParts(todayStart);
+        const year = Number(parts.find(p => p.type === 'year')?.value);
+        const month = Number(parts.find(p => p.type === 'month')?.value) - 1;
+        const day = Number(parts.find(p => p.type === 'day')?.value);
+        const todayMidnight = new Date(Date.UTC(year, month, day, 0, 0, 0));
 
         const nextEvents = eventosStats.filter(e => {
             const ev = eventos.find(ex => ex.id === e.id);
             if (!ev) return false;
-            const fim = ev.dataFim ? ev.dataFim : ev.dataInicio;
-            return fim >= todayStart;
+            const fim = ev.dataFim ? new Date(ev.dataFim) : new Date(ev.dataInicio);
+            return fim.getTime() >= todayMidnight.getTime();
         }).slice(0, 3);
+
+        // 2. Fetch last 15 days of daily sales
+        const fifteenDaysAgo = new Date(todayMidnight);
+        fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 14);
+
+        const ordersLast15Days = await prisma.pedido.findMany({
+            where: {
+                estado: 'PAGO',
+                dataPedido: { gte: fifteenDaysAgo },
+                bilhetes: {
+                    some: {
+                        lote: {
+                            evento: {
+                                organizadorId: userId
+                            }
+                        }
+                    }
+                }
+            },
+            select: {
+                dataPedido: true,
+                valorTotal: true,
+                bilhetes: {
+                    select: { id: true }
+                }
+            }
+        });
+
+        // Map sales trend for the last 15 days
+        const salesMap: Record<string, { count: number, revenue: number }> = {};
+        for (let i = 14; i >= 0; i--) {
+            const d = new Date(todayMidnight);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
+            salesMap[dateStr] = { count: 0, revenue: 0 };
+        }
+
+        ordersLast15Days.forEach(order => {
+            const orderDateStr = order.dataPedido.toLocaleDateString('pt-PT', { 
+                timeZone: 'Europe/Lisbon', 
+                day: '2-digit', 
+                month: 'short' 
+            });
+            if (salesMap[orderDateStr] !== undefined) {
+                salesMap[orderDateStr].count += order.bilhetes.length;
+                salesMap[orderDateStr].revenue += order.valorTotal;
+            }
+        });
+
+        const salesByDate = Object.entries(salesMap).map(([date, data]) => ({
+            date,
+            count: data.count,
+            revenue: data.revenue
+        }));
+
+        // 3. Promoters statistics leaderboard
+        const promotores = await prisma.promotor.findMany({
+            where: {
+                evento: { organizadorId: userId }
+            },
+            include: {
+                utilizador: { select: { nome: true } },
+                evento: { select: { titulo: true } },
+                pedidosGerados: {
+                    where: { estado: 'PAGO' },
+                    include: { bilhetes: true }
+                }
+            }
+        });
+
+        const promoterLeaderboard = promotores.map(p => {
+            let totalSales = 0;
+            let totalRevenue = 0;
+            let commissionEarned = 0;
+
+            p.pedidosGerados.forEach(order => {
+                const numTickets = order.bilhetes.length;
+                totalSales += numTickets;
+                totalRevenue += order.valorTotal;
+
+                if (p.comissaoValor !== null && p.comissaoValor !== undefined) {
+                    commissionEarned += numTickets * p.comissaoValor;
+                } else if (p.comissaoPercent !== null && p.comissaoPercent !== undefined) {
+                    commissionEarned += order.valorTotal * (p.comissaoPercent / 100);
+                }
+            });
+
+            return {
+                id: p.id,
+                slug: p.linkSlug,
+                name: p.utilizador.nome,
+                eventoTitulo: p.evento.titulo,
+                salesCount: totalSales,
+                revenue: totalRevenue,
+                commissionEarned: commissionEarned
+            };
+        }).sort((a, b) => b.salesCount - a.salesCount);
 
         // Obter os 10 últimos pedidos pagos referentes a eventos deste organizador
         const recentOrders = await prisma.pedido.findMany({
@@ -151,15 +261,18 @@ export async function getOrganizerDashboardData(userId: number) {
 
         return {
             success: true,
-            pedidoPromotores: userObj?.pedidoPromotores || 'NADA',
+            pedidoPromotores: (userObj as any)?.pedidoPromotores || 'NADA',
             summary: {
                 totalEventos: eventos.length,
                 totalBilhetesVendidos,
-                receitaTotal
+                receitaTotal,
+                totalCapacity
             },
             eventos: eventosStats,
             nextEvents,
-            recentPurchases
+            recentPurchases,
+            salesByDate,
+            promoterLeaderboard
         };
     } catch (error: any) {
         return { success: false, message: error.message };
@@ -330,7 +443,7 @@ export async function solicitarAcessoPromotores() {
 
         await prisma.utilizador.update({
             where: { id: session.userId },
-            data: { pedidoPromotores: 'PENDENTE' }
+            data: { pedidoPromotores: 'PENDENTE' } as any
         });
 
         return { success: true, message: 'Pedido enviado com sucesso para aprovação do administrador!' };

@@ -21,10 +21,13 @@ interface OrganizerShellProps {
         totalEventos: number;
         totalBilhetesVendidos: number;
         receitaTotal: number;
+        totalCapacity?: number;
     };
     eventos: any[];
     nextEvents: any[];
     recentPurchases?: any[];
+    salesByDate?: any[];
+    promoterLeaderboard?: any[];
     user: {
         id: number;
         nome: string;
@@ -35,7 +38,18 @@ interface OrganizerShellProps {
     parcerias: any[];
 }
 
-export default function OrganizerShell({ userName, summary, eventos, nextEvents, recentPurchases = [], user, pedidoPromotores, parcerias }: OrganizerShellProps) {
+export default function OrganizerShell({ 
+    userName, 
+    summary, 
+    eventos, 
+    nextEvents, 
+    recentPurchases = [], 
+    salesByDate = [], 
+    promoterLeaderboard = [], 
+    user, 
+    pedidoPromotores, 
+    parcerias 
+}: OrganizerShellProps) {
     const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
     const [editEventId, setEditEventId] = useState<number | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -134,7 +148,15 @@ export default function OrganizerShell({ userName, summary, eventos, nextEvents,
                         {activeTab === 'events' && <OrganizerEvents eventos={eventos} onCreateEvent={() => handleTabChange('create-event')} onEditEvent={handleEditEvent} />}
                         {activeTab === 'create-event' && <CreateEventWizard userName={userName} userId={user.id} onEventCreated={() => { handleTabChange('events'); router.refresh(); }} />}
                         {activeTab === 'edit-event' && editEventId && <CreateEventWizard userName={userName} userId={user.id} editEventId={editEventId} onEventCreated={() => { setEditEventId(null); handleTabChange('events'); router.refresh(); }} />}
-                        {activeTab === 'sales' && <OrganizerSales eventos={eventos} summary={summary} recentPurchases={recentPurchases} />}
+                        {activeTab === 'sales' && (
+                            <OrganizerSales 
+                                eventos={eventos} 
+                                summary={summary} 
+                                recentPurchases={recentPurchases} 
+                                salesByDate={salesByDate}
+                                promoterLeaderboard={promoterLeaderboard}
+                            />
+                        )}
                         {activeTab === 'promoters' && <OrganizerPromoters eventos={eventos} />}
                         {activeTab === 'promotor' && <PromotorContent parcerias={parcerias} onRefresh={() => router.refresh()} />}
                         {activeTab === 'staff' && <OrganizerStaff eventos={eventos} />}

@@ -21,10 +21,12 @@ export default async function OrganizerDashboardPage() {
         getParceriasPromotor()
     ]);
 
-    const summary = dashboardResult.summary || { totalEventos: 0, totalBilhetesVendidos: 0, receitaTotal: 0 };
+    const summary = dashboardResult.summary || { totalEventos: 0, totalBilhetesVendidos: 0, receitaTotal: 0, totalCapacity: 0 };
     const eventos = dashboardResult.eventos || [];
     const nextEvents = dashboardResult.nextEvents || [];
     const recentPurchases = (dashboardResult as any).recentPurchases || [];
+    const salesByDate = (dashboardResult as any).salesByDate || [];
+    const promoterLeaderboard = (dashboardResult as any).promoterLeaderboard || [];
     const userName = session.nome || "Organizador";
     const pedidoPromotores = dashboardResult.pedidoPromotores || 'NADA';
     const parcerias = parceriasResult.success ? (parceriasResult.data || []) : [];
@@ -43,6 +45,8 @@ export default async function OrganizerDashboardPage() {
             eventos={eventos}
             nextEvents={nextEvents}
             recentPurchases={recentPurchases}
+            salesByDate={salesByDate}
+            promoterLeaderboard={promoterLeaderboard}
             user={user}
             pedidoPromotores={pedidoPromotores}
             parcerias={parcerias}
