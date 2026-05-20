@@ -18,6 +18,16 @@ export default function EventDetailsDynamic() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (typeof window !== 'undefined' && params.id) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if (ref) {
+                localStorage.setItem(`promotor_ref_${Number(params.id)}`, ref);
+            }
+        }
+    }, [params.id]);
+
+    useEffect(() => {
         getActiveSession().then(setUserSession);
         if (params.id) {
             getEventoById(Number(params.id))

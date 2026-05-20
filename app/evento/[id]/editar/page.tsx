@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getEventoById, updateEvento, deleteEvento } from '@/app/actions/evento';
 
-type Tab = 'detalhes' | 'bilheteira' | 'media' | 'config';
+type Tab = 'detalhes' | 'bilheteira' | 'media' | 'personalizacao' | 'config';
 interface Lote { nome: string; descricao: string; preco: number; lotacaoTotal: number; }
 
 export default function EditarEventoPage() {
@@ -33,6 +33,9 @@ export default function EditarEventoPage() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [mostrarBanner, setMostrarBanner] = useState(true);
     const [mostrarLogo, setMostrarLogo] = useState(true);
+    const [ticketCorFundo, setTicketCorFundo] = useState('#ffffff');
+    const [ticketCorTexto, setTicketCorTexto] = useState('#000000');
+    const [ticketMensagem, setTicketMensagem] = useState('Apresente este bilhete impresso ou no telemóvel na entrada do recinto.');
 
     useEffect(() => {
         if (!eventoId) return;
@@ -45,6 +48,9 @@ export default function EditarEventoPage() {
                 setEstado(d.estado || 'RASCUNHO'); setBannerUrl(d.bannerUrl || '');
                 setThumbnailUrl(d.thumbnailUrl || ''); setOrganizadorId(d.organizadorId);
                 setMostrarBanner(d.mostrarBanner ?? true); setMostrarLogo(d.mostrarLogo ?? true);
+                setTicketCorFundo(d.ticketCorFundo || '#ffffff');
+                setTicketCorTexto(d.ticketCorTexto || '#000000');
+                setTicketMensagem(d.ticketMensagem || 'Apresente este bilhete impresso ou no telemóvel na entrada do recinto.');
                 setLotes(d.lotes.map(l => ({ nome: l.nome, descricao: l.descricao, preco: l.preco, lotacaoTotal: l.lotacaoTotal })));
             }
             setLoading(false);
@@ -55,7 +61,25 @@ export default function EditarEventoPage() {
 
     const handleSave = () => {
         startTransition(async () => {
-            const res = await updateEvento(eventoId, { titulo, descricao, dataInicio, dataFim, localizacao, organizadorId, lotes, bannerUrl, thumbnailUrl, formato, categoria, estado, mostrarBanner, mostrarLogo });
+            const res = await updateEvento(eventoId, { 
+                titulo, 
+                descricao, 
+                dataInicio, 
+                dataFim, 
+                localizacao, 
+                organizadorId, 
+                lotes, 
+                bannerUrl, 
+                thumbnailUrl, 
+                formato, 
+                categoria, 
+                estado, 
+                mostrarBanner, 
+                mostrarLogo,
+                ticketCorFundo,
+                ticketCorTexto,
+                ticketMensagem
+            });
             if (res.success) flash('Evento guardado com sucesso!', 'ok');
             else flash(res.message || 'Erro ao guardar.', 'err');
         });
@@ -88,6 +112,7 @@ export default function EditarEventoPage() {
         { id: 'detalhes', icon: 'description', label: 'Detalhes' },
         { id: 'bilheteira', icon: 'confirmation_number', label: 'Bilheteira' },
         { id: 'media', icon: 'image', label: 'Media' },
+        { id: 'personalizacao', icon: 'palette', label: 'Personalizar Bilhete' },
         { id: 'config', icon: 'settings', label: 'Configurações' },
     ];
 
@@ -258,6 +283,105 @@ export default function EditarEventoPage() {
                             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center justify-between">
                                 <div><p className="font-bold text-slate-800 text-sm">Mostrar Logo/Thumbnail na Página do Evento</p><p className="text-xs text-slate-500">Se ativado, aparece junto ao título como identidade visual.</p></div>
                                 <button type="button" onClick={() => setMostrarLogo(!mostrarLogo)} className={`relative w-12 h-7 rounded-full transition-colors ${mostrarLogo ? 'bg-violet-700' : 'bg-slate-300'}`}><span className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${mostrarLogo ? 'translate-x-5' : ''}`} /></button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TAB: PERSONALIZAR BILHETE */}
+                    {tab === 'personalizacao' && (
+                        <div className="space-y-8">
+                            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+                                <h2 className="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-violet-700">palette</span>
+                                    Design do Bilhete PDF
+                                </h2>
+                                <p className="text-sm text-slate-500 mb-6">
+                                    Personalize o aspeto visual e as instruções do bilhete digital que os participantes irão descarregar e apresentar no evento.
+                                </p>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className={labelCls}>Cor de Fundo do Bilhete</label>
+                                        <div className="flex gap-3 items-center">
+                                            <input 
+                                                type="color" 
+                                                value={ticketCorFundo} 
+                                                onChange={e => setTicketCorFundo(e.target.value)} 
+                                                className="w-12 h-12 rounded-lg border border-slate-200 cursor-pointer"
+                                            />
+                                            <input 
+                                                type="text" 
+                                                value={ticketCorFundo} 
+                                                onChange={e => setTicketCorFundo(e.target.value)} 
+                                                className={inputCls} 
+                                                placeholder="#ffffff"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Cor do Texto</label>
+                                        <div className="flex gap-3 items-center">
+                                            <input 
+                                                type="color" 
+                                                value={ticketCorTexto} 
+                                                onChange={e => setTicketCorTexto(e.target.value)} 
+                                                className="w-12 h-12 rounded-lg border border-slate-200 cursor-pointer"
+                                            />
+                                            <input 
+                                                type="text" 
+                                                value={ticketCorTexto} 
+                                                onChange={e => setTicketCorTexto(e.target.value)} 
+                                                className={inputCls} 
+                                                placeholder="#000000"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6">
+                                    <label className={labelCls}>Mensagem de Instruções / Rodapé do Bilhete</label>
+                                    <textarea 
+                                        rows={4} 
+                                        value={ticketMensagem} 
+                                        onChange={e => setTicketMensagem(e.target.value)} 
+                                        className={inputCls} 
+                                        placeholder="Instruções para o check-in ou notas adicionais..."
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Preview do Bilhete */}
+                            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">Pré-visualização do Bilhete</h3>
+                                <div className="flex justify-center p-6 bg-slate-100 rounded-xl border border-slate-200">
+                                    <div 
+                                        style={{ backgroundColor: ticketCorFundo, color: ticketCorTexto }}
+                                        className="w-full max-w-sm rounded-2xl shadow-lg border border-slate-200/60 overflow-hidden flex flex-col p-6 font-sans transition-all duration-300"
+                                    >
+                                        <div className="border-b border-dashed border-slate-300/80 pb-4 mb-4">
+                                            <p className="text-[10px] uppercase font-bold tracking-widest opacity-60">Bilhete de Ingresso</p>
+                                            <h4 className="text-lg font-bold truncate mt-1">{titulo || "Título do Evento"}</h4>
+                                            <p className="text-xs opacity-80 mt-1 truncate">{localizacao || "Localização do Evento"}</p>
+                                        </div>
+                                        
+                                        <div className="flex justify-center my-4">
+                                            <div className="w-40 h-40 bg-white rounded-xl border border-slate-200 p-2 flex items-center justify-center">
+                                                <span className="material-symbols-outlined text-6xl text-slate-400">qr_code_2</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-center space-y-1 mt-2">
+                                            <p className="text-xs font-bold uppercase tracking-wider font-semibold">LOTE GERAL</p>
+                                            <p className="text-[9px] opacity-60 font-mono">TOKEN: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</p>
+                                        </div>
+
+                                        <div className="border-t border-dashed border-slate-300/80 pt-4 mt-4 text-center">
+                                            <p className="text-[10px] leading-relaxed opacity-80">
+                                                {ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto."}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}

@@ -14,6 +14,8 @@ const loteSchema = z.object({
     descricao: z.string().optional(),
     preco: z.number().min(0, 'O preço não pode ser negativo.'),
     lotacaoTotal: z.number().int().positive('A lotação total deve ser um número positivo.'),
+    tipo: z.string().optional(),
+    diasValidos: z.string().optional(),
 });
 
 const criarEventoSchema = z.object({
@@ -31,6 +33,9 @@ const criarEventoSchema = z.object({
     estado: z.string().optional(),
     mostrarBanner: z.boolean().optional(),
     mostrarLogo: z.boolean().optional(),
+    ticketCorFundo: z.string().optional(),
+    ticketCorTexto: z.string().optional(),
+    ticketMensagem: z.string().optional(),
 });
 
 // Tipo inferido do schema para reutilização
@@ -54,7 +59,7 @@ export async function createEvento(data: CreateEventoInput) {
 
         const lotacaoMaxima = validated.lotes.reduce((sum, l) => sum + l.lotacaoTotal, 0);
 
-        const evento = await prisma.evento.create({
+        const evento = await (prisma.evento.create as any)({
             data: {
                 titulo: validated.titulo,
                 descricao: validated.descricao,
@@ -69,6 +74,9 @@ export async function createEvento(data: CreateEventoInput) {
                 thumbnailUrl: validated.thumbnailUrl || null,
                 mostrarBanner: validated.mostrarBanner ?? true,
                 mostrarLogo: validated.mostrarLogo ?? true,
+                ticketCorFundo: validated.ticketCorFundo || "#ffffff",
+                ticketCorTexto: validated.ticketCorTexto || "#000000",
+                ticketMensagem: validated.ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto.",
                 organizadorId: validated.organizadorId,
                 lotes: {
                     create: validated.lotes.map(lote => ({
@@ -77,6 +85,8 @@ export async function createEvento(data: CreateEventoInput) {
                         preco: lote.preco,
                         lotacaoTotal: lote.lotacaoTotal,
                         quantidadeDisponivel: lote.lotacaoTotal,
+                        tipo: lote.tipo || "DIARIO",
+                        diasValidos: lote.diasValidos || "",
                     })),
                 },
             },
@@ -104,7 +114,7 @@ export async function getEventoById(eventoId: number) {
         const evento = await prisma.evento.findUnique({
             where: { id: eventoId },
             include: { lotes: true },
-        });
+        }) as any;
         if (!evento) return { success: false, message: "Evento não encontrado." };
 
         return {
@@ -125,12 +135,17 @@ export async function getEventoById(eventoId: number) {
                 thumbnailUrl: evento.thumbnailUrl || '',
                 mostrarBanner: evento.mostrarBanner,
                 mostrarLogo: evento.mostrarLogo,
-                lotes: evento.lotes.map(l => ({
+                ticketCorFundo: evento.ticketCorFundo,
+                ticketCorTexto: evento.ticketCorTexto,
+                ticketMensagem: evento.ticketMensagem,
+                lotes: evento.lotes.map((l: any) => ({
                     id: l.id,
                     nome: l.nome,
                     descricao: l.descricao || '',
                     preco: l.preco,
                     lotacaoTotal: l.lotacaoTotal,
+                    tipo: l.tipo,
+                    diasValidos: l.diasValidos,
                 })),
             },
         };
@@ -166,7 +181,7 @@ export async function updateEvento(eventoId: number, data: CreateEventoInput) {
         // Delete existing lots and recreate them
         await prisma.loteBilhete.deleteMany({ where: { eventoId } });
 
-        await prisma.evento.update({
+        await (prisma.evento.update as any)({
             where: { id: eventoId },
             data: {
                 titulo: validated.titulo,
@@ -182,6 +197,9 @@ export async function updateEvento(eventoId: number, data: CreateEventoInput) {
                 thumbnailUrl: validated.thumbnailUrl || null,
                 mostrarBanner: validated.mostrarBanner ?? true,
                 mostrarLogo: validated.mostrarLogo ?? true,
+                ticketCorFundo: validated.ticketCorFundo || "#ffffff",
+                ticketCorTexto: validated.ticketCorTexto || "#000000",
+                ticketMensagem: validated.ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto.",
                 lotes: {
                     create: validated.lotes.map(lote => ({
                         nome: lote.nome,
@@ -189,6 +207,8 @@ export async function updateEvento(eventoId: number, data: CreateEventoInput) {
                         preco: lote.preco,
                         lotacaoTotal: lote.lotacaoTotal,
                         quantidadeDisponivel: lote.lotacaoTotal,
+                        tipo: lote.tipo || "DIARIO",
+                        diasValidos: lote.diasValidos || "",
                     })),
                 },
             },

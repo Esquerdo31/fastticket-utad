@@ -45,6 +45,7 @@ model Utilizador {
   email          String          @unique
   passwordHash   String
   role           Role            @default(PARTICIPANTE)
+  pedidoPromotores String          @default("NADA") // NADA, PENDENTE, APROVADO, REJEITADO
   
   // Relacionamentos
   eventos        Evento[]        // (Organiza) 1 Utilizador -> * Eventos
@@ -70,6 +71,11 @@ model Evento {
   mostrarBanner  Boolean       @default(true)
   mostrarLogo    Boolean       @default(true)
   
+  // Personalização de Bilhetes
+  ticketCorFundo String        @default("#ffffff")
+  ticketCorTexto String        @default("#000000")
+  ticketMensagem String        @default("Apresente este bilhete impresso ou no telemóvel na entrada do recinto.")
+  
   // Chaves Estrangeiras & Relacionamentos
   organizadorId  Int
   organizador    Utilizador    @relation(fields: [organizadorId], references: [id])
@@ -85,6 +91,10 @@ model LoteBilhete {
   preco                Float
   lotacaoTotal         Int
   quantidadeDisponivel Int
+  
+  // Novos campos para suporte multi-dia
+  tipo                 String    @default("DIARIO") // "DIARIO" ou "GERAL"
+  diasValidos          String    @default("")       // Datas YYYY-MM-DD separadas por virgula
   
   // Chaves Estrangeiras & Relacionamentos
   eventoId             Int

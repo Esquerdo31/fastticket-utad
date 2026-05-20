@@ -29,12 +29,14 @@ export async function getTicketsData(userId: number) {
             }
         });
 
-        const tickets = bilhetes.map(b => {
-            const ev = b.lote.evento;
+        const tickets = await Promise.all(bilhetes.map(async b => {
+            const ev = b.lote.evento as any;
             const dateObj = new Date(ev.dataInicio);
+            const qrCodeBase64 = await gerarQRCodeBase64(b.qrCodeToken);
             return {
                 id: b.id,
                 qrCodeToken: b.qrCodeToken,
+                qrCodeBase64,
                 estado: b.estado,
                 loteNome: b.lote.nome,
                 preco: b.lote.preco,
@@ -48,8 +50,11 @@ export async function getTicketsData(userId: number) {
                 pedidoEstado: b.pedido.estado,
                 dataCompra: b.pedido.dataPedido.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }),
                 usado: b.registosAcesso.length > 0,
+                ticketCorFundo: ev.ticketCorFundo || "#ffffff",
+                ticketCorTexto: ev.ticketCorTexto || "#000000",
+                ticketMensagem: ev.ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto.",
             };
-        });
+        }));
 
         return { success: true, tickets };
     } catch (error: any) {
@@ -322,21 +327,93 @@ export async function validarBilhete(data: {
             return { success: false, message: 'Este bilhete ainda não foi pago.' };
         }
 
-        // 3.3 Bilhete já utilizado
-        if (bilhete.estado === 'USADO') {
-            return {
-                success: false,
-                message: '⚠️ Alerta: Este bilhete já foi utilizado!',
-                alreadyUsed: true,
-                usedAt: bilhete.registosAcesso[0]?.dataHoraEntrada || null,
-            };
+        // --- SUPORTE MULTI-DIA (PASSES GERAIS / BILHETES DIÁRIOS) ---
+
+        // Obter data de hoje no fuso horário Europe/Lisbon como YYYY-MM-DD
+        const formatter = new Intl.DateTimeFormat('pt-PT', {
+            timeZone: 'Europe/Lisbon',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        const parts = formatter.formatToParts(new Date());
+        const year = parts.find(p => p.type === 'year')?.value;
+        const month = parts.find(p => p.type === 'month')?.value;
+        const day = parts.find(p => p.type === 'day')?.value;
+        const todayStr = `${year}-${month}-${day}`;
+
+        const loteDb = bilhete.lote as any;
+        const diasValidosRaw = loteDb.diasValidos || "";
+        const tipoLote = loteDb.tipo || "DIARIO";
+
+        // 1. Validar se o dia de hoje está dentro dos dias permitidos
+        if (diasValidosRaw.trim() !== "") {
+            const diasList = diasValidosRaw.split(',').map((d: string) => d.trim());
+            if (!diasList.includes(todayStr)) {
+                return {
+                    success: false,
+                    message: `⚠️ Alerta: Este bilhete não é válido para o dia de hoje (${todayStr}).`
+                };
+            }
         }
 
-        // 4. Check-in — marcar como usado e registar acesso
+        // 2. Controlar entradas com base no tipo de lote
+        if (tipoLote === 'GERAL') {
+            // Passe Geral: pode entrar em dias diferentes, mas apenas uma entrada por dia
+            const jaEntrouHoje = bilhete.registosAcesso.some(r => {
+                const partsAcc = formatter.formatToParts(r.dataHoraEntrada);
+                const y = partsAcc.find(p => p.type === 'year')?.value;
+                const m = partsAcc.find(p => p.type === 'month')?.value;
+                const d = partsAcc.find(p => p.type === 'day')?.value;
+                const dateStr = `${y}-${m}-${d}`;
+                return dateStr === todayStr;
+            });
+
+            if (jaEntrouHoje) {
+                const regHoje = bilhete.registosAcesso.find(r => {
+                    const partsAcc = formatter.formatToParts(r.dataHoraEntrada);
+                    const y = partsAcc.find(p => p.type === 'year')?.value;
+                    const m = partsAcc.find(p => p.type === 'month')?.value;
+                    const d = partsAcc.find(p => p.type === 'day')?.value;
+                    const dateStr = `${y}-${m}-${d}`;
+                    return dateStr === todayStr;
+                });
+
+                const horaStr = regHoje ? regHoje.dataHoraEntrada.toLocaleTimeString('pt-PT', {
+                    timeZone: 'Europe/Lisbon',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : '';
+
+                return {
+                    success: false,
+                    message: `⚠️ Alerta: Este passe geral já efetuou check-in hoje às ${horaStr}!`,
+                    alreadyUsed: true,
+                    usedAt: regHoje?.dataHoraEntrada || null,
+                };
+            }
+        } else {
+            // Bilhete Diário: apenas uma utilização no total do evento
+            if (bilhete.estado === 'USADO' || bilhete.registosAcesso.length > 0) {
+                return {
+                    success: false,
+                    message: '⚠️ Alerta: Este bilhete já foi utilizado!',
+                    alreadyUsed: true,
+                    usedAt: bilhete.registosAcesso[0]?.dataHoraEntrada || null,
+                };
+            }
+        }
+
+        // 3. Determinar se é a última utilização possível para marcar como USADO
+        const diasValidosList = diasValidosRaw.trim() !== "" ? diasValidosRaw.split(',').map((d: string) => d.trim()) : [];
+        const totalRegistosFuturos = bilhete.registosAcesso.length + 1;
+        const isLastCheckin = tipoLote === 'DIARIO' || totalRegistosFuturos >= diasValidosList.length;
+
+        // 4. Executar check-in na base de dados
         await prisma.$transaction([
             prisma.bilhete.update({
                 where: { id: bilhete.id },
-                data: { estado: 'USADO' },
+                data: { estado: isLastCheckin ? 'USADO' : 'PAGO' },
             }),
             prisma.registoAcesso.create({
                 data: {

@@ -1,7 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { solicitarAcessoPromotores } from '@/app/actions/organizador';
 
 interface EventoStat {
     id: number;
@@ -21,11 +23,55 @@ interface OrganizerDashboardProps {
         receitaTotal: number;
     };
     nextEvents: EventoStat[];
+    pedidoPromotores: string;
+    parcerias: any[];
+    onTabChange: (tab: any) => void;
 }
 
-export default function OrganizerDashboard({ userName, summary, nextEvents }: OrganizerDashboardProps) {
+export default function OrganizerDashboard({ userName, summary, nextEvents, pedidoPromotores, parcerias = [], onTabChange }: OrganizerDashboardProps) {
+    const [isPending, startTransition] = useTransition();
+    const [msg, setMsg] = useState("");
+    const router = useRouter();
+
+    const handleSolicitarAcesso = () => {
+        setMsg("");
+        startTransition(async () => {
+            const res = await solicitarAcessoPromotores();
+            if (res.success) {
+                setMsg("Pedido enviado com sucesso!");
+                router.refresh();
+            } else {
+                setMsg(res.message || "Erro ao processar o pedido.");
+            }
+        });
+    };
+
+    const pendingInvites = parcerias.filter(p => p.estado === 'PENDENTE');
+
     return (
         <>
+            {/* Notification for Promoter Invitation */}
+            {pendingInvites.length > 0 && (
+                <div className="mb-6 p-4 bg-gradient-to-r from-violet-500/15 via-indigo-500/10 to-transparent border border-violet-500/30 rounded-2xl flex items-start gap-4 shadow-sm animate-fadeIn">
+                    <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center text-violet-700 shrink-0">
+                        <span className="material-symbols-outlined text-[24px]">handshake</span>
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="text-sm font-bold text-slate-900">Novo Convite de Afiliado / Parceria!</h4>
+                        <p className="text-xs text-slate-600 mt-0.5">
+                            Foste convidado para promover o evento <strong className="text-violet-700">{pendingInvites[0].eventoTitulo}</strong> e ganhar comissões por venda.
+                            {pendingInvites.length > 1 && ` Tens mais ${pendingInvites.length - 1} convite(s) pendente(s).`}
+                        </p>
+                    </div>
+                    <button 
+                        onClick={() => onTabChange('promotor')}
+                        className="bg-violet-700 hover:bg-violet-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all active:scale-95 shadow-md shadow-violet-800/10 shrink-0"
+                    >
+                        Ver Convites
+                    </button>
+                </div>
+            )}
+
             {/* Welcome Section */}
             <section className="mb-10">
                 <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-900 via-violet-800 to-violet-600 p-8 lg:p-12 text-white shadow-xl shadow-violet-900/10">
@@ -40,6 +86,57 @@ export default function OrganizerDashboard({ userName, summary, nextEvents }: Or
                     <span className="material-symbols-outlined absolute -bottom-10 -right-10 text-[200px] opacity-10 rotate-12 select-none">campaign</span>
                 </div>
             </section>
+
+            {/* Secção de Solicitação de Promotores */}
+            {pedidoPromotores !== 'APROVADO' && (
+                <section className="mb-10 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${
+                            pedidoPromotores === 'PENDENTE' ? 'bg-amber-100 text-amber-700' :
+                            pedidoPromotores === 'REJEITADO' ? 'bg-red-100 text-red-700' : 'bg-violet-100 text-violet-700'
+                        }`}>
+                            <span className="material-symbols-outlined text-3xl">
+                                {pedidoPromotores === 'PENDENTE' ? 'hourglass_empty' :
+                                 pedidoPromotores === 'REJEITADO' ? 'cancel' : 'campaign'}
+                            </span>
+                        </div>
+                        <div>
+                            <h3 className="font-extrabold text-slate-900 text-lg">Sistema de Núcleos & Promotores</h3>
+                            <p className="text-slate-500 text-sm mt-1 max-w-xl">
+                                {pedidoPromotores === 'NADA' && "Aumente as vendas dos seus eventos permitindo que afiliados, núcleos de estudantes ou promotores partilhem links dedicados e ganhem comissões."}
+                                {pedidoPromotores === 'PENDENTE' && "O seu pedido de ativação de promotores está a ser avaliado por um administrador. Receberá acesso assim que for aprovado."}
+                                {pedidoPromotores === 'REJEITADO' && "Infelizmente, o seu pedido para gerir promotores foi recusado pelo administrador. Pode tentar solicitar acesso novamente."}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="shrink-0 w-full md:w-auto text-center">
+                        {pedidoPromotores === 'NADA' && (
+                            <button
+                                disabled={isPending}
+                                onClick={handleSolicitarAcesso}
+                                className="w-full md:w-auto bg-violet-700 hover:bg-violet-800 text-white font-bold px-6 py-3 rounded-xl shadow-md shadow-violet-700/20 active:scale-95 transition-all text-sm"
+                            >
+                                {isPending ? "A processar..." : "Solicitar Acesso"}
+                            </button>
+                        )}
+                        {pedidoPromotores === 'PENDENTE' && (
+                            <span className="inline-block bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold px-4 py-2.5 rounded-full uppercase tracking-wider animate-pulse">
+                                Aguarda Aprovação
+                            </span>
+                        )}
+                        {pedidoPromotores === 'REJEITADO' && (
+                            <button
+                                disabled={isPending}
+                                onClick={handleSolicitarAcesso}
+                                className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl shadow-md shadow-red-700/20 active:scale-95 transition-all text-sm"
+                            >
+                                {isPending ? "A processar..." : "Solicitar Novamente"}
+                            </button>
+                        )}
+                        {msg && <p className="text-xs text-violet-700 font-bold mt-2">{msg}</p>}
+                    </div>
+                </section>
+            )}
 
             {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">

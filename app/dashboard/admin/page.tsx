@@ -1,7 +1,7 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
 import { getActiveSession } from '@/app/actions/auth';
-import { getAdminDashboardData, getAdminUsers, getAdminEvents } from '@/app/actions/admin';
+import { getAdminDashboardData, getAdminUsers, getAdminEvents, getPendingPromoterRequests } from '@/app/actions/admin';
 import AdminShell from './components/AdminShell';
 
 export default async function AdminDashboardPage() {
@@ -15,15 +15,17 @@ export default async function AdminDashboardPage() {
         redirect('/dashboard');
     }
 
-    const [dashboardResult, usersResult, eventsResult] = await Promise.all([
+    const [dashboardResult, usersResult, eventsResult, promoterRequestsResult] = await Promise.all([
         getAdminDashboardData(),
         getAdminUsers(),
-        getAdminEvents()
+        getAdminEvents(),
+        getPendingPromoterRequests()
     ]);
 
     const summary = dashboardResult.summary || { totalUsers: 0, totalEventos: 0, totalPedidos: 0, receitaTotal: 0 };
     const users = usersResult.users || [];
     const eventos = eventsResult.eventos || [];
+    const promoterRequests = promoterRequestsResult.requests || [];
     const userName = session.nome || "Admin";
 
     const user = {
@@ -39,6 +41,7 @@ export default async function AdminDashboardPage() {
             summary={summary}
             users={users}
             eventos={eventos}
+            promoterRequests={promoterRequests}
             user={user}
         />
     );

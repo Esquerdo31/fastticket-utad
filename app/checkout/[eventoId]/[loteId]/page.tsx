@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getEventoById } from '../../../actions/event';
-import { criarSessaoCheckout } from '../../../actions/pagamento';
+import { criarSessaoCheckout, simularPagamento } from '../../../actions/pagamento';
 import { getActiveSession } from '../../../actions/auth';
 
 export default function CheckoutPage() {
@@ -27,6 +27,14 @@ export default function CheckoutPage() {
     const universityTax = 0.80;
 
     useEffect(() => {
+        if (typeof window !== 'undefined' && eventoId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if (ref) {
+                localStorage.setItem(`promotor_ref_${eventoId}`, ref);
+            }
+        }
+
         getActiveSession().then(session => {
             setUserSession(session);
             if (session?.role === "ORGANIZADOR" || session?.role === "STAFF" || session?.role === "ADMIN") {
@@ -63,9 +71,12 @@ export default function CheckoutPage() {
         setProcessing(true);
         setErrorMsg("");
 
-        // Obter promotor do URL se existir
+        // Obter promotor do URL se existir, com fallback para localStorage
         const urlParams = new URLSearchParams(window.location.search);
-        const ref = urlParams.get('ref');
+        let ref = urlParams.get('ref');
+        if (!ref && typeof window !== 'undefined') {
+            ref = localStorage.getItem(`promotor_ref_${evento.id}`);
+        }
 
         // Parse price from string like "25.00€" or "Gratuito"
         let basePrice = 0;
@@ -92,6 +103,39 @@ export default function CheckoutPage() {
             window.location.href = res.url;
         } else {
             setErrorMsg(res.message || "Ocorreu um erro ao processar o pagamento.");
+            setProcessing(false);
+        }
+    };
+
+    const handleSimulatePayment = async () => {
+        if (!evento || !lote) return;
+        
+        if (userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") {
+            setErrorMsg("Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.");
+            return;
+        }
+
+        setProcessing(true);
+        setErrorMsg("");
+
+        // Obter promotor do URL se existir, com fallback para localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        let ref = urlParams.get('ref');
+        if (!ref && typeof window !== 'undefined') {
+            ref = localStorage.getItem(`promotor_ref_${evento.id}`);
+        }
+
+        const res = await simularPagamento({
+            eventoId: evento.id,
+            loteId: lote.id,
+            quantidade: quantity,
+            promotorSlug: ref || undefined
+        });
+
+        if (res.success) {
+            router.push('/dashboard?pagamento=sucesso');
+        } else {
+            setErrorMsg(res.message || "Ocorreu um erro ao simular o pagamento.");
             setProcessing(false);
         }
     };
@@ -273,6 +317,18 @@ export default function CheckoutPage() {
                                     {processing ? 'Processing...' : 'Finalize Purchase'}
                                     {!processing && <span className="material-symbols-outlined text-[18px]">arrow_forward</span>}
                                 </button>
+
+                                {/* Botão de Simulação de Pagamento (Apenas em Dev) */}
+                                {process.env.NODE_ENV === 'development' && (
+                                    <button
+                                        onClick={handleSimulatePayment}
+                                        disabled={processing || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
+                                        className="w-full mt-3 py-3 border-2 border-dashed border-violet-500 text-violet-700 hover:bg-violet-50 font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">developer_mode</span>
+                                        Simular Pagamento (Teste)
+                                    </button>
+                                )}
                                 
                                 <p className="text-center text-[10px] text-slate-400 mt-4 leading-relaxed">
                                     By clicking Finalize Purchase, you agree to the <a href="#" className="underline hover:text-slate-600">Terms of Service</a> and <a href="#" className="underline hover:text-slate-600">Privacy Policy</a> of UTAD FastTicket.
