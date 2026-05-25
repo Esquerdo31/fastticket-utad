@@ -3,11 +3,23 @@
 import React, { useState, useRef, useEffect, useCallback, useActionState, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { loginUser, registerUser } from "../actions/auth";
+import { loginUser, registerUser, getActiveSession } from "../actions/auth";
 import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
   const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Se o utilizador já estiver logado, redireciona para o dashboard
+  useEffect(() => {
+    getActiveSession().then((session) => {
+      if (session && session.userId) {
+        router.push("/dashboard");
+      } else {
+        setCheckingAuth(false);
+      }
+    });
+  }, [router]);
 
   // ─── Mode Toggle ──────────────────────────────────────────────
   const loginRef = useRef<HTMLDivElement>(null);
@@ -30,22 +42,32 @@ export default function AuthPage() {
   const [recoverEmail, setRecoverEmail] = useState("");
 
   // ─── Dynamic Height ───────────────────────────────────────────
-  const measureHeight = useCallback(() => {
-    const ref = isLogin
-      ? loginRef.current
-      : isRecover
-        ? recoverRef.current
-        : registerRef.current;
-    if (ref) {
-      setContainerHeight(ref.scrollHeight);
-    }
-  }, [isLogin, isRecover]);
-
   useEffect(() => {
-    measureHeight();
-    window.addEventListener("resize", measureHeight);
-    return () => window.removeEventListener("resize", measureHeight);
-  }, [measureHeight]);
+    if (checkingAuth) return;
+
+    const handleResize = () => {
+      const ref = isLogin
+        ? loginRef.current
+        : isRecover
+          ? recoverRef.current
+          : registerRef.current;
+      if (ref) {
+        setContainerHeight(ref.scrollHeight);
+      }
+    };
+
+    // Measure initially
+    handleResize();
+
+    // Measure after a small delay to ensure DOM layout is painted
+    const timer = setTimeout(handleResize, 100);
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timer);
+    };
+  }, [mode, isLogin, isRecover, checkingAuth]);
 
   // Redireciona ao ter sucesso
   useEffect(() => {
@@ -68,6 +90,17 @@ export default function AuthPage() {
     console.log("Recover submitted", { recoverEmail });
   };
 
+
+  if (checkingAuth) {
+    return (
+      <div className="bg-[#f5f7f8] text-[#0f172a] min-h-screen flex flex-col items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#006837]/20 border-t-[#006837] rounded-full animate-spin" />
+          <p className="text-sm font-bold text-[#475569] animate-pulse">A verificar sessão...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#f5f7f8] text-[#0f172a] min-h-screen flex items-center justify-center p-0 md:p-4 font-sans">
