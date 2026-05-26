@@ -2,7 +2,12 @@ import { PrismaClient } from '@prisma/client'
 
 import { PrismaNeon } from '@prisma/adapter-neon'
 
-const connectionString = `${process.env.DATABASE_URL}`
+const connectionString = process.env.DATABASE_URL?.trim()
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL nao esta definida. Cria/atualiza o ficheiro .env e reinicia o servidor Next.js.')
+}
+
 const adapter = new PrismaNeon({ connectionString })
 
 const prismaClientSingleton = () => {

@@ -1,27 +1,92 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { getActiveSession, logoutUser } from '../actions/auth';
 import { getEventos } from '../actions/event';
+
+type EventCard = {
+    id: number;
+    title: string;
+    description?: string;
+    date: string;
+    startDate: string;
+    location: string;
+    price: string;
+    priceValue: number;
+    category: string;
+    format?: string;
+    organizador?: string;
+    bannerUrl?: string | null;
+    thumbnailUrl?: string | null;
+    mostrarBanner?: boolean;
+    mostrarLogo?: boolean;
+};
+
+const normalizeText = (value: string) =>
+    value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const getDateRange = (filter: string) => {
+    const dateFilter = normalizeText(filter);
+    const now = new Date();
+    const today = startOfDay(now);
+
+    if (dateFilter === 'hoje') {
+        return { start: today, end: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1) };
+    }
+
+    if (dateFilter === 'esta semana') {
+        const day = today.getDay();
+        const mondayOffset = day === 0 ? -6 : 1 - day;
+        const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() + mondayOffset);
+        return { start: weekStart, end: new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7) };
+    }
+
+    if (dateFilter === 'proximo mes' || filter.includes('ximo')) {
+        const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        return { start: nextMonthStart, end: new Date(today.getFullYear(), today.getMonth() + 2, 1) };
+    }
+
+    return null;
+};
+
+const matchesCategory = (eventCategory: string, selectedCategory: string) => {
+    const eventRaw = eventCategory.toLowerCase();
+    const selectedRaw = selectedCategory.toLowerCase();
+    const eventValue = normalizeText(eventCategory);
+    const selectedValue = normalizeText(selectedCategory);
+
+    if (selectedRaw.startsWith('confer')) return eventRaw.includes('confer') || eventValue.includes('confer');
+    if (selectedRaw.startsWith('workshop')) return eventRaw.includes('workshop') || eventValue.includes('workshop');
+    if (selectedRaw.startsWith('gala')) return eventRaw.includes('gala') || eventRaw.includes('festa') || eventValue.includes('gala') || eventValue.includes('festa');
+    if (selectedRaw.startsWith('desporto')) return eventRaw.includes('desporto') || eventValue.includes('desporto');
+
+    return eventValue === selectedValue;
+};
 
 const UTADFastTicket = () => {
     // --- Estados para Filtros e Pesquisa ---
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [selectedDate, setSelectedDate] = useState('');
-    const [location, setLocation] = useState('Vila Real');
+    const [location, setLocation] = useState('Todos');
     const [sortBy, setSortBy] = useState('Mais Recentes');
     const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
 
-    const [events, setEvents] = useState<any[]>([]);
+    const [events, setEvents] = useState<EventCard[]>([]);
     const [userSession, setUserSession] = useState<any>(null);
 
     useEffect(() => {
         getActiveSession().then(setUserSession);
         getEventos().then((res) => {
             if (res.success && res.data) {
-                setEvents(res.data);
+                setEvents(res.data as EventCard[]);
             }
         });
     }, []);
@@ -52,8 +117,75 @@ const UTADFastTicket = () => {
         setSelectedDate('');
         setSearchTerm('');
         setSelectedPrices([]);
-        setLocation('Vila Real');
+        setLocation('Todos');
     };
+
+    const filteredEvents = useMemo(() => {
+        const search = normalizeText(searchTerm);
+        const dateRange = getDateRange(selectedDate);
+
+        return events
+            .filter((event) => {
+                if (search) {
+                    const searchableText = normalizeText([
+                        event.title,
+                        event.description,
+                        event.location,
+                        event.category,
+                        event.organizador,
+                    ].filter(Boolean).join(' '));
+
+                    if (!searchableText.includes(search)) return false;
+                }
+
+                if (selectedCategories.length > 0 && !selectedCategories.some((category) => matchesCategory(event.category, category))) {
+                    return false;
+                }
+
+                if (dateRange) {
+                    const eventDate = new Date(event.startDate);
+                    if (Number.isNaN(eventDate.getTime()) || eventDate < dateRange.start || eventDate >= dateRange.end) {
+                        return false;
+                    }
+                }
+
+                if (location && location !== 'Todos') {
+                    const selectedLocation = normalizeText(location);
+                    const eventLocation = normalizeText(event.location || '');
+                    const eventFormat = normalizeText(event.format || '');
+
+                    if (selectedLocation === 'online') {
+                        if (!eventLocation.includes('online') && eventFormat !== 'online') return false;
+                    } else if (!eventLocation.includes(selectedLocation)) {
+                        return false;
+                    }
+                }
+
+                if (selectedPrices.length > 0) {
+                    const isFree = event.priceValue === 0;
+                    const isPaid = event.priceValue > 0;
+
+                    if (!((selectedPrices.includes('Gratuito') && isFree) || (selectedPrices.includes('Pago') && isPaid))) {
+                        return false;
+                    }
+                }
+
+                return true;
+            })
+            .sort((a, b) => {
+                const sort = normalizeText(sortBy);
+
+                if (sort.startsWith('pre')) {
+                    return a.priceValue - b.priceValue;
+                }
+
+                if (sort === 'mais recentes') {
+                    return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+                }
+
+                return 0;
+            });
+    }, [events, searchTerm, selectedCategories, selectedDate, location, selectedPrices, sortBy]);
 
     return (
         <div className="bg-[#f5f7f8] font-sans text-[#0f172a] antialiased min-h-screen">
@@ -171,6 +303,7 @@ const UTADFastTicket = () => {
                                         value={location}
                                         onChange={(e) => setLocation(e.target.value)}
                                     >
+                                        <option>Todos</option>
                                         <option>Vila Real</option>
                                         <option>Porto</option>
                                         <option>Lisboa</option>
@@ -204,7 +337,9 @@ const UTADFastTicket = () => {
                     <div className="flex-1">
                         {/* Sorting Bar */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                            <span className="text-[13px] text-slate-500 font-medium">A mostrar 12 de 48 eventos</span>
+                            <span className="text-[13px] text-slate-500 font-medium">
+                                A mostrar {filteredEvents.length} de {events.length} eventos
+                            </span>
                             <div className="flex items-center gap-3">
                                 <span className="text-[13px] text-slate-700 font-medium">Ordenar por:</span>
                                 <div className="relative inline-block w-40">
@@ -224,7 +359,7 @@ const UTADFastTicket = () => {
 
                         {/* Event Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {events.map((event) => (
+                            {filteredEvents.map((event) => (
                                 <Link href={`/evento/${event.id}`} key={event.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-100 flex flex-col">
                                     <div className={`relative h-44 overflow-hidden ${!event.bannerUrl ? 'bg-gradient-to-br from-[#0b2818] to-[#006837]' : ''} flex items-center justify-center p-6 text-center`}>
                                         {event.bannerUrl && <img src={event.bannerUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />}
@@ -262,9 +397,16 @@ const UTADFastTicket = () => {
                                     </div>
                                 </Link>
                             ))}
+                            {filteredEvents.length === 0 && (
+                                <div className="md:col-span-2 xl:col-span-3 bg-white border border-slate-200 rounded-xl px-6 py-12 text-center">
+                                    <p className="text-base font-bold text-slate-800 mb-2">Nenhum evento encontrado</p>
+                                    <p className="text-sm text-slate-500">Experimenta ajustar os filtros ou limpar a pesquisa.</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Pagination */}
+                        {filteredEvents.length > 0 && (
                         <nav className="mt-16 mb-8 flex justify-center items-center gap-2">
                             <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
                                 <span className="material-symbols-outlined text-slate-600 text-sm">chevron_left</span>
@@ -278,6 +420,7 @@ const UTADFastTicket = () => {
                                 <span className="material-symbols-outlined text-slate-600 text-sm">chevron_right</span>
                             </button>
                         </nav>
+                        )}
                     </div>
                 </div>
             </main>
