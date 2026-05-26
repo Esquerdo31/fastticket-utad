@@ -160,7 +160,7 @@ export default function OrganizerStaff({ eventos }: { eventos: any[] }) {
                                 type="submit"
                                 disabled={submitting || !eventoId}
                                 className={`w-full py-3 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6 ${
-                                    submitting || !eventoId ? 'bg-slate-300 cursor-not-allowed' : 'bg-violet-700 shadow-md shadow-violet-700/10 hover:bg-violet-800'
+                                    submitting || !eventoId ? 'bg-slate-300 cursor-not-allowed' : 'bg-violet-700 shadow-md shadow-violet-700/10 hover:bg-violet-800 hover:shadow-lg hover:shadow-violet-700/20 cursor-pointer'
                                 }`}
                             >
                                 {submitting ? 'A processar...' : 'Criar Conta Staff'}
@@ -208,7 +208,7 @@ export default function OrganizerStaff({ eventos }: { eventos: any[] }) {
                                         </div>
                                         <button
                                             onClick={() => handleRemoveStaff(st.id, st.eventoId)}
-                                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100 active:scale-95 cursor-pointer"
                                             title="Remover acesso ao evento"
                                         >
                                             <span className="material-symbols-outlined text-[18px]">person_remove</span>

@@ -385,7 +385,7 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                     </div>
                     <button 
                         onClick={() => onTabChange('promotor')}
-                        className="bg-[#006837] hover:bg-emerald-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all active:scale-95 shadow-md shadow-emerald-800/10"
+                        className="bg-[#006837] hover:bg-emerald-800 hover:shadow-lg hover:shadow-emerald-800/20 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all active:scale-95 shadow-md shadow-emerald-800/10 cursor-pointer"
                     >
                         Ver Convites
                     </button>
@@ -417,7 +417,7 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                 <div className="lg:col-span-2 space-y-6">
                     <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-bold tracking-tight text-slate-800">Próximos Eventos</h2>
-                        <Link href="/eventos" className="text-[#006837] font-semibold text-sm hover:underline">Ver Agenda Completa</Link>
+                        <Link href="/eventos" className="text-[#006837] font-semibold text-sm hover:underline hover:bg-emerald-50 rounded-lg px-3 py-2 -mr-3 transition-all cursor-pointer">Ver Agenda Completa</Link>
                     </div>
 
                     <div className="space-y-4">
@@ -461,7 +461,7 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                             <div className="bg-white border-2 border-dashed border-slate-200 rounded-xl p-10 text-center">
                                 <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">confirmation_number</span>
                                 <p className="text-slate-500 font-medium">Nenhum evento pago encontrado.</p>
-                                <Link href="/eventos" className="inline-block mt-4 text-[#006837] font-bold hover:underline">Explorar Eventos</Link>
+                                <Link href="/eventos" className="inline-block mt-4 text-[#006837] font-bold hover:underline hover:bg-emerald-50 rounded-lg px-3 py-2 transition-all cursor-pointer">Explorar Eventos</Link>
                             </div>
                         )}
                     </div>
@@ -472,7 +472,7 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                     <h2 className="text-2xl font-bold tracking-tight text-slate-800">Recomendações</h2>
                     <div className="space-y-4">
                         {suggestions.map((suggestion) => (
-                            <Link href={`/evento/${suggestion.id}`} key={suggestion.id} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 hover:border-[#006837]/40 transition-all group">
+                            <Link href={`/evento/${suggestion.id}`} key={suggestion.id} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 hover:border-[#006837]/40 hover:shadow-md transition-all group cursor-pointer">
                                 <div className="h-32 relative bg-gradient-to-br from-[#0b2818] to-[#006837] p-6 flex items-center justify-center text-center">
                                     <div className="absolute top-3 left-3">
                                         <span className="bg-white/20 backdrop-blur-sm border border-white/30 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">

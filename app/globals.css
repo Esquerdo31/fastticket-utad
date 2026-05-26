@@ -18,6 +18,54 @@ body {
   color: var(--foreground);
 }
 
+button:not(:disabled),
+[role="button"],
+a[href],
+a[href][class*="bg-"],
+a[href][class*="border"],
+a[href][class*="rounded"],
+a[href][class*="px-"],
+a[href][class*="py-"] {
+  transition-property: background-color, border-color, color, box-shadow, opacity, filter, transform;
+  transition-duration: 180ms;
+  transition-timing-function: ease;
+  cursor: pointer;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+a[href]:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled)[class*="bg-"]:hover,
+  button:not(:disabled)[class*="border"]:hover,
+  button:not(:disabled)[class*="rounded-lg"]:hover,
+  button:not(:disabled)[class*="rounded-xl"]:hover,
+  button:not(:disabled)[class*="rounded-full"]:hover,
+  [role="button"]:hover,
+  a[href][class*="bg-"]:hover,
+  a[href][class*="border"]:hover,
+  a[href][class*="rounded"]:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.03);
+  }
+}
+
+button:not(:disabled):active,
+[role="button"]:active,
+a[href][class*="bg-"]:active,
+a[href][class*="border"]:active,
+a[href][class*="rounded"]:active {
+  transform: translateY(0) scale(0.98);
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 /* Smooth tab transition animation */
 @keyframes fadeIn {
   from {

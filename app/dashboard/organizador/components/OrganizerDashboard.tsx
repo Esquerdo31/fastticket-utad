@@ -65,7 +65,7 @@ export default function OrganizerDashboard({ userName, summary, nextEvents, pedi
                     </div>
                     <button 
                         onClick={() => onTabChange('promotor')}
-                        className="bg-violet-700 hover:bg-violet-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all active:scale-95 shadow-md shadow-violet-800/10 shrink-0"
+                        className="bg-violet-700 hover:bg-violet-800 hover:shadow-lg hover:shadow-violet-800/20 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all active:scale-95 shadow-md shadow-violet-800/10 shrink-0 cursor-pointer"
                     >
                         Ver Convites
                     </button>
@@ -114,7 +114,7 @@ export default function OrganizerDashboard({ userName, summary, nextEvents, pedi
                             <button
                                 disabled={isPending}
                                 onClick={handleSolicitarAcesso}
-                                className="w-full md:w-auto bg-violet-700 hover:bg-violet-800 text-white font-bold px-6 py-3 rounded-xl shadow-md shadow-violet-700/20 active:scale-95 transition-all text-sm"
+                                className="w-full md:w-auto bg-violet-700 hover:bg-violet-800 hover:shadow-lg hover:shadow-violet-700/25 text-white font-bold px-6 py-3 rounded-xl shadow-md shadow-violet-700/20 active:scale-95 transition-all text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {isPending ? "A processar..." : "Solicitar Acesso"}
                             </button>
@@ -128,7 +128,7 @@ export default function OrganizerDashboard({ userName, summary, nextEvents, pedi
                             <button
                                 disabled={isPending}
                                 onClick={handleSolicitarAcesso}
-                                className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl shadow-md shadow-red-700/20 active:scale-95 transition-all text-sm"
+                                className="w-full md:w-auto bg-red-600 hover:bg-red-700 hover:shadow-lg hover:shadow-red-700/25 text-white font-bold px-6 py-3 rounded-xl shadow-md shadow-red-700/20 active:scale-95 transition-all text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {isPending ? "A processar..." : "Solicitar Novamente"}
                             </button>
@@ -176,7 +176,7 @@ export default function OrganizerDashboard({ userName, summary, nextEvents, pedi
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {nextEvents.length > 0 ? nextEvents.map((evento) => (
-                        <Link href={`/evento/${evento.id}`} key={evento.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-lg hover:border-violet-200 transition-all group cursor-pointer">
+                        <Link href={`/evento/${evento.id}`} key={evento.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-lg hover:border-violet-200 hover:-translate-y-0.5 transition-all group cursor-pointer">
                             <div className="p-6 flex-1">
                                 <div className="flex justify-between items-start mb-4">
                                     <span className="bg-violet-100 text-violet-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">

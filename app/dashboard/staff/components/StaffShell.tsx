@@ -179,7 +179,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                     <span className="text-xs font-semibold text-slate-500 hidden sm:inline">{userName}</span>
                     <button 
                         onClick={handleLogout} 
-                        className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors text-xs font-bold rounded-lg flex items-center gap-1"
+                        className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 hover:text-red-700 transition-all active:scale-95 text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
                     >
                         <span className="material-symbols-outlined text-sm">logout</span> Sair
                     </button>
@@ -233,7 +233,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                         <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => setSelectedEvent(null)}
-                                className="p-2 hover:bg-slate-200 active:scale-95 rounded-full transition-all text-slate-600 flex items-center"
+                                className="p-2 hover:bg-slate-200 hover:text-emerald-700 active:scale-95 rounded-full transition-all text-slate-600 flex items-center cursor-pointer"
                             >
                                 <span className="material-symbols-outlined">arrow_back</span>
                             </button>
@@ -308,7 +308,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                                     type="submit"
                                     disabled={loading || !qrCodeToken.trim()}
                                     className={`w-full py-3 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
-                                        loading || !qrCodeToken.trim() ? 'bg-slate-300 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/10'
+                                        loading || !qrCodeToken.trim() ? 'bg-slate-300 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20 shadow-md shadow-emerald-600/10 cursor-pointer'
                                     }`}
                                 >
                                     {loading ? 'A validar...' : 'Validar Entrada'}
@@ -342,7 +342,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                                                 </div>
                                                 <button
                                                     onClick={() => simulateScan(t.token)}
-                                                    className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all whitespace-nowrap ${
+                                                    className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
                                                         t.estado === 'USADO' 
                                                             ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' 
                                                             : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'

@@ -98,7 +98,7 @@ export default function OrganizerShell({
                     <span className="bg-violet-100 text-violet-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest hidden sm:inline-block">Organizador</span>
                 </div>
                 <div className="flex items-center gap-4">
-                    <button className="p-2 text-slate-600 hover:bg-slate-50 rounded-full transition-colors active:scale-95">
+                    <button className="p-2 text-slate-600 hover:bg-slate-50 hover:text-violet-700 rounded-full transition-all active:scale-95 cursor-pointer">
                         <span className="material-symbols-outlined">notifications</span>
                     </button>
                     <div onClick={() => handleTabChange('profile')} className="flex items-center gap-2 border-l border-slate-200 pl-4 cursor-pointer hover:opacity-80 transition-opacity">
@@ -173,7 +173,7 @@ export default function OrganizerShell({
                         <button
                             key={item.id}
                             onClick={() => handleTabChange(item.id)}
-                            className={`flex flex-col items-center gap-1 ${isActive ? 'text-violet-700 font-bold' : 'text-slate-500'}`}
+                            className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 transition-all cursor-pointer active:scale-95 ${isActive ? 'text-violet-700 font-bold bg-violet-50' : 'text-slate-500 hover:text-violet-700 hover:bg-violet-50'}`}
                         >
                             <span className="material-symbols-outlined">{item.icon}</span>
                             <span className="text-[10px]">{item.label}</span>

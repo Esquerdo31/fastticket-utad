@@ -27,7 +27,7 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                     <h1 className="text-3xl font-bold text-slate-900 mb-2">Meus Eventos</h1>
                     <p className="text-slate-500">Faça a gestão dos seus eventos criados e acompanhe a lotação.</p>
                 </div>
-                <button onClick={onCreateEvent} className="bg-violet-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-violet-800 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-700/20">
+                <button onClick={onCreateEvent} className="bg-violet-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-violet-800 hover:shadow-xl hover:shadow-violet-700/25 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-700/20 cursor-pointer">
                     <span className="material-symbols-outlined">add_circle</span>
                     Criar Novo Evento
                 </button>
@@ -56,7 +56,7 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                                 return (
                                     <tr key={evento.id} className="hover:bg-slate-50/50 transition-colors group">
                                         <td className="p-4 pl-6">
-                                            <Link href={`/evento/${evento.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                                            <Link href={`/evento/${evento.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
                                                 <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-violet-700 shrink-0">
                                                     <span className="material-symbols-outlined text-[20px]">campaign</span>
                                                 </div>
@@ -90,10 +90,10 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                                         </td>
                                         <td className="p-4 text-right pr-6">
                                             <div className="flex items-center justify-end gap-1">
-                                                <button onClick={() => onEditEvent?.(evento.id)} className="p-2 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors" title="Editar rápido">
+                                                <button onClick={() => onEditEvent?.(evento.id)} className="p-2 text-violet-600 hover:bg-violet-50 hover:text-violet-800 rounded-lg transition-all active:scale-95 cursor-pointer" title="Editar rápido">
                                                     <span className="material-symbols-outlined text-[20px]">edit</span>
                                                 </button>
-                                                <Link href={`/evento/${evento.id}/editar`} className="p-2 text-slate-500 hover:bg-slate-50 hover:text-violet-600 rounded-lg transition-colors" title="Edição avançada">
+                                                <Link href={`/evento/${evento.id}/editar`} className="p-2 text-slate-500 hover:bg-slate-50 hover:text-violet-600 rounded-lg transition-all active:scale-95 cursor-pointer" title="Edição avançada">
                                                     <span className="material-symbols-outlined text-[20px]">open_in_new</span>
                                                 </Link>
                                             </div>

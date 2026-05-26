@@ -74,11 +74,11 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                 </div>
                 <div className="flex items-center gap-6">
                     <div className="hidden md:flex gap-8 items-center">
-                        <Link className="text-[#006837] font-bold tracking-tight" href="/eventos">Explorar Eventos</Link>
+                        <Link className="text-[#006837] font-bold tracking-tight hover:bg-emerald-50 rounded-lg px-3 py-2 -mx-3 transition-all cursor-pointer" href="/eventos">Explorar Eventos</Link>
                         <a className="text-slate-600 hover:bg-slate-50 transition-colors px-2 py-1 rounded font-medium" href="#">Ajuda</a>
                     </div>
                     <div className="flex items-center gap-4">
-                        <button className="p-2 text-slate-600 hover:bg-slate-50 rounded-full transition-colors active:scale-95">
+                        <button className="p-2 text-slate-600 hover:bg-slate-50 hover:text-[#006837] rounded-full transition-all active:scale-95 cursor-pointer">
                             <span className="material-symbols-outlined">notifications</span>
                         </button>
                         <div
@@ -126,7 +126,7 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                     </nav>
 
                     <div className="px-4">
-                        <Link href="/eventos" className="w-full bg-[#006837] text-white py-3 rounded-lg font-semibold shadow-lg shadow-[#006837]/20 hover:bg-emerald-800 active:scale-95 transition-all flex items-center justify-center">
+                        <Link href="/eventos" className="w-full bg-[#006837] text-white py-3 rounded-lg font-semibold shadow-lg shadow-[#006837]/20 hover:bg-emerald-800 hover:shadow-xl hover:shadow-[#006837]/25 active:scale-95 transition-all flex items-center justify-center cursor-pointer">
                             Comprar Bilhetes
                         </Link>
                     </div>
@@ -166,7 +166,7 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                     const isActive = activeTab === item.id;
                     if (item.href) {
                         return (
-                            <Link key={item.id} href={item.href} className="flex flex-col items-center gap-1 text-slate-500">
+                            <Link key={item.id} href={item.href} className="flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-slate-500 hover:text-[#006837] hover:bg-emerald-50 transition-all cursor-pointer">
                                 <span className="material-symbols-outlined">{item.icon}</span>
                                 <span className="text-[10px]">{item.label}</span>
                             </Link>
@@ -176,7 +176,7 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                         <button
                             key={item.id}
                             onClick={() => handleTabChange(item.id as ActiveTab)}
-                            className={`flex flex-col items-center gap-1 ${isActive ? 'text-[#006837] font-bold' : 'text-slate-500'}`}
+                            className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 transition-all cursor-pointer active:scale-95 ${isActive ? 'text-[#006837] font-bold bg-emerald-50' : 'text-slate-500 hover:text-[#006837] hover:bg-emerald-50'}`}
                         >
                             <span className="material-symbols-outlined">{item.icon}</span>
                             <span className="text-[10px]">{item.label}</span>

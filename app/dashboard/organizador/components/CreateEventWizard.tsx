@@ -211,8 +211,8 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                             <div>
                                                 <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Formato</label>
                                                 <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
-                                                    <button type="button" onClick={() => setFormato('presencial')} className={`flex-1 py-2.5 font-bold text-sm rounded-lg transition-all ${formato === 'presencial' ? 'bg-white text-violet-700 shadow-sm border border-slate-100' : 'text-slate-500 hover:text-slate-700'}`}>Presencial</button>
-                                                    <button type="button" onClick={() => setFormato('online')} className={`flex-1 py-2.5 font-bold text-sm rounded-lg transition-all ${formato === 'online' ? 'bg-white text-violet-700 shadow-sm border border-slate-100' : 'text-slate-500 hover:text-slate-700'}`}>Online</button>
+                                                    <button type="button" onClick={() => setFormato('presencial')} className={`flex-1 py-2.5 font-bold text-sm rounded-lg transition-all cursor-pointer active:scale-95 ${formato === 'presencial' ? 'bg-white text-violet-700 shadow-sm border border-slate-100' : 'text-slate-500 hover:text-slate-700 hover:bg-white/70'}`}>Presencial</button>
+                                                    <button type="button" onClick={() => setFormato('online')} className={`flex-1 py-2.5 font-bold text-sm rounded-lg transition-all cursor-pointer active:scale-95 ${formato === 'online' ? 'bg-white text-violet-700 shadow-sm border border-slate-100' : 'text-slate-500 hover:text-slate-700 hover:bg-white/70'}`}>Online</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -230,11 +230,11 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                             <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Descrição do Evento</label>
                                             <div className="border border-slate-200 rounded-xl overflow-hidden">
                                                 <div className="bg-slate-50 border-b border-slate-200 p-2 flex items-center gap-2">
-                                                    <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded"><span className="material-symbols-outlined text-[18px]">format_bold</span></button>
-                                                    <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded"><span className="material-symbols-outlined text-[18px]">format_italic</span></button>
-                                                    <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded"><span className="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+                                                    <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded cursor-pointer active:scale-95 transition-all"><span className="material-symbols-outlined text-[18px]">format_bold</span></button>
+                                                    <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded cursor-pointer active:scale-95 transition-all"><span className="material-symbols-outlined text-[18px]">format_italic</span></button>
+                                                    <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded cursor-pointer active:scale-95 transition-all"><span className="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
                                                     <div className="w-px h-4 bg-slate-300 mx-1" />
-                                                    <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded"><span className="material-symbols-outlined text-[18px]">link</span></button>
+                                                    <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded cursor-pointer active:scale-95 transition-all"><span className="material-symbols-outlined text-[18px]">link</span></button>
                                                 </div>
                                                 <textarea rows={6} value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Descreva os detalhes do seu evento aqui..." className="w-full p-4 focus:outline-none text-sm text-slate-800 resize-none" />
                                             </div>
@@ -270,7 +270,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                             <span className="material-symbols-outlined text-violet-700 bg-violet-50 p-1 rounded">confirmation_number</span>
                                             <h2 className="text-xl font-bold text-slate-900">Lotes de Bilhetes</h2>
                                         </div>
-                                        <button type="button" onClick={addLote} className="bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-violet-800 active:scale-95 transition-all flex items-center gap-2">
+                                        <button type="button" onClick={addLote} className="bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-violet-800 hover:shadow-md hover:shadow-violet-700/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
                                             <span className="material-symbols-outlined text-[18px]">add</span>Adicionar Lote
                                         </button>
                                     </div>
@@ -288,7 +288,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                                                 Ativo ({vendidos} vendidos)
                                                             </div>
                                                         ) : (
-                                                            <button type="button" onClick={() => removeLote(i)} className="absolute top-3 right-3 p-1 text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                                                            <button type="button" onClick={() => removeLote(i)} className="absolute top-3 right-3 p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100 cursor-pointer active:scale-95">
                                                                 <span className="material-symbols-outlined text-[20px]">close</span>
                                                             </button>
                                                         )
@@ -451,7 +451,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                     {bannerUrl ? (
                                         <div className="relative rounded-xl overflow-hidden border border-slate-200 group">
                                             <img src={bannerUrl} alt="Banner" className="w-full h-36 object-cover" />
-                                            <button type="button" onClick={() => setBannerUrl('')} className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600">
+                                            <button type="button" onClick={() => setBannerUrl('')} className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md hover:bg-red-600 cursor-pointer active:scale-95">
                                                 <span className="material-symbols-outlined text-[16px]">close</span>
                                             </button>
                                         </div>
@@ -470,7 +470,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                         {thumbnailUrl ? (
                                             <div className="relative w-24 h-24 shrink-0 rounded-xl overflow-hidden border border-slate-200 group">
                                                 <img src={thumbnailUrl} alt="Thumbnail" className="w-full h-full object-cover" />
-                                                <button type="button" onClick={() => setThumbnailUrl('')} className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600">
+                                                <button type="button" onClick={() => setThumbnailUrl('')} className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md hover:bg-red-600 cursor-pointer active:scale-95">
                                                     <span className="material-symbols-outlined text-[14px]">close</span>
                                                 </button>
                                             </div>
@@ -504,16 +504,16 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                 </div>
                             </div>
                             {error && <p className="text-red-300 text-xs mb-4 bg-red-900/30 p-2 rounded-lg">{error}</p>}
-                            <button type="button" onClick={goNext} disabled={isPending} className="w-full bg-white text-violet-700 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-violet-50 active:scale-95 transition-all shadow-md disabled:opacity-50">
+                            <button type="button" onClick={goNext} disabled={isPending} className="w-full bg-white text-violet-700 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-violet-50 hover:shadow-lg active:scale-95 transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                                 {isPending ? 'A publicar...' : nextLabel}
                                 <span className="material-symbols-outlined text-[20px]">{step === 3 ? 'check' : 'arrow_forward'}</span>
                             </button>
                             {step > 1 && (
-                                <button type="button" onClick={goBack} className="w-full mt-3 text-sm font-medium text-violet-300 hover:text-white transition-colors text-center flex items-center justify-center gap-1">
+                                <button type="button" onClick={goBack} className="w-full mt-3 text-sm font-medium text-violet-300 hover:text-white hover:bg-white/5 rounded-lg py-2 transition-all text-center flex items-center justify-center gap-1 cursor-pointer active:scale-95">
                                     <span className="material-symbols-outlined text-[16px]">arrow_back</span>Voltar
                                 </button>
                             )}
-                            <button type="button" className="w-full mt-2 text-sm font-medium text-violet-300/60 hover:text-violet-300 transition-colors text-center">Salvar como Rascunho</button>
+                            <button type="button" className="w-full mt-2 text-sm font-medium text-violet-300/60 hover:text-violet-300 hover:bg-white/5 rounded-lg py-2 transition-all text-center cursor-pointer active:scale-95">Salvar como Rascunho</button>
                         </div>
                     </div>
                 </div>

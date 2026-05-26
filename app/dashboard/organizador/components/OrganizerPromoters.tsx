@@ -81,7 +81,7 @@ export default function OrganizerPromoters({ eventos }: { eventos: any[] }) {
                         </h2>
                         <button 
                             onClick={() => { setMsg(""); setShowModal(true); }}
-                            className="bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-violet-800 transition-colors shadow-md shadow-violet-700/20"
+                            className="bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-violet-800 hover:shadow-lg hover:shadow-violet-700/20 transition-all active:scale-95 shadow-md shadow-violet-700/20 cursor-pointer"
                         >
                             <span className="material-symbols-outlined text-[18px]">add</span>
                             Adicionar Parceiro
@@ -167,7 +167,7 @@ export default function OrganizerPromoters({ eventos }: { eventos: any[] }) {
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold text-slate-800">Adicionar Parceiro/Núcleo</h3>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
+                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg p-1 transition-all active:scale-95 cursor-pointer">
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
@@ -198,7 +198,7 @@ export default function OrganizerPromoters({ eventos }: { eventos: any[] }) {
 
                             {msg && <p className="text-sm text-center font-bold text-violet-700 bg-violet-50 p-2 rounded">{msg}</p>}
 
-                            <button type="submit" className="w-full bg-violet-700 text-white font-bold py-3 rounded-xl mt-4 hover:bg-violet-800 transition-colors shadow-lg shadow-violet-700/20">
+                            <button type="submit" className="w-full bg-violet-700 text-white font-bold py-3 rounded-xl mt-4 hover:bg-violet-800 hover:shadow-xl hover:shadow-violet-700/25 transition-all active:scale-95 shadow-lg shadow-violet-700/20 cursor-pointer">
                                 Convidar Parceiro
                             </button>
                         </form>
