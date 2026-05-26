@@ -67,7 +67,7 @@ export async function criarSessaoCheckout(data: {
             const promotor = await prisma.promotor.findUnique({
                 where: { linkSlug: data.promotorSlug },
             });
-            if (promotor && promotor.eventoId === eventoId) {
+            if (promotor && promotor.eventoId === eventoId && promotor.estado === 'ACEITE') {
                 promotorId = promotor.id.toString();
             }
         }
@@ -110,5 +110,64 @@ export async function criarSessaoCheckout(data: {
     } catch (error: any) {
         console.error('[Pagamento] Erro ao criar sessão Stripe:', error);
         return { success: false, message: `Erro ao processar pagamento: ${error.message}` };
+    }
+}
+
+/**
+ * Simula um pagamento bem-sucedido em ambiente de desenvolvimento.
+ * Desvia o Stripe e gera os bilhetes diretamente chamando o webhook interno.
+ */
+export async function simularPagamento(data: {
+    eventoId: number;
+    loteId: number;
+    quantidade: number;
+    promotorSlug?: string;
+}) {
+    try {
+        if (process.env.NODE_ENV !== 'development') {
+            return { success: false, message: 'A simulação de pagamentos só é permitida em ambiente de desenvolvimento.' };
+        }
+
+        const session = await getSession();
+        if (!session) {
+            return { success: false, message: 'Não autenticado. Faça login primeiro.' };
+        }
+
+        // 1. Procurar o ID do promotor se houver slug
+        let promotorId: number | undefined = undefined;
+        if (data.promotorSlug) {
+            const promotor = await prisma.promotor.findUnique({
+                where: { linkSlug: data.promotorSlug },
+            });
+            if (promotor && promotor.eventoId === data.eventoId && promotor.estado === 'ACEITE') {
+                promotorId = promotor.id;
+            }
+        }
+
+        // 2. Procurar o lote para saber o preço
+        const lote = await prisma.loteBilhete.findUnique({
+            where: { id: data.loteId }
+        });
+        if (!lote) {
+            return { success: false, message: 'Lote de bilhetes não encontrado.' };
+        }
+
+        const valorTotal = lote.preco * data.quantidade;
+        const fakePaymentIntentId = `fake_pi_${crypto.randomUUID()}`;
+
+        // 3. Chamar diretamente o processador de pagamentos do webhook
+        const { processarPagamentoWebhook } = await import('./tickets');
+        const res = await processarPagamentoWebhook({
+            userId: session.userId,
+            eventoId: data.eventoId,
+            loteId: data.loteId,
+            quantidade: data.quantidade,
+            promotorId: promotorId,
+        }, fakePaymentIntentId, valorTotal);
+
+        return res;
+    } catch (error: any) {
+        console.error('[Pagamento] Erro ao simular pagamento:', error);
+        return { success: false, message: `Erro ao simular pagamento: ${error.message}` };
     }
 }

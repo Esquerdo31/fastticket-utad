@@ -18,19 +18,36 @@ export default function EventDetailsDynamic() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (typeof window !== 'undefined' && params.id) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if (ref) {
+                localStorage.setItem(`promotor_ref_${Number(params.id)}`, ref);
+            }
+        }
+    }, [params.id]);
+
+    useEffect(() => {
         getActiveSession().then(setUserSession);
         if (params.id) {
-            getEventoById(Number(params.id)).then(res => {
-                if (res.success && res.data) {
-                    setEvento(res.data);
-                    if (res.data.lotes && res.data.lotes.length > 0) {
-                        setSelectedTicket(res.data.lotes[0].id); // Seleciona o primeiro lote por defeito
+            getEventoById(Number(params.id))
+                .then(res => {
+                    if (res.success && res.data) {
+                        setEvento(res.data);
+                        if (res.data.lotes && res.data.lotes.length > 0) {
+                            setSelectedTicket(res.data.lotes[0].id); // Seleciona o primeiro lote por defeito
+                        }
+                    } else {
+                        router.push('/eventos'); // Cód. não existe, volta pra trás
                     }
-                } else {
-                    router.push('/eventos'); // Cód. não existe, volta pra trás
-                }
-                setLoading(false);
-            });
+                })
+                .catch(err => {
+                    console.error("Erro ao carregar evento:", err);
+                    router.push('/eventos');
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
         }
     }, [params.id, router]);
 
@@ -218,7 +235,28 @@ export default function EventDetailsDynamic() {
                                                                     onChange={() => setSelectedTicket(ticket.id)}
                                                                 />
                                                                 <div>
-                                                                    <p className="font-bold text-slate-800 leading-tight">{ticket.name}</p>
+                                                                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                        <p className="font-bold text-slate-800 leading-tight">{ticket.name}</p>
+                                                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                                                            ticket.tipo === 'GERAL' 
+                                                                                ? 'bg-violet-100 text-violet-800 border border-violet-200' 
+                                                                                : 'bg-emerald-100 text-[#006837] border border-emerald-200'
+                                                                        }`}>
+                                                                            {ticket.tipo === 'GERAL' ? 'Passe Geral' : 'Diário'}
+                                                                        </span>
+                                                                    </div>
+                                                                    {ticket.tipo === 'DIARIO' && ticket.diasValidos && (
+                                                                        <p className="text-[10px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                                                                            <span className="material-symbols-outlined text-[12px]">calendar_today</span>
+                                                                            Válido para: {new Date(ticket.diasValidos + 'T00:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                                                        </p>
+                                                                    )}
+                                                                    {ticket.tipo === 'GERAL' && (
+                                                                        <p className="text-[10px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                                                                            <span className="material-symbols-outlined text-[12px]">all_inclusive</span>
+                                                                            Acesso total a todos os dias do evento
+                                                                        </p>
+                                                                    )}
                                                                     {ticket.description && (
                                                                         <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">{ticket.description}</p>
                                                                     )}

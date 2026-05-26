@@ -64,7 +64,7 @@ export async function loginUser(prevState: any, formData: FormData) {
 
         // Criar sessão JWT com o Nome gravado
         await createSession(user.id, user.email, user.nome, user.role);
-        return { success: true, message: "Login realizado com sucesso!" };
+        return { success: true, message: "Login realizado com sucesso!", role: user.role };
     } catch (e: any) {
         return { success: false, message: `Erro ao iniciar sessão: ${e.message}` };
     }
@@ -115,7 +115,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 
         // Criar sessão (Auto-login após registo) com o Nome
         await createSession(newUser.id, newUser.email, newUser.nome, newUser.role);
-        return { success: true, message: "Conta criada e sessão iniciada!" };
+        return { success: true, message: "Conta criada e sessão iniciada!", role: newUser.role };
     } catch (e: any) {
         return { success: false, message: `Erro ao registar conta: ${e.message}` };
     }

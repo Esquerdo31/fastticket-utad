@@ -3,11 +3,23 @@
 import React, { useState, useRef, useEffect, useCallback, useActionState, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { loginUser, registerUser } from "../actions/auth";
+import { loginUser, registerUser, getActiveSession } from "../actions/auth";
 import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
   const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Se o utilizador já estiver logado, redireciona para o dashboard
+  useEffect(() => {
+    getActiveSession().then((session) => {
+      if (session && session.userId) {
+        router.push("/dashboard");
+      } else {
+        setCheckingAuth(false);
+      }
+    });
+  }, [router]);
 
   // ─── Mode Toggle ──────────────────────────────────────────────
   const loginRef = useRef<HTMLDivElement>(null);
@@ -30,28 +42,46 @@ export default function AuthPage() {
   const [recoverEmail, setRecoverEmail] = useState("");
 
   // ─── Dynamic Height ───────────────────────────────────────────
-  const measureHeight = useCallback(() => {
-    const ref = isLogin
-      ? loginRef.current
-      : isRecover
-        ? recoverRef.current
-        : registerRef.current;
-    if (ref) {
-      setContainerHeight(ref.scrollHeight);
-    }
-  }, [isLogin, isRecover]);
-
   useEffect(() => {
-    measureHeight();
-    window.addEventListener("resize", measureHeight);
-    return () => window.removeEventListener("resize", measureHeight);
-  }, [measureHeight]);
+    if (checkingAuth) return;
+
+    const handleResize = () => {
+      const ref = isLogin
+        ? loginRef.current
+        : isRecover
+          ? recoverRef.current
+          : registerRef.current;
+      if (ref) {
+        setContainerHeight(ref.scrollHeight);
+      }
+    };
+
+    // Measure initially
+    handleResize();
+
+    // Measure after a small delay to ensure DOM layout is painted
+    const timer = setTimeout(handleResize, 100);
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timer);
+    };
+  }, [mode, isLogin, isRecover, checkingAuth]);
 
   // Redireciona ao ter sucesso
   useEffect(() => {
     if (loginState?.success || registerState?.success) {
-      // Redireciona de volta para a Home (ou dashboard)
-      router.push("/dashboard");
+      const userRole = loginState?.role || registerState?.role;
+      
+      if (userRole === "ADMIN") {
+        router.push("/dashboard/admin");
+      } else if (userRole === "STAFF") {
+        router.push("/dashboard/staff");
+      } else {
+        // Redireciona de volta para a Home (Participante / Organizador)
+        router.push("/");
+      }
     }
   }, [loginState, registerState, router]);
 
@@ -60,6 +90,17 @@ export default function AuthPage() {
     console.log("Recover submitted", { recoverEmail });
   };
 
+
+  if (checkingAuth) {
+    return (
+      <div className="bg-[#f5f7f8] text-[#0f172a] min-h-screen flex flex-col items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#006837]/20 border-t-[#006837] rounded-full animate-spin" />
+          <p className="text-sm font-bold text-[#475569] animate-pulse">A verificar sessão...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#f5f7f8] text-[#0f172a] min-h-screen flex items-center justify-center p-0 md:p-4 font-sans">
@@ -106,9 +147,8 @@ export default function AuthPage() {
           <div className="mb-5 sm:mb-8">
             {/* Recover mode: show back button */}
             <div
-              className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                isRecover ? "max-h-20 opacity-100" : "max-h-0 opacity-0"
-              }`}
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${isRecover ? "max-h-20 opacity-100" : "max-h-0 opacity-0"
+                }`}
             >
               <button
                 type="button"
@@ -124,9 +164,8 @@ export default function AuthPage() {
 
             {/* Login/Register tabs */}
             <nav
-              className={`flex bg-[#f1f5f9] rounded-lg p-1.5 w-full relative transition-all duration-300 ease-in-out ${
-                isRecover ? "max-h-0 opacity-0 overflow-hidden" : "max-h-20 opacity-100"
-              }`}
+              className={`flex bg-[#f1f5f9] rounded-lg p-1.5 w-full relative transition-all duration-300 ease-in-out ${isRecover ? "max-h-0 opacity-0 overflow-hidden" : "max-h-20 opacity-100"
+                }`}
             >
               {/* Sliding pill background */}
               <div
@@ -136,18 +175,16 @@ export default function AuthPage() {
               <button
                 type="button"
                 onClick={() => setMode("login")}
-                className={`relative z-10 flex-1 py-3 text-center text-sm font-bold transition-colors duration-300 ${
-                  isLogin ? "text-[#006837]" : "text-[#475569] hover:text-[#0f172a]"
-                }`}
+                className={`relative z-10 flex-1 py-3 text-center text-sm font-bold transition-colors duration-300 ${isLogin ? "text-[#006837]" : "text-[#475569] hover:text-[#0f172a]"
+                  }`}
               >
                 Entrar
               </button>
               <button
                 type="button"
                 onClick={() => setMode("register")}
-                className={`relative z-10 flex-1 py-3 text-center text-sm font-bold transition-colors duration-300 ${
-                  mode === "register" ? "text-[#006837]" : "text-[#475569] hover:text-[#0f172a]"
-                }`}
+                className={`relative z-10 flex-1 py-3 text-center text-sm font-bold transition-colors duration-300 ${mode === "register" ? "text-[#006837]" : "text-[#475569] hover:text-[#0f172a]"
+                  }`}
               >
                 Registar
               </button>
@@ -162,11 +199,10 @@ export default function AuthPage() {
             {/* ─── Login Form ───────────────────────────────────── */}
             <div
               ref={loginRef}
-              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${
-                isLogin
-                  ? "opacity-100 translate-x-0 visible"
-                  : "opacity-0 -translate-x-8 invisible pointer-events-none"
-              }`}
+              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${isLogin
+                ? "opacity-100 translate-x-0 visible"
+                : "opacity-0 -translate-x-8 invisible pointer-events-none"
+                }`}
             >
               <div className="mb-5 sm:mb-8">
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a]">
@@ -313,11 +349,10 @@ export default function AuthPage() {
             {/* ─── Register Form ────────────────────────────────── */}
             <div
               ref={registerRef}
-              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${
-                mode === "register"
-                  ? "opacity-100 translate-x-0 visible"
-                  : "opacity-0 translate-x-8 invisible pointer-events-none"
-              }`}
+              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${mode === "register"
+                ? "opacity-100 translate-x-0 visible"
+                : "opacity-0 translate-x-8 invisible pointer-events-none"
+                }`}
             >
               <div className="mb-5 sm:mb-8">
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a]">
@@ -535,11 +570,10 @@ export default function AuthPage() {
             {/* ─── Recover Password Form ────────────────────────── */}
             <div
               ref={recoverRef}
-              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${
-                isRecover
-                  ? "opacity-100 translate-x-0 visible"
-                  : "opacity-0 translate-x-8 invisible pointer-events-none"
-              }`}
+              className={`absolute inset-x-0 top-0 transition-all duration-400 ease-in-out ${isRecover
+                ? "opacity-100 translate-x-0 visible"
+                : "opacity-0 translate-x-8 invisible pointer-events-none"
+                }`}
             >
               <div className="mb-5 sm:mb-8">
                 <div className="flex items-center gap-3 mb-4">

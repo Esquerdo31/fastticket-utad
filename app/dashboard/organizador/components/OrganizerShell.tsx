@@ -11,8 +11,9 @@ import ProfileContent from '../../utilizador/components/ProfileContent';
 import CreateEventWizard from './CreateEventWizard';
 import OrganizerPromoters from './OrganizerPromoters';
 import OrganizerStaff from './OrganizerStaff';
+import PromotorContent from '../../utilizador/components/PromotorContent';
 
-type ActiveTab = 'dashboard' | 'events' | 'sales' | 'profile' | 'create-event' | 'edit-event' | 'promoters' | 'staff';
+type ActiveTab = 'dashboard' | 'events' | 'sales' | 'profile' | 'create-event' | 'edit-event' | 'promoters' | 'staff' | 'promotor';
 
 interface OrganizerShellProps {
     userName: string;
@@ -20,18 +21,35 @@ interface OrganizerShellProps {
         totalEventos: number;
         totalBilhetesVendidos: number;
         receitaTotal: number;
+        totalCapacity?: number;
     };
     eventos: any[];
     nextEvents: any[];
+    recentPurchases?: any[];
+    salesByDate?: any[];
+    promoterLeaderboard?: any[];
     user: {
         id: number;
         nome: string;
         email: string;
         role: string;
     };
+    pedidoPromotores: string;
+    parcerias: any[];
 }
 
-export default function OrganizerShell({ userName, summary, eventos, nextEvents, user }: OrganizerShellProps) {
+export default function OrganizerShell({ 
+    userName, 
+    summary, 
+    eventos, 
+    nextEvents, 
+    recentPurchases = [], 
+    salesByDate = [], 
+    promoterLeaderboard = [], 
+    user, 
+    pedidoPromotores, 
+    parcerias 
+}: OrganizerShellProps) {
     const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
     const [editEventId, setEditEventId] = useState<number | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -57,7 +75,8 @@ export default function OrganizerShell({ userName, summary, eventos, nextEvents,
         { id: 'dashboard', icon: 'dashboard', label: 'Painel' },
         { id: 'events', icon: 'campaign', label: 'Meus Eventos' },
         { id: 'sales', icon: 'analytics', label: 'Vendas' },
-        { id: 'promoters', icon: 'groups', label: 'Núcleos & Promotores' },
+        ...(pedidoPromotores === 'APROVADO' ? [{ id: 'promoters' as ActiveTab, icon: 'groups', label: 'Núcleos & Promotores' }] : []),
+        ...(parcerias.length > 0 ? [{ id: 'promotor' as ActiveTab, icon: 'handshake', label: 'Minhas Parcerias' }] : []),
         { id: 'staff', icon: 'badge', label: 'Equipa Staff' },
         { id: 'profile', icon: 'person', label: 'Definições' },
     ];
@@ -65,6 +84,7 @@ export default function OrganizerShell({ userName, summary, eventos, nextEvents,
     const bottomNavItems: { id: ActiveTab; icon: string; label: string }[] = [
         { id: 'dashboard', icon: 'dashboard', label: 'Painel' },
         { id: 'events', icon: 'campaign', label: 'Eventos' },
+        ...(parcerias.length > 0 ? [{ id: 'promotor' as ActiveTab, icon: 'handshake', label: 'Parcerias' }] : []),
         { id: 'sales', icon: 'analytics', label: 'Vendas' },
         { id: 'profile', icon: 'person', label: 'Perfil' },
     ];
@@ -124,12 +144,21 @@ export default function OrganizerShell({ userName, summary, eventos, nextEvents,
                 {/* Main Content Canvas */}
                 <main className="flex-1 md:ml-64 p-6 lg:p-10 pb-24 md:pb-10">
                     <div key={activeTab} className="animate-fadeIn">
-                        {activeTab === 'dashboard' && <OrganizerDashboard userName={userName} summary={summary} nextEvents={nextEvents} />}
+                        {activeTab === 'dashboard' && <OrganizerDashboard userName={userName} summary={summary} nextEvents={nextEvents} pedidoPromotores={pedidoPromotores} parcerias={parcerias} onTabChange={handleTabChange} />}
                         {activeTab === 'events' && <OrganizerEvents eventos={eventos} onCreateEvent={() => handleTabChange('create-event')} onEditEvent={handleEditEvent} />}
                         {activeTab === 'create-event' && <CreateEventWizard userName={userName} userId={user.id} onEventCreated={() => { handleTabChange('events'); router.refresh(); }} />}
                         {activeTab === 'edit-event' && editEventId && <CreateEventWizard userName={userName} userId={user.id} editEventId={editEventId} onEventCreated={() => { setEditEventId(null); handleTabChange('events'); router.refresh(); }} />}
-                        {activeTab === 'sales' && <OrganizerSales eventos={eventos} summary={summary} />}
+                        {activeTab === 'sales' && (
+                            <OrganizerSales 
+                                eventos={eventos} 
+                                summary={summary} 
+                                recentPurchases={recentPurchases} 
+                                salesByDate={salesByDate}
+                                promoterLeaderboard={promoterLeaderboard}
+                            />
+                        )}
                         {activeTab === 'promoters' && <OrganizerPromoters eventos={eventos} />}
+                        {activeTab === 'promotor' && <PromotorContent parcerias={parcerias} onRefresh={() => router.refresh()} />}
                         {activeTab === 'staff' && <OrganizerStaff eventos={eventos} />}
                         {activeTab === 'profile' && <ProfileContent user={user} onLogout={handleLogout} />}
                     </div>

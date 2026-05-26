@@ -21,6 +21,7 @@ interface AdminShellProps {
     };
     users: any[];
     eventos: any[];
+    promoterRequests: any[];
     user: {
         id: number;
         nome: string;
@@ -29,7 +30,7 @@ interface AdminShellProps {
     };
 }
 
-export default function AdminShell({ userName, summary, users, eventos, user }: AdminShellProps) {
+export default function AdminShell({ userName, summary, users, eventos, promoterRequests, user }: AdminShellProps) {
     const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
     const [isPending, startTransition] = useTransition();
     const [searchQuery, setSearchQuery] = useState('');
@@ -190,6 +191,7 @@ export default function AdminShell({ userName, summary, users, eventos, user }: 
                         {activeTab === 'approvals' && (
                             <AdminApprovals
                                 eventos={filteredEvents}
+                                promoterRequests={promoterRequests}
                                 onRefresh={handleRefresh}
                             />
                         )}

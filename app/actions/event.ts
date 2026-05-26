@@ -97,7 +97,9 @@ export async function getEventoById(id: number) {
                     price: l.preco === 0 ? "Gratuito" : `${l.preco.toFixed(2)}€`,
                     lotacaoTotal: l.lotacaoTotal,
                     quantidadeDisponivel: l.quantidadeDisponivel,
-                    esgotado: l.quantidadeDisponivel === 0
+                    esgotado: l.quantidadeDisponivel === 0,
+                    tipo: (l as any).tipo || "DIARIO",
+                    diasValidos: (l as any).diasValidos || ""
                 }))
             } 
         };

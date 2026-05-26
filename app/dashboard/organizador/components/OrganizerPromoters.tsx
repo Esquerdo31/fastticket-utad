@@ -27,7 +27,7 @@ export default function OrganizerPromoters({ eventos }: { eventos: any[] }) {
         setLoading(true);
         const res = await getPromotoresPorEvento(selectedEventId);
         if (res.success) {
-            setPromotores(res.data);
+            setPromotores(res.data || []);
         }
         setLoading(false);
     };
@@ -95,15 +95,16 @@ export default function OrganizerPromoters({ eventos }: { eventos: any[] }) {
                                     <th className="p-4 font-bold">Núcleo / Parceiro</th>
                                     <th className="p-4 font-bold">Link (Slug)</th>
                                     <th className="p-4 font-bold">Comissão</th>
+                                    <th className="p-4 font-bold">Estado</th>
                                     <th className="p-4 font-bold text-center">Bilhetes Vendidos</th>
                                     <th className="p-4 font-bold text-right">A Pagar</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400">A carregar dados...</td></tr>
+                                    <tr><td colSpan={6} className="p-8 text-center text-slate-400">A carregar dados...</td></tr>
                                 ) : promotores.length === 0 ? (
-                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400">Nenhum parceiro associado a este evento.</td></tr>
+                                    <tr><td colSpan={6} className="p-8 text-center text-slate-400">Nenhum parceiro associado a este evento.</td></tr>
                                 ) : promotores.map((p, idx) => (
                                     <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                                         <td className="p-4">
@@ -124,6 +125,23 @@ export default function OrganizerPromoters({ eventos }: { eventos: any[] }) {
                                             <span className="text-sm font-semibold text-violet-700 bg-violet-50 px-2 py-1 rounded">
                                                 {p.comissaoPercent ? `${p.comissaoPercent}%` : `€${p.comissaoValor}`}
                                             </span>
+                                        </td>
+                                        <td className="p-4">
+                                            {p.estado === 'ACEITE' && (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+                                                    <span className="material-symbols-outlined text-[10px]">check_circle</span> Aceite
+                                                </span>
+                                            )}
+                                            {p.estado === 'PENDENTE' && (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider animate-pulse">
+                                                    <span className="material-symbols-outlined text-[10px]">hourglass_empty</span> Pendente
+                                                </span>
+                                            )}
+                                            {p.estado === 'REJEITADO' && (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 uppercase tracking-wider">
+                                                    <span className="material-symbols-outlined text-[10px]">cancel</span> Recusado
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="p-4 text-center">
                                             <span className="text-xl font-black text-slate-800">{p.bilhetesVendidos}</span>

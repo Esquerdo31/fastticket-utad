@@ -8,8 +8,9 @@ import DashboardContent from './DashboardContent';
 import ProfileContent from './ProfileContent';
 import TicketsContent from './TicketsContent';
 import BillingContent from './BillingContent';
+import PromotorContent from './PromotorContent';
 
-type ActiveTab = 'dashboard' | 'tickets' | 'billing' | 'profile';
+type ActiveTab = 'dashboard' | 'tickets' | 'billing' | 'profile' | 'promotor';
 
 interface DashboardShellProps {
     userName: string;
@@ -23,6 +24,7 @@ interface DashboardShellProps {
     };
     tickets: any[];
     orders: any[];
+    parcerias: any[];
     billingSummary: {
         totalGasto: number;
         totalPedidos: number;
@@ -31,7 +33,7 @@ interface DashboardShellProps {
     initialTab?: ActiveTab;
 }
 
-export default function DashboardShell({ userName, nextEvents, suggestions, user, tickets, orders, billingSummary, initialTab = 'dashboard' }: DashboardShellProps) {
+export default function DashboardShell({ userName, nextEvents, suggestions, user, tickets, orders, parcerias, billingSummary, initialTab = 'dashboard' }: DashboardShellProps) {
     const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab);
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
@@ -50,6 +52,7 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
     const sideNavItems: { id: ActiveTab; icon: string; label: string }[] = [
         { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
         { id: 'tickets', icon: 'confirmation_number', label: 'Meus Bilhetes' },
+        ...(parcerias.length > 0 ? [{ id: 'promotor' as ActiveTab, icon: 'campaign', label: 'Afiliados / Promotor' }] : []),
         { id: 'billing', icon: 'payments', label: 'Faturação' },
         { id: 'profile', icon: 'person', label: 'Definições' },
     ];
@@ -57,6 +60,7 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
     const bottomNavItems: { id: ActiveTab | 'explore'; icon: string; label: string; href?: string }[] = [
         { id: 'dashboard', icon: 'dashboard', label: 'Painel' },
         { id: 'tickets', icon: 'confirmation_number', label: 'Bilhetes' },
+        ...(parcerias.length > 0 ? [{ id: 'promotor' as ActiveTab, icon: 'campaign', label: 'Promotor' }] : []),
         { id: 'explore', icon: 'search', label: 'Agenda', href: '/eventos' },
         { id: 'profile', icon: 'person', label: 'Perfil' },
     ];
@@ -132,10 +136,19 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                 <main className="flex-1 md:ml-64 p-6 lg:p-10 pb-24 md:pb-10">
                     <div key={activeTab} className="animate-fadeIn">
                         {activeTab === 'dashboard' && (
-                            <DashboardContent userName={userName} nextEvents={nextEvents} suggestions={suggestions} />
+                            <DashboardContent 
+                                userName={userName} 
+                                nextEvents={nextEvents} 
+                                suggestions={suggestions} 
+                                parcerias={parcerias}
+                                onTabChange={handleTabChange}
+                            />
                         )}
                         {activeTab === 'tickets' && (
                             <TicketsContent tickets={tickets} />
+                        )}
+                        {activeTab === 'promotor' && (
+                            <PromotorContent parcerias={parcerias} onRefresh={() => router.refresh()} />
                         )}
                         {activeTab === 'billing' && (
                             <BillingContent orders={orders} summary={billingSummary} />

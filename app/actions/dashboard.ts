@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "../../lib/prisma";
+import { gerarQRCodeBase64 } from "../../lib/qrcode";
 
 export async function getDashboardData(userId: number) {
     try {
@@ -45,8 +46,38 @@ export async function getDashboardData(userId: number) {
             }
         }
 
-        const nextEvents = Array.from(myEventsMap.values()).map(ev => {
+        const nextEvents = await Promise.all(Array.from(myEventsMap.values()).map(async ev => {
             const dateStr = ev.dateObj.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            // Get all tickets of the user for this event
+            const eventTickets = compras.flatMap(p => p.bilhetes)
+                .filter(b => b.lote.eventoId === ev.id);
+
+            const ticketsWithQR = await Promise.all(eventTickets.map(async b => {
+                const qrCodeBase64 = await gerarQRCodeBase64(b.qrCodeToken);
+                const evDb = b.lote.evento as any;
+                return {
+                    id: b.id,
+                    qrCodeToken: b.qrCodeToken,
+                    qrCodeBase64,
+                    loteNome: b.lote.nome,
+                    estado: b.estado,
+                    preco: b.lote.preco,
+                    eventoTitulo: evDb.titulo,
+                    eventoLocal: evDb.localizacao,
+                    eventoData: ev.dateObj.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    eventoHora: ev.dateObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+                    ticketCorFundo: evDb.ticketCorFundo || "#ffffff",
+                    ticketCorTexto: evDb.ticketCorTexto || "#000000",
+                    ticketMensagem: evDb.ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto.",
+                    ticketBackgroundUrl: evDb.ticketBackgroundUrl || null,
+                    ticketTemplate: evDb.ticketTemplate || "classic",
+                    ticketLogoUrl: evDb.ticketLogoUrl || null,
+                    ticketGlow: evDb.ticketGlow ?? false,
+                    participanteNome: user?.nome || "Participante",
+                };
+            }));
+
             return {
                 id: ev.id,
                 title: ev.title,
@@ -55,8 +86,9 @@ export async function getDashboardData(userId: number) {
                 day: ev.dateObj.toLocaleDateString('pt-PT', { day: '2-digit' }),
                 month: ev.dateObj.toLocaleDateString('pt-PT', { month: 'short' }),
                 time: ev.dateObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+                tickets: ticketsWithQR
             };
-        });
+        }));
 
         // 3. Recomendados (Top 3 futuros cronologicamente)
         const recomendacoes = await prisma.evento.findMany({

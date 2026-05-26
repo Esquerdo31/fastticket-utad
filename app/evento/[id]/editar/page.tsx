@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getEventoById, updateEvento, deleteEvento } from '@/app/actions/evento';
 
-type Tab = 'detalhes' | 'bilheteira' | 'media' | 'config';
+type Tab = 'detalhes' | 'bilheteira' | 'media' | 'personalizacao' | 'config';
 interface Lote { nome: string; descricao: string; preco: number; lotacaoTotal: number; }
 
 export default function EditarEventoPage() {
@@ -33,6 +33,13 @@ export default function EditarEventoPage() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [mostrarBanner, setMostrarBanner] = useState(true);
     const [mostrarLogo, setMostrarLogo] = useState(true);
+    const [ticketCorFundo, setTicketCorFundo] = useState('#ffffff');
+    const [ticketCorTexto, setTicketCorTexto] = useState('#000000');
+    const [ticketMensagem, setTicketMensagem] = useState('Apresente este bilhete impresso ou no telemóvel na entrada do recinto.');
+    const [ticketBackgroundUrl, setTicketBackgroundUrl] = useState('');
+    const [ticketTemplate, setTicketTemplate] = useState('classic');
+    const [ticketLogoUrl, setTicketLogoUrl] = useState('');
+    const [ticketGlow, setTicketGlow] = useState(false);
 
     useEffect(() => {
         if (!eventoId) return;
@@ -45,7 +52,14 @@ export default function EditarEventoPage() {
                 setEstado(d.estado || 'RASCUNHO'); setBannerUrl(d.bannerUrl || '');
                 setThumbnailUrl(d.thumbnailUrl || ''); setOrganizadorId(d.organizadorId);
                 setMostrarBanner(d.mostrarBanner ?? true); setMostrarLogo(d.mostrarLogo ?? true);
-                setLotes(d.lotes.map(l => ({ nome: l.nome, descricao: l.descricao, preco: l.preco, lotacaoTotal: l.lotacaoTotal })));
+                setTicketCorFundo(d.ticketCorFundo || '#ffffff');
+                setTicketCorTexto(d.ticketCorTexto || '#000000');
+                setTicketMensagem(d.ticketMensagem || 'Apresente este bilhete impresso ou no telemóvel na entrada do recinto.');
+                setTicketBackgroundUrl(d.ticketBackgroundUrl || '');
+                setTicketTemplate((d as any).ticketTemplate || 'classic');
+                setTicketLogoUrl((d as any).ticketLogoUrl || '');
+                setTicketGlow((d as any).ticketGlow ?? false);
+                setLotes(d.lotes.map((l: any) => ({ nome: l.nome, descricao: l.descricao, preco: l.preco, lotacaoTotal: l.lotacaoTotal })));
             }
             setLoading(false);
         });
@@ -55,7 +69,29 @@ export default function EditarEventoPage() {
 
     const handleSave = () => {
         startTransition(async () => {
-            const res = await updateEvento(eventoId, { titulo, descricao, dataInicio, dataFim, localizacao, organizadorId, lotes, bannerUrl, thumbnailUrl, formato, categoria, estado, mostrarBanner, mostrarLogo });
+            const res = await updateEvento(eventoId, { 
+                titulo, 
+                descricao, 
+                dataInicio, 
+                dataFim, 
+                localizacao, 
+                organizadorId, 
+                lotes, 
+                bannerUrl, 
+                thumbnailUrl, 
+                formato, 
+                categoria, 
+                estado, 
+                mostrarBanner, 
+                mostrarLogo,
+                ticketCorFundo,
+                ticketCorTexto,
+                ticketMensagem,
+                ticketBackgroundUrl,
+                ticketTemplate,
+                ticketLogoUrl,
+                ticketGlow
+            });
             if (res.success) flash('Evento guardado com sucesso!', 'ok');
             else flash(res.message || 'Erro ao guardar.', 'err');
         });
@@ -69,12 +105,17 @@ export default function EditarEventoPage() {
         });
     };
 
-    const handleUpload = async (file: File, type: 'banner'|'thumbnail') => {
+    const handleUpload = async (file: File, type: 'banner'|'thumbnail'|'ticketBackground'|'ticketLogo') => {
         setUploading(true);
         const fd = new FormData(); fd.append('file', file);
         const res = await fetch('/api/upload', { method: 'POST', body: fd });
         const data = await res.json();
-        if (data.success) { if (type === 'banner') setBannerUrl(data.url); else setThumbnailUrl(data.url); }
+        if (data.success) { 
+            if (type === 'banner') setBannerUrl(data.url); 
+            else if (type === 'thumbnail') setThumbnailUrl(data.url);
+            else if (type === 'ticketBackground') setTicketBackgroundUrl(data.url);
+            else if (type === 'ticketLogo') setTicketLogoUrl(data.url);
+        }
         else flash(data.message || 'Erro no upload.', 'err');
         setUploading(false);
     };
@@ -88,6 +129,7 @@ export default function EditarEventoPage() {
         { id: 'detalhes', icon: 'description', label: 'Detalhes' },
         { id: 'bilheteira', icon: 'confirmation_number', label: 'Bilheteira' },
         { id: 'media', icon: 'image', label: 'Media' },
+        { id: 'personalizacao', icon: 'palette', label: 'Personalizar Bilhete' },
         { id: 'config', icon: 'settings', label: 'Configurações' },
     ];
 
@@ -258,6 +300,293 @@ export default function EditarEventoPage() {
                             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center justify-between">
                                 <div><p className="font-bold text-slate-800 text-sm">Mostrar Logo/Thumbnail na Página do Evento</p><p className="text-xs text-slate-500">Se ativado, aparece junto ao título como identidade visual.</p></div>
                                 <button type="button" onClick={() => setMostrarLogo(!mostrarLogo)} className={`relative w-12 h-7 rounded-full transition-colors ${mostrarLogo ? 'bg-violet-700' : 'bg-slate-300'}`}><span className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${mostrarLogo ? 'translate-x-5' : ''}`} /></button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TAB: PERSONALIZAR BILHETE */}
+                    {tab === 'personalizacao' && (
+                        <div className="space-y-8">
+                            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+                                <h2 className="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-violet-700">palette</span>
+                                    Design do Bilhete PDF & Digital
+                                </h2>
+                                <p className="text-sm text-slate-500 mb-6">
+                                    Escolha um estilo visual e carregue designs personalizados para tornar os bilhetes do seu evento únicos.
+                                </p>
+                                
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    <div className="space-y-6">
+                                        {/* Template selector */}
+                                        <div>
+                                            <label className={labelCls}>Estilo Visual / Template</label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {[
+                                                    { id: 'classic', label: 'Clássico', desc: 'Picotado tradicional' },
+                                                    { id: 'glassmorphism', label: 'Glassmorphism', desc: 'Vidro premium fosco' },
+                                                    { id: 'neon', label: 'Cyberpunk Neon', desc: 'Fundo escuro e neon' },
+                                                    { id: 'minimalist', label: 'Minimalista', desc: 'Limpo e tipográfico' }
+                                                ].map(tmpl => (
+                                                    <button
+                                                        key={tmpl.id}
+                                                        type="button"
+                                                        onClick={() => setTicketTemplate(tmpl.id)}
+                                                        className={`p-4 rounded-xl border text-left transition-all ${ticketTemplate === tmpl.id ? 'border-violet-700 bg-violet-50/50 ring-2 ring-violet-700/10' : 'border-slate-200 hover:border-slate-300'}`}
+                                                    >
+                                                        <p className="font-bold text-sm text-slate-800">{tmpl.label}</p>
+                                                        <p className="text-[10px] text-slate-400 mt-0.5">{tmpl.desc}</p>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Background upload control */}
+                                        <div>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className={labelCls + " !mb-0"}>Imagem de Fundo do Bilhete</label>
+                                                {ticketBackgroundUrl && (
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setTicketBackgroundUrl('')}
+                                                        className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">delete</span> Remover Fundo
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {ticketBackgroundUrl ? (
+                                                <div className="relative rounded-xl overflow-hidden border border-slate-200 group h-32">
+                                                    <img src={ticketBackgroundUrl} alt="Fundo bilhete" className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <label className="bg-white text-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                                                            Alterar Imagem
+                                                            <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0], 'ticketBackground'); }} />
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <label className="border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-100 transition-colors hover:border-violet-700/50">
+                                                    <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0], 'ticketBackground'); }} />
+                                                    <span className="material-symbols-outlined text-3xl text-slate-400 mb-2">cloud_upload</span>
+                                                    <p className="text-xs font-bold text-slate-700">Carregar Imagem de Fundo (Ex: Arte do Evento)</p>
+                                                    <p className="text-[10px] text-slate-400 mt-1">PNG, JPG de alta resolução</p>
+                                                </label>
+                                            )}
+                                        </div>
+
+                                        {/* Logo upload control */}
+                                        <div>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className={labelCls + " !mb-0"}>Logótipo do Recinto / Patrocinadores</label>
+                                                {ticketLogoUrl && (
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setTicketLogoUrl('')}
+                                                        className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">delete</span> Remover Logo
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {ticketLogoUrl ? (
+                                                <div className="relative rounded-xl overflow-hidden border border-slate-200 group h-20 bg-slate-50 flex items-center justify-center p-3">
+                                                    <img src={ticketLogoUrl} alt="Logo bilhete" className="h-full object-contain" />
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <label className="bg-white text-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                                                            Alterar Logo
+                                                            <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0], 'ticketLogo'); }} />
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <label className="border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-100 transition-colors hover:border-violet-700/50">
+                                                    <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0], 'ticketLogo'); }} />
+                                                    <span className="material-symbols-outlined text-3xl text-slate-400 mb-2">add_photo_alternate</span>
+                                                    <p className="text-xs font-bold text-slate-700">Carregar Logótipo Oficial (Opcional)</p>
+                                                    <p className="text-[10px] text-slate-400 mt-1">Ideal: Imagem horizontal sem fundo (PNG transparente)</p>
+                                                </label>
+                                            )}
+                                        </div>
+
+                                        {/* Cores picker */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className={labelCls}>Cor Base do Bilhete</label>
+                                                <div className="flex gap-2 items-center">
+                                                    <input 
+                                                        type="color" 
+                                                        value={ticketCorFundo} 
+                                                        onChange={e => setTicketCorFundo(e.target.value)} 
+                                                        className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer animate-none"
+                                                    />
+                                                    <input 
+                                                        type="text" 
+                                                        value={ticketCorFundo} 
+                                                        onChange={e => setTicketCorFundo(e.target.value)} 
+                                                        className={inputCls + " !p-2 text-center"} 
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className={labelCls}>Cor do Texto</label>
+                                                <div className="flex gap-2 items-center">
+                                                    <input 
+                                                        type="color" 
+                                                        value={ticketCorTexto} 
+                                                        onChange={e => setTicketCorTexto(e.target.value)} 
+                                                        className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer animate-none"
+                                                    />
+                                                    <input 
+                                                        type="text" 
+                                                        value={ticketCorTexto} 
+                                                        onChange={e => setTicketCorTexto(e.target.value)} 
+                                                        className={inputCls + " !p-2 text-center"} 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Glow toggle */}
+                                        <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                            <div>
+                                                <p className="font-bold text-slate-800 text-xs">Efeito Neon Glow / Brilho Externo</p>
+                                                <p className="text-[10px] text-slate-500">Adiciona uma aura de iluminação ao redor do bilhete.</p>
+                                            </div>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setTicketGlow(!ticketGlow)} 
+                                                className={`relative w-12 h-7 rounded-full transition-colors ${ticketGlow ? 'bg-violet-700' : 'bg-slate-300'}`}
+                                            >
+                                                <span className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${ticketGlow ? 'translate-x-5' : ''}`} />
+                                            </button>
+                                        </div>
+
+                                        {/* Mensagem custom */}
+                                        <div>
+                                            <label className={labelCls}>Rodapé / Instruções do Bilhete</label>
+                                            <textarea 
+                                                rows={2} 
+                                                value={ticketMensagem} 
+                                                onChange={e => setTicketMensagem(e.target.value)} 
+                                                className={inputCls} 
+                                                placeholder="Instruções para o check-in ou notas adicionais..."
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Preview do Bilhete Column */}
+                                    <div className="flex flex-col items-center justify-start">
+                                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 w-full text-left">Pré-visualização do Bilhete</h3>
+                                        
+                                        {/* Background wrapper to simulate glassmorphic depth */}
+                                        <div className="w-full flex justify-center p-8 bg-slate-900 rounded-2xl border border-slate-800 relative overflow-hidden min-h-[500px] items-center">
+                                            {/* Colored ambient orbs for glassmorphism */}
+                                            {ticketTemplate === 'glassmorphism' && (
+                                                <>
+                                                    <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-violet-600 rounded-full blur-[40px] opacity-40 animate-pulse" />
+                                                    <div className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-fuchsia-600 rounded-full blur-[40px] opacity-40 animate-pulse" />
+                                                </>
+                                            )}
+
+                                            {/* Neon grids or glow orbs for Cyberpunk */}
+                                            {ticketTemplate === 'neon' && (
+                                                <div className="absolute inset-0 bg-slate-950 opacity-10" />
+                                            )}
+
+                                            <div 
+                                                style={{ 
+                                                    backgroundColor: (ticketTemplate === 'glassmorphism' || ticketTemplate === 'neon') ? undefined : (ticketBackgroundUrl ? undefined : ticketCorFundo),
+                                                    color: (ticketTemplate === 'glassmorphism' || ticketTemplate === 'neon' || ticketBackgroundUrl) ? '#ffffff' : ticketCorTexto,
+                                                    backgroundImage: ticketBackgroundUrl ? `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.85)), url(${ticketBackgroundUrl})` : undefined,
+                                                    backgroundSize: 'cover',
+                                                    backgroundPosition: 'center',
+                                                    borderColor: ticketTemplate === 'neon' ? (ticketCorFundo || '#8b5cf6') : undefined,
+                                                }}
+                                                className={`w-full max-w-xs rounded-2xl flex flex-col p-6 font-sans transition-all duration-300 relative border ${
+                                                    ticketTemplate === 'glassmorphism' 
+                                                        ? 'bg-white/10 backdrop-blur-md border-white/20 shadow-2xl shadow-black/50' 
+                                                        : ticketTemplate === 'neon'
+                                                            ? 'bg-slate-950/90 border-2 shadow-2xl shadow-violet-500/10'
+                                                            : ticketTemplate === 'minimalist'
+                                                                ? 'bg-white text-slate-900 border-slate-200 shadow-lg'
+                                                                : 'border-slate-200/60 shadow-lg'
+                                                } ${
+                                                    ticketGlow ? 'shadow-[0_0_25px_rgba(139,92,246,0.5)]' : ''
+                                                }`}
+                                            >
+                                                {/* Classic Cutout Circles */}
+                                                {ticketTemplate === 'classic' && (
+                                                    <>
+                                                        <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-900 rounded-full border-r border-slate-200/60 z-10" />
+                                                        <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-900 rounded-full border-l border-slate-200/60 z-10" />
+                                                    </>
+                                                )}
+
+                                                {/* Header & Logo */}
+                                                <div className={`pb-4 flex flex-col items-center border-b ${
+                                                    ticketTemplate === 'glassmorphism' 
+                                                        ? 'border-white/10' 
+                                                        : ticketTemplate === 'neon' 
+                                                            ? 'border-violet-500/20' 
+                                                            : ticketTemplate === 'minimalist'
+                                                                ? 'border-slate-100'
+                                                                : 'border-dashed border-slate-300/80'
+                                                }`}>
+                                                    {ticketLogoUrl ? (
+                                                        <img src={ticketLogoUrl} alt="Logo" className="h-10 object-contain mb-2 max-w-full" />
+                                                    ) : (
+                                                        <div className={`text-[10px] uppercase font-black tracking-[0.25em] ${
+                                                            ticketTemplate === 'neon' ? 'text-violet-400' : 'opacity-60'
+                                                        }`}>FASTTICKET</div>
+                                                    )}
+                                                    <h4 className={`text-md font-bold truncate mt-1 text-center max-w-full ${
+                                                        ticketTemplate === 'neon' ? 'text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 font-extrabold' : ''
+                                                    }`}>
+                                                        {titulo || "Título do Evento"}
+                                                    </h4>
+                                                    <p className="text-[10px] opacity-75 mt-0.5 truncate text-center max-w-full">{localizacao || "Localização"}</p>
+                                                </div>
+                                                
+                                                {/* Participant & QR Code */}
+                                                <div className="flex flex-col items-center my-6 space-y-4">
+                                                    <div className="text-center">
+                                                        <p className="text-[9px] uppercase tracking-widest opacity-60">Participante</p>
+                                                        <p className="text-sm font-bold tracking-wide uppercase mt-0.5">PARTICIPANTE EXEMPLO</p>
+                                                    </div>
+
+                                                    <div className={`w-36 h-36 bg-white rounded-2xl p-3 flex items-center justify-center shadow-lg transition-transform hover:scale-105 ${
+                                                        ticketTemplate === 'neon' ? 'border-2 border-violet-500/50' : 'border border-slate-100'
+                                                    }`}>
+                                                        <span className="material-symbols-outlined text-[90px] text-slate-900 select-none">qr_code_2</span>
+                                                    </div>
+                                                    
+                                                    <div className={`text-xs font-bold px-4 py-1.5 rounded-lg shadow-sm font-mono tracking-widest ${
+                                                        ticketTemplate === 'neon' ? 'bg-violet-950 text-violet-300 border border-violet-500/30' : 'bg-slate-100 text-slate-800'
+                                                    }`}>
+                                                        12345678
+                                                    </div>
+                                                </div>
+
+                                                {/* Ticket Footer / Message */}
+                                                <div className={`border-t pt-4 mt-auto text-center ${
+                                                    ticketTemplate === 'glassmorphism' 
+                                                        ? 'border-white/10' 
+                                                        : ticketTemplate === 'neon' 
+                                                            ? 'border-violet-500/20' 
+                                                            : ticketTemplate === 'minimalist'
+                                                                ? 'border-slate-100'
+                                                                : 'border-dashed border-slate-300/80'
+                                                }`}>
+                                                    <p className="text-[9px] uppercase tracking-widest opacity-60 mb-1">Lote: Geral / Único</p>
+                                                    <p className="text-[9px] leading-relaxed opacity-70 max-h-16 overflow-y-auto px-1">
+                                                        {ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto."}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}

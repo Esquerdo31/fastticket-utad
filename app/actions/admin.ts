@@ -183,3 +183,54 @@ export async function exportarRelatorioGlobal() {
         return { success: false, message: error.message };
     }
 }
+
+export async function getPendingPromoterRequests() {
+    try {
+        const session = await getActiveSession();
+        if (!session || session.role !== 'ADMIN') {
+            return { success: false, message: 'Não autorizado.', requests: [] };
+        }
+
+        const requests = await prisma.utilizador.findMany({
+            where: {
+                role: 'ORGANIZADOR',
+                pedidoPromotores: 'PENDENTE'
+            },
+            select: {
+                id: true,
+                nome: true,
+                email: true,
+                pedidoPromotores: true
+            },
+            orderBy: {
+                id: 'asc'
+            }
+        });
+
+        return { success: true, requests };
+    } catch (error: any) {
+        console.error('Erro ao obter pedidos de promotores pendentes:', error);
+        return { success: false, message: error.message, requests: [] };
+    }
+}
+
+export async function avaliarPedidoPromotores(userId: number, aprovado: boolean) {
+    try {
+        const session = await getActiveSession();
+        if (!session || session.role !== 'ADMIN') {
+            return { success: false, message: 'Não autorizado.' };
+        }
+
+        const novoEstado = aprovado ? 'APROVADO' : 'REJEITADO';
+
+        await prisma.utilizador.update({
+            where: { id: userId },
+            data: { pedidoPromotores: novoEstado }
+        });
+
+        return { success: true, message: `Pedido de promotores ${aprovado ? 'aprovado' : 'recusado'} com sucesso!` };
+    } catch (error: any) {
+        console.error('Erro ao avaliar pedido de promotores:', error);
+        return { success: false, message: error.message };
+    }
+}

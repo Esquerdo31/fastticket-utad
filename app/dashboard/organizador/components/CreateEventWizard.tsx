@@ -2,8 +2,37 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import { createEvento, getEventoById, updateEvento } from '@/app/actions/evento';
 
-interface Lote { nome: string; descricao: string; preco: number; lotacaoTotal: number; }
+interface Lote { 
+    id?: number;
+    nome: string; 
+    descricao: string; 
+    preco: number; 
+    lotacaoTotal: number; 
+    quantidadeDisponivel?: number;
+    tipo?: string; 
+    diasValidos?: string; 
+}
 interface Props { userName: string; userId: number; onEventCreated: () => void; editEventId?: number; }
+
+function getDiasEvento(start: string, end: string) {
+    if (!start) return [];
+    const startDate = new Date(start);
+    const endDate = end ? new Date(end) : startDate;
+    const dias = [];
+    let current = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const limit = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    
+    let safetyCounter = 0;
+    while (current <= limit && safetyCounter < 30) {
+        const y = current.getFullYear();
+        const m = String(current.getMonth() + 1).padStart(2, '0');
+        const d = String(current.getDate()).padStart(2, '0');
+        dias.push(`${y}-${m}-${d}`);
+        current.setDate(current.getDate() + 1);
+        safetyCounter++;
+    }
+    return dias;
+}
 
 export default function CreateEventWizard({ userName, userId, onEventCreated, editEventId }: Props) {
     const isEditMode = !!editEventId;
@@ -15,7 +44,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
     const [dataFim, setDataFim] = useState('');
     const [descricao, setDescricao] = useState('');
     const [localizacao, setLocalizacao] = useState('');
-    const [lotes, setLotes] = useState<Lote[]>([{ nome: 'Geral', descricao: '', preco: 0, lotacaoTotal: 50 }]);
+    const [lotes, setLotes] = useState<Lote[]>([{ nome: 'Geral', descricao: '', preco: 0, lotacaoTotal: 50, tipo: 'DIARIO', diasValidos: '' }]);
     const [bannerUrl, setBannerUrl] = useState('');
     const [thumbnailUrl, setThumbnailUrl] = useState('');
     const [uploading, setUploading] = useState(false);
@@ -34,7 +63,16 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                 setLocalizacao(res.data.localizacao);
                 setBannerUrl(res.data.bannerUrl || '');
                 setThumbnailUrl(res.data.thumbnailUrl || '');
-                setLotes(res.data.lotes.map(l => ({ nome: l.nome, descricao: l.descricao, preco: l.preco, lotacaoTotal: l.lotacaoTotal })));
+                setLotes(res.data.lotes.map((l: any) => ({ 
+                    id: l.id,
+                    nome: l.nome, 
+                    descricao: l.descricao, 
+                    preco: l.preco, 
+                    lotacaoTotal: l.lotacaoTotal,
+                    quantidadeDisponivel: l.quantidadeDisponivel,
+                    tipo: (l as any).tipo || 'DIARIO',
+                    diasValidos: (l as any).diasValidos || ''
+                })));
             } else {
                 setError(res.message || 'Erro ao carregar evento.');
             }
@@ -46,7 +84,17 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
     const nextLabel = step === 1 ? 'Próximo: Bilheteira' : step === 2 ? 'Próximo: Publicação' : (isEditMode ? 'Guardar Alterações' : 'Publicar Evento');
     const totalBilhetes = lotes.reduce((s, l) => s + l.lotacaoTotal, 0);
 
-    const addLote = () => setLotes([...lotes, { nome: '', descricao: '', preco: 0, lotacaoTotal: 10 }]);
+    const addLote = () => {
+        const days = getDiasEvento(dataInicio, dataFim);
+        setLotes([...lotes, { 
+            nome: '', 
+            descricao: '', 
+            preco: 0, 
+            lotacaoTotal: 10, 
+            tipo: 'DIARIO', 
+            diasValidos: days[0] || '' 
+        }]);
+    };
     const removeLote = (i: number) => { if (lotes.length > 1) setLotes(lotes.filter((_, idx) => idx !== i)); };
     const updateLote = (i: number, field: keyof Lote, value: string | number) => {
         const u = [...lotes]; (u[i] as any)[field] = value; setLotes(u);
@@ -56,6 +104,17 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
         setError('');
         if (step === 1) {
             if (!titulo.trim() || !dataInicio || !localizacao.trim() || !descricao.trim()) { setError('Preencha todos os campos obrigatórios.'); return; }
+            const days = getDiasEvento(dataInicio, dataFim);
+            setLotes(prev => prev.map(l => {
+                if (!l.diasValidos) {
+                    return {
+                        ...l,
+                        tipo: l.tipo || 'DIARIO',
+                        diasValidos: l.tipo === 'GERAL' ? days.join(',') : (days[0] || '')
+                    };
+                }
+                return l;
+            }));
             setStep(2);
         } else if (step === 2) {
             if (lotes.some(l => !l.nome.trim() || l.lotacaoTotal < 1)) { setError('Preencha o nome e quantidade de cada lote.'); return; }
@@ -216,36 +275,103 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                         </button>
                                     </div>
                                     <div className="space-y-4">
-                                        {lotes.map((lote, i) => (
-                                            <div key={i} className="bg-slate-50 rounded-xl p-6 border border-slate-200 relative group">
-                                                {lotes.length > 1 && (
-                                                    <button type="button" onClick={() => removeLote(i)} className="absolute top-3 right-3 p-1 text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                                                        <span className="material-symbols-outlined text-[20px]">close</span>
-                                                    </button>
-                                                )}
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                                    <div className="md:col-span-2">
-                                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Nome do Lote</label>
-                                                        <input type="text" value={lote.nome} onChange={e => updateLote(i, 'nome', e.target.value)} placeholder="Ex: Geral, VIP, Estudante" className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                        {lotes.map((lote, i) => {
+                                            const vendidos = lote.id && lote.quantidadeDisponivel !== undefined ? lote.lotacaoTotal - lote.quantidadeDisponivel : 0;
+                                            const hasSoldTickets = vendidos > 0;
+
+                                            return (
+                                                <div key={i} className="bg-slate-50 rounded-xl p-6 border border-slate-200 relative group">
+                                                    {lotes.length > 1 && (
+                                                        hasSoldTickets ? (
+                                                            <div className="absolute top-3 right-3 p-1 bg-amber-50 rounded px-2.5 py-1 border border-amber-200 text-amber-700 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider shadow-sm select-none" title="Lote com bilhetes emitidos (não pode ser removido)">
+                                                                <span className="material-symbols-outlined text-[14px]">lock</span>
+                                                                Ativo ({vendidos} vendidos)
+                                                            </div>
+                                                        ) : (
+                                                            <button type="button" onClick={() => removeLote(i)} className="absolute top-3 right-3 p-1 text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                                                                <span className="material-symbols-outlined text-[20px]">close</span>
+                                                            </button>
+                                                        )
+                                                    )}
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                                        <div className="md:col-span-2">
+                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Nome do Lote</label>
+                                                            <input type="text" value={lote.nome} onChange={e => updateLote(i, 'nome', e.target.value)} disabled={hasSoldTickets} placeholder="Ex: Geral, VIP, Estudante" className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Quantidade</label>
+                                                            <input type="number" min={hasSoldTickets ? vendidos : 1} value={lote.lotacaoTotal} onChange={e => updateLote(i, 'lotacaoTotal', parseInt(e.target.value) || 0)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                            {hasSoldTickets && (
+                                                                <span className="text-[9px] text-amber-600 font-bold mt-1 block">Mínimo: {vendidos} (vendidos)</span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Quantidade</label>
-                                                        <input type="number" min={1} value={lote.lotacaoTotal} onChange={e => updateLote(i, 'lotacaoTotal', parseInt(e.target.value) || 0)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Preço (€)</label>
+                                                            <input type="number" min={0} step={0.01} value={lote.preco} onChange={e => updateLote(i, 'preco', parseFloat(e.target.value) || 0)} disabled={hasSoldTickets} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed" />
+                                                            {hasSoldTickets && (
+                                                                <span className="text-[9px] text-slate-400 font-medium mt-1 block">Bloqueado (bilhetes vendidos)</span>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Descrição (Opcional)</label>
+                                                            <input type="text" value={lote.descricao} onChange={e => updateLote(i, 'descricao', e.target.value)} placeholder="Ex: Acesso geral ao evento" className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Preço (€)</label>
-                                                        <input type="number" min={0} step={0.01} value={lote.preco} onChange={e => updateLote(i, 'preco', parseFloat(e.target.value) || 0)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Descrição (Opcional)</label>
-                                                        <input type="text" value={lote.descricao} onChange={e => updateLote(i, 'descricao', e.target.value)} placeholder="Ex: Acesso geral ao evento" className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Tipo de Bilhete</label>
+                                                            <select
+                                                                value={lote.tipo || 'DIARIO'}
+                                                                disabled={hasSoldTickets}
+                                                                onChange={e => {
+                                                                    const type = e.target.value;
+                                                                    const days = getDiasEvento(dataInicio, dataFim);
+                                                                    updateLote(i, 'tipo', type);
+                                                                    updateLote(i, 'diasValidos', type === 'GERAL' ? days.join(',') : (days[0] || ''));
+                                                                }}
+                                                                className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                                                            >
+                                                                <option value="DIARIO">Bilhete Diário</option>
+                                                                <option value="GERAL">Passe Geral (Todos os dias)</option>
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Dia(s) Válido(s)</label>
+                                                            {lote.tipo === 'GERAL' ? (
+                                                                <div className="w-full p-3 bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600">
+                                                                    Todos os dias ({getDiasEvento(dataInicio, dataFim).length} dias)
+                                                                </div>
+                                                            ) : (
+                                                                <select
+                                                                    value={lote.diasValidos || ''}
+                                                                    disabled={hasSoldTickets}
+                                                                    onChange={e => updateLote(i, 'diasValidos', e.target.value)}
+                                                                    className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                                                                >
+                                                                    {getDiasEvento(dataInicio, dataFim).map(day => {
+                                                                    // Format using JS date or simple slice
+                                                                    const dateObj = new Date(day + 'T00:00:00');
+                                                                    const label = dateObj.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });
+                                                                    return (
+                                                                        <option key={day} value={day}>
+                                                                            {label}
+                                                                        </option>
+                                                                    );
+                                                                })}
+                                                                {getDiasEvento(dataInicio, dataFim).length === 0 && (
+                                                                    <option value="">(Defina primeiro as datas do evento)</option>
+                                                                )}
+                                                            </select>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
+                                        );
+                                    })}
+                                </div>
                                 </div>
                                 <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
                                     <h3 className="font-bold text-slate-900 mb-4">Resumo da Bilheteira</h3>

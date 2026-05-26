@@ -10,10 +10,13 @@ import { z } from "zod";
 // ==========================================
 
 const loteSchema = z.object({
+    id: z.number().optional(),
     nome: z.string().min(1, 'O nome do lote é obrigatório.'),
     descricao: z.string().optional(),
     preco: z.number().min(0, 'O preço não pode ser negativo.'),
     lotacaoTotal: z.number().int().positive('A lotação total deve ser um número positivo.'),
+    tipo: z.string().optional(),
+    diasValidos: z.string().optional(),
 });
 
 const criarEventoSchema = z.object({
@@ -31,6 +34,13 @@ const criarEventoSchema = z.object({
     estado: z.string().optional(),
     mostrarBanner: z.boolean().optional(),
     mostrarLogo: z.boolean().optional(),
+    ticketCorFundo: z.string().optional(),
+    ticketCorTexto: z.string().optional(),
+    ticketMensagem: z.string().optional(),
+    ticketBackgroundUrl: z.string().optional(),
+    ticketTemplate: z.string().optional(),
+    ticketLogoUrl: z.string().optional(),
+    ticketGlow: z.boolean().optional(),
 });
 
 // Tipo inferido do schema para reutilização
@@ -54,7 +64,7 @@ export async function createEvento(data: CreateEventoInput) {
 
         const lotacaoMaxima = validated.lotes.reduce((sum, l) => sum + l.lotacaoTotal, 0);
 
-        const evento = await prisma.evento.create({
+        const evento = await (prisma.evento.create as any)({
             data: {
                 titulo: validated.titulo,
                 descricao: validated.descricao,
@@ -69,6 +79,13 @@ export async function createEvento(data: CreateEventoInput) {
                 thumbnailUrl: validated.thumbnailUrl || null,
                 mostrarBanner: validated.mostrarBanner ?? true,
                 mostrarLogo: validated.mostrarLogo ?? true,
+                ticketCorFundo: validated.ticketCorFundo || "#ffffff",
+                ticketCorTexto: validated.ticketCorTexto || "#000000",
+                ticketMensagem: validated.ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto.",
+                ticketBackgroundUrl: validated.ticketBackgroundUrl || null,
+                ticketTemplate: validated.ticketTemplate || "classic",
+                ticketLogoUrl: validated.ticketLogoUrl || null,
+                ticketGlow: validated.ticketGlow ?? false,
                 organizadorId: validated.organizadorId,
                 lotes: {
                     create: validated.lotes.map(lote => ({
@@ -77,6 +94,8 @@ export async function createEvento(data: CreateEventoInput) {
                         preco: lote.preco,
                         lotacaoTotal: lote.lotacaoTotal,
                         quantidadeDisponivel: lote.lotacaoTotal,
+                        tipo: lote.tipo || "DIARIO",
+                        diasValidos: lote.diasValidos || "",
                     })),
                 },
             },
@@ -104,7 +123,7 @@ export async function getEventoById(eventoId: number) {
         const evento = await prisma.evento.findUnique({
             where: { id: eventoId },
             include: { lotes: true },
-        });
+        }) as any;
         if (!evento) return { success: false, message: "Evento não encontrado." };
 
         return {
@@ -125,12 +144,22 @@ export async function getEventoById(eventoId: number) {
                 thumbnailUrl: evento.thumbnailUrl || '',
                 mostrarBanner: evento.mostrarBanner,
                 mostrarLogo: evento.mostrarLogo,
-                lotes: evento.lotes.map(l => ({
+                ticketCorFundo: evento.ticketCorFundo,
+                ticketCorTexto: evento.ticketCorTexto,
+                ticketMensagem: evento.ticketMensagem,
+                ticketBackgroundUrl: evento.ticketBackgroundUrl || '',
+                ticketTemplate: (evento as any).ticketTemplate || 'classic',
+                ticketLogoUrl: (evento as any).ticketLogoUrl || '',
+                ticketGlow: (evento as any).ticketGlow ?? false,
+                lotes: evento.lotes.map((l: any) => ({
                     id: l.id,
                     nome: l.nome,
                     descricao: l.descricao || '',
                     preco: l.preco,
                     lotacaoTotal: l.lotacaoTotal,
+                    quantidadeDisponivel: l.quantidadeDisponivel,
+                    tipo: l.tipo,
+                    diasValidos: l.diasValidos,
                 })),
             },
         };
@@ -160,38 +189,105 @@ export async function updateEvento(eventoId: number, data: CreateEventoInput) {
         }
 
         const validated = parseResult.data;
-
         const lotacaoMaxima = validated.lotes.reduce((sum, l) => sum + l.lotacaoTotal, 0);
 
-        // Delete existing lots and recreate them
-        await prisma.loteBilhete.deleteMany({ where: { eventoId } });
+        // Fetch existing lots from database
+        const existingLots = await prisma.loteBilhete.findMany({
+            where: { eventoId },
+            include: { bilhetes: true }
+        });
 
-        await prisma.evento.update({
-            where: { id: eventoId },
-            data: {
-                titulo: validated.titulo,
-                descricao: validated.descricao,
-                dataInicio: new Date(validated.dataInicio),
-                dataFim: validated.dataFim ? new Date(validated.dataFim) : null,
-                localizacao: validated.localizacao,
-                lotacaoMaxima,
-                formato: validated.formato || "presencial",
-                categoria: validated.categoria || "Conferência",
-                estado: validated.estado,
-                bannerUrl: validated.bannerUrl || null,
-                thumbnailUrl: validated.thumbnailUrl || null,
-                mostrarBanner: validated.mostrarBanner ?? true,
-                mostrarLogo: validated.mostrarLogo ?? true,
-                lotes: {
-                    create: validated.lotes.map(lote => ({
-                        nome: lote.nome,
-                        descricao: lote.descricao || null,
-                        preco: lote.preco,
-                        lotacaoTotal: lote.lotacaoTotal,
-                        quantidadeDisponivel: lote.lotacaoTotal,
-                    })),
-                },
-            },
+        const incomingIds = validated.lotes.map(l => l.id).filter((id): id is number => id !== undefined);
+
+        // Identify lots to delete
+        const lotsToDelete = existingLots.filter(el => !incomingIds.includes(el.id));
+
+        // Check if any lot to delete has sold/issued tickets
+        for (const lot of lotsToDelete) {
+            if (lot.bilhetes.length > 0) {
+                return {
+                    success: false,
+                    message: `Não é possível remover o lote '${lot.nome}' porque já tem bilhetes emitidos.`
+                };
+            }
+        }
+
+        // Perform upserts in a transaction
+        await prisma.$transaction(async (tx) => {
+            // Delete unused lots (that have no tickets)
+            if (lotsToDelete.length > 0) {
+                await tx.loteBilhete.deleteMany({
+                    where: {
+                        id: { in: lotsToDelete.map(l => l.id) }
+                    }
+                });
+            }
+
+            // Upsert incoming lots
+            for (const lote of validated.lotes) {
+                if (lote.id) {
+                    // Update existing lot
+                    const existing = existingLots.find(el => el.id === lote.id);
+                    if (existing) {
+                        const vendidos = existing.lotacaoTotal - existing.quantidadeDisponivel;
+                        const novaQuantDisponivel = Math.max(0, lote.lotacaoTotal - vendidos);
+
+                        await tx.loteBilhete.update({
+                            where: { id: lote.id },
+                            data: {
+                                nome: lote.nome,
+                                descricao: lote.descricao || null,
+                                preco: lote.preco,
+                                lotacaoTotal: lote.lotacaoTotal,
+                                quantidadeDisponivel: novaQuantDisponivel,
+                                tipo: lote.tipo || "DIARIO",
+                                diasValidos: lote.diasValidos || "",
+                            } as any
+                        });
+                    }
+                } else {
+                    // Create new lot
+                    await tx.loteBilhete.create({
+                        data: {
+                            eventoId,
+                            nome: lote.nome,
+                            descricao: lote.descricao || null,
+                            preco: lote.preco,
+                            lotacaoTotal: lote.lotacaoTotal,
+                            quantidadeDisponivel: lote.lotacaoTotal,
+                            tipo: lote.tipo || "DIARIO",
+                            diasValidos: lote.diasValidos || "",
+                        } as any
+                    });
+                }
+            }
+
+            // Update event itself
+            await (tx.evento.update as any)({
+                where: { id: eventoId },
+                data: {
+                    titulo: validated.titulo,
+                    descricao: validated.descricao,
+                    dataInicio: new Date(validated.dataInicio),
+                    dataFim: validated.dataFim ? new Date(validated.dataFim) : null,
+                    localizacao: validated.localizacao,
+                    lotacaoMaxima,
+                    formato: validated.formato || "presencial",
+                    categoria: validated.categoria || "Conferência",
+                    estado: validated.estado,
+                    bannerUrl: validated.bannerUrl || null,
+                    thumbnailUrl: validated.thumbnailUrl || null,
+                    mostrarBanner: validated.mostrarBanner ?? true,
+                    mostrarLogo: validated.mostrarLogo ?? true,
+                    ticketCorFundo: validated.ticketCorFundo || "#ffffff",
+                    ticketCorTexto: validated.ticketCorTexto || "#000000",
+                    ticketMensagem: validated.ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto.",
+                    ticketBackgroundUrl: validated.ticketBackgroundUrl || null,
+                    ticketTemplate: validated.ticketTemplate || "classic",
+                    ticketLogoUrl: validated.ticketLogoUrl || null,
+                    ticketGlow: validated.ticketGlow ?? false,
+                }
+            });
         });
 
         return { success: true, message: "Evento atualizado com sucesso!" };
@@ -220,6 +316,18 @@ export async function deleteEvento(eventoId: number) {
         if (!evento) return { success: false, message: "Evento não encontrado." };
         if (evento.organizadorId !== session.userId) {
             return { success: false, message: "Sem permissão para apagar este evento." };
+        }
+
+        // Check if there are tickets sold/issued
+        const ticketsCount = await prisma.bilhete.count({
+            where: {
+                lote: {
+                    eventoId: eventoId
+                }
+            }
+        });
+        if (ticketsCount > 0) {
+            return { success: false, message: "Não é possível apagar este evento porque já existem bilhetes emitidos." };
         }
 
         // Delete related records first
