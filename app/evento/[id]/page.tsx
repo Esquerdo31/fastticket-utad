@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getActiveSession, logoutUser } from '../../actions/auth';
 import { getEventoById } from '../../actions/event';
+import { joinWaitlist } from '../../actions/engagement';
+import WishlistButton from '../../components/WishlistButton';
 import Link from 'next/link';
 
 export default function EventDetailsDynamic() {
@@ -16,6 +18,8 @@ export default function EventDetailsDynamic() {
     const [userSession, setUserSession] = useState<any>(null);
     const [evento, setEvento] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [waitlistMessage, setWaitlistMessage] = useState('');
+    const [joiningWaitlist, setJoiningWaitlist] = useState(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined' && params.id) {
@@ -56,6 +60,22 @@ export default function EventDetailsDynamic() {
         setUserSession(null);
     };
 
+    const handleJoinWaitlist = async () => {
+        if (!userSession?.userId) {
+            router.push('/login');
+            return;
+        }
+
+        setJoiningWaitlist(true);
+        setWaitlistMessage('');
+        const res = await joinWaitlist(evento.id, userSession.userId);
+        if (res.success) {
+            setEvento((current: any) => current ? { ...current, isWaitlisted: true } : current);
+        }
+        setWaitlistMessage(res.message || (res.success ? 'Entrou na lista de espera.' : 'Nao foi possivel entrar na lista de espera.'));
+        setJoiningWaitlist(false);
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -65,6 +85,10 @@ export default function EventDetailsDynamic() {
     }
 
     if (!evento) return null;
+
+    const bilhetesDisponiveis = evento.availability?.bilhetesDisponiveis ?? 0;
+    const eventoEsgotado = evento.availability?.esgotado ?? bilhetesDisponiveis === 0;
+    const ultimosLugares = evento.availability?.ultimosLugares ?? (bilhetesDisponiveis > 0 && bilhetesDisponiveis < 5);
 
     return (
         <div className="bg-slate-50 font-sans text-slate-800 min-h-screen">
@@ -92,6 +116,10 @@ export default function EventDetailsDynamic() {
                         </div>
                         {userSession ? (
                             <div className="flex items-center gap-4">
+                                <Link href="/wishlist" className="text-sm font-bold text-red-600 bg-red-50 px-4 py-2 rounded-lg whitespace-nowrap border border-red-100 hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-sm">favorite</span>
+                                    Favoritos
+                                </Link>
                                 <Link href="/dashboard" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-800 transition-colors flex items-center gap-2">
                                     <span className="material-symbols-outlined text-sm">person</span>
                                     {userSession.nome || userSession.email.split("@")[0]}
@@ -130,6 +158,15 @@ export default function EventDetailsDynamic() {
                                     <span className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold tracking-widest uppercase mb-4 rounded-full shadow-lg">
                                         {evento.category}
                                     </span>
+                                    {eventoEsgotado ? (
+                                        <span className="ml-3 inline-block px-4 py-1.5 bg-red-500 text-white text-xs font-extrabold tracking-widest uppercase mb-4 rounded-full shadow-lg">
+                                            Esgotado
+                                        </span>
+                                    ) : ultimosLugares ? (
+                                        <span className="ml-3 inline-block px-4 py-1.5 bg-amber-400 text-amber-950 text-xs font-extrabold tracking-widest uppercase mb-4 rounded-full shadow-lg">
+                                            Ultimos lugares!
+                                        </span>
+                                    ) : null}
                                     <h1 className="text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.1] drop-shadow-md">
                                         {evento.title}
                                     </h1>
@@ -204,17 +241,35 @@ export default function EventDetailsDynamic() {
                                 <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
                                     <div className="p-6 bg-[#006837] text-white">
                                         <h3 className="text-xl font-bold">Garantir Bilhete</h3>
-                                        <p className="text-emerald-100/90 text-sm mt-1">Selecione o seu lote abaixo</p>
+                                        <p className="text-emerald-100/90 text-sm mt-1">
+                                            {eventoEsgotado ? 'Este evento esgotou' : `${bilhetesDisponiveis} bilhete(s) disponiveis`}
+                                        </p>
                                     </div>
 
                                     <div className="p-6 space-y-4 bg-white">
+                                        <WishlistButton
+                                            eventoId={evento.id}
+                                            userId={userSession?.userId}
+                                            initialIsWishlisted={Boolean(evento.isWishlisted)}
+                                        />
+
+                                        {eventoEsgotado ? (
+                                            <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+                                                Esgotado
+                                            </div>
+                                        ) : ultimosLugares ? (
+                                            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+                                                Ultimos lugares! Restam apenas {bilhetesDisponiveis}.
+                                            </div>
+                                        ) : null}
+
                                         {evento.lotes && evento.lotes.length > 0 ? evento.lotes.map((ticket: any) => {
                                             const isSelected = selectedTicket === ticket.id;
                                             const isSoldOut = ticket.esgotado;
                                             // Matemática da ocupação
                                             const ocupados = ticket.lotacaoTotal - ticket.quantidadeDisponivel;
                                             const percentagem = Math.min(100, Math.max(0, Math.round((ocupados / ticket.lotacaoTotal) * 100)));
-                                            const almostGone = !isSoldOut && ticket.quantidadeDisponivel <= 20;
+                                            const almostGone = !isSoldOut && ticket.quantidadeDisponivel < 5;
 
                                             return (
                                                 <div key={ticket.id} className="block relative">
@@ -275,7 +330,7 @@ export default function EventDetailsDynamic() {
                                                                     {isSoldOut ? (
                                                                         <span className="text-[11px] font-bold text-red-600 px-2 py-0.5 bg-red-50 rounded text-right">ESGOTADO</span>
                                                                     ) : almostGone ? (
-                                                                        <span className="text-[11px] font-bold text-amber-600 text-right">Apenas {ticket.quantidadeDisponivel} restantes!</span>
+                                                                        <span className="text-[11px] font-bold text-amber-600 text-right">Ultimos lugares! {ticket.quantidadeDisponivel} restantes</span>
                                                                     ) : (
                                                                         <span className="text-[11px] font-bold text-[#006837] text-right">{percentagem}% reservado</span>
                                                                     )}
@@ -295,20 +350,39 @@ export default function EventDetailsDynamic() {
                                             <p className="text-center text-slate-500 py-4 text-sm font-medium">Sem bilhetes disponíveis de momento.</p>
                                         )}
 
-                                        <button
-                                            disabled={!selectedTicket || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
-                                            onClick={() => {
-                                                const urlParams = new URLSearchParams(window.location.search);
-                                                const ref = urlParams.get('ref');
-                                                router.push(`/checkout/${evento.id}/${selectedTicket}${ref ? `?ref=${ref}` : ''}`);
-                                            }}
-                                            className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6
-                                                ${(selectedTicket && userSession?.role !== "ORGANIZADOR" && userSession?.role !== "STAFF" && userSession?.role !== "ADMIN") ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}
-                                            `}
-                                        >
-                                            Prosseguir para Checkout
-                                            <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                                        </button>
+                                        {eventoEsgotado ? (
+                                            <button
+                                                onClick={handleJoinWaitlist}
+                                                disabled={joiningWaitlist || Boolean(evento.isWaitlisted)}
+                                                className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6 ${
+                                                    evento.isWaitlisted
+                                                        ? 'bg-slate-400 cursor-not-allowed'
+                                                        : 'bg-amber-600 shadow-lg shadow-amber-600/20 hover:bg-amber-700'
+                                                }`}
+                                            >
+                                                {joiningWaitlist ? 'A registar...' : evento.isWaitlisted ? 'Ja esta na lista de espera' : 'Avisar-me quando houver vagas'}
+                                                <span className="material-symbols-outlined text-lg">notifications_active</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                disabled={!selectedTicket || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
+                                                onClick={() => {
+                                                    const urlParams = new URLSearchParams(window.location.search);
+                                                    const ref = urlParams.get('ref');
+                                                    router.push(`/checkout/${evento.id}/${selectedTicket}${ref ? `?ref=${ref}` : ''}`);
+                                                }}
+                                                className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6
+                                                    ${(selectedTicket && userSession?.role !== "ORGANIZADOR" && userSession?.role !== "STAFF" && userSession?.role !== "ADMIN") ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}
+                                                `}
+                                            >
+                                                Prosseguir para Checkout
+                                                <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                                            </button>
+                                        )}
+
+                                        {waitlistMessage && (
+                                            <p className="text-center text-xs font-semibold text-amber-700">{waitlistMessage}</p>
+                                        )}
 
                                         {(userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") && (
                                             <p className="text-red-600 text-xs font-semibold text-center mt-2">

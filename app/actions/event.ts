@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "../../lib/prisma";
+import { getAvailabilityStatus, getUserEngagementStatus } from "./engagement";
 
 export async function getEventos() {
     try {
@@ -75,6 +76,8 @@ export async function getEventoById(id: number) {
         const dataObj = new Date(ev.dataInicio);
         const dateStr = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
         const timeStr = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+        const availability = await getAvailabilityStatus(ev.id);
+        const engagement = await getUserEngagementStatus(ev.id);
 
         return { 
             success: true, 
@@ -86,6 +89,9 @@ export async function getEventoById(id: number) {
                 location: ev.localizacao,
                 organizador: ev.organizador.nome,
                 category: "EVENTO",
+                availability,
+                isWishlisted: engagement.isWishlisted,
+                isWaitlisted: engagement.isWaitlisted,
                 bannerUrl: ev.bannerUrl || null,
                 thumbnailUrl: ev.thumbnailUrl || null,
                 mostrarBanner: ev.mostrarBanner,

@@ -64,7 +64,8 @@ const matchesCategory = (eventCategory: string, selectedCategory: string) => {
 
     if (selectedRaw.startsWith('confer')) return eventRaw.includes('confer') || eventValue.includes('confer');
     if (selectedRaw.startsWith('workshop')) return eventRaw.includes('workshop') || eventValue.includes('workshop');
-    if (selectedRaw.startsWith('gala')) return eventRaw.includes('gala') || eventRaw.includes('festa') || eventValue.includes('gala') || eventValue.includes('festa');
+    if (selectedRaw.startsWith('gala')) return eventRaw.includes('gala') || eventValue.includes('gala');
+    if (selectedRaw.startsWith('festa')) return eventRaw.includes('festa') || eventValue.includes('festa');
     if (selectedRaw.startsWith('desporto')) return eventRaw.includes('desporto') || eventValue.includes('desporto');
 
     return eventValue === selectedValue;
@@ -217,6 +218,10 @@ const UTADFastTicket = () => {
                         </div>
                         {userSession ? (
                             <div className="flex items-center gap-4">
+                                <Link href="/wishlist" className="text-sm font-bold text-red-600 bg-red-50 px-4 py-2 rounded-lg whitespace-nowrap border border-red-100 hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-sm">favorite</span>
+                                    Favoritos
+                                </Link>
                                 <Link href="/dashboard" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-800 transition-colors flex items-center gap-2">
                                     <span className="material-symbols-outlined text-sm">person</span>
                                     {userSession.nome || userSession.email.split("@")[0]}
@@ -261,7 +266,7 @@ const UTADFastTicket = () => {
                             <div className="mb-8">
                                 <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#475569] mb-4">Categoria</p>
                                 <div className="space-y-4">
-                                    {['Conferências', 'Workshops', 'Galas', 'Desporto'].map((cat) => (
+                                    {['Conferências', 'Workshops', 'Galas', 'Festa Académica', 'Desporto'].map((cat) => (
                                         <label key={cat} className="flex items-center gap-3 cursor-pointer group">
                                             <input
                                                 className="w-4 h-4 rounded border-slate-300 accent-[#006837] cursor-pointer"
@@ -360,7 +365,7 @@ const UTADFastTicket = () => {
                         {/* Event Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredEvents.map((event) => (
-                                <Link href={`/evento/${event.id}`} key={event.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-100 flex flex-col">
+                                <Link href={`/evento/${event.id}`} key={event.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-100 flex flex-col cursor-pointer">
                                     <div className={`relative h-44 overflow-hidden ${!event.bannerUrl ? 'bg-gradient-to-br from-[#0b2818] to-[#006837]' : ''} flex items-center justify-center p-6 text-center`}>
                                         {event.bannerUrl && <img src={event.bannerUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />}
                                         {event.bannerUrl && <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />}
@@ -390,9 +395,9 @@ const UTADFastTicket = () => {
                                                 </p>
                                                 <p className="text-lg font-extrabold text-[#006837]">{event.price}</p>
                                             </div>
-                                            <button className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center hover:bg-[#006837] transition-colors group/btn">
-                                                <span className="material-symbols-outlined text-slate-600 group-hover/btn:text-white transition-colors">arrow_forward</span>
-                                            </button>
+                                            <span className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-[#006837] transition-colors" aria-hidden="true">
+                                                <span className="material-symbols-outlined text-slate-600 group-hover:text-white transition-colors">arrow_forward</span>
+                                            </span>
                                         </div>
                                     </div>
                                 </Link>
