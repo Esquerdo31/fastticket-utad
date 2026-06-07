@@ -45,6 +45,16 @@ export async function getEventos() {
                 thumbnailUrl: ev.thumbnailUrl || null,
                 mostrarBanner: ev.mostrarBanner,
                 mostrarLogo: ev.mostrarLogo,
+                estado: ev.estado,
+                dataInicio: ev.dataInicio.toISOString(),
+                dataFim: ev.dataFim ? ev.dataFim.toISOString() : null,
+                lotes: ev.lotes.map(l => ({
+                    nome: l.nome,
+                    quantidadeDisponivel: l.quantidadeDisponivel,
+                    lotacaoTotal: l.lotacaoTotal,
+                    vendaInicio: (l as any).vendaInicio ? (l as any).vendaInicio.toISOString() : null,
+                    vendaFim: (l as any).vendaFim ? (l as any).vendaFim.toISOString() : null,
+                }))
             };
         });
 
@@ -90,6 +100,9 @@ export async function getEventoById(id: number) {
                 thumbnailUrl: ev.thumbnailUrl || null,
                 mostrarBanner: ev.mostrarBanner,
                 mostrarLogo: ev.mostrarLogo,
+                estado: ev.estado,
+                dataInicio: ev.dataInicio.toISOString(),
+                dataFim: ev.dataFim ? ev.dataFim.toISOString() : null,
                 lotes: ev.lotes.map(l => ({
                     id: l.id,
                     name: l.nome,
@@ -99,7 +112,9 @@ export async function getEventoById(id: number) {
                     quantidadeDisponivel: l.quantidadeDisponivel,
                     esgotado: l.quantidadeDisponivel === 0,
                     tipo: (l as any).tipo || "DIARIO",
-                    diasValidos: (l as any).diasValidos || ""
+                    diasValidos: (l as any).diasValidos || "",
+                    vendaInicio: (l as any).vendaInicio ? (l as any).vendaInicio.toISOString() : null,
+                    vendaFim: (l as any).vendaFim ? (l as any).vendaFim.toISOString() : null,
                 }))
             } 
         };

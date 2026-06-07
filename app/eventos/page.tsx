@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { getActiveSession, logoutUser } from '../actions/auth';
 import { getEventos } from '../actions/event';
+import { getEventStatus, getEventStatusLabel, getEventStatusColor } from '@/lib/eventStatus';
 
 type EventCard = {
     id: number;
@@ -21,6 +22,10 @@ type EventCard = {
     thumbnailUrl?: string | null;
     mostrarBanner?: boolean;
     mostrarLogo?: boolean;
+    estado: string;
+    dataInicio: string;
+    dataFim?: string | null;
+    lotes?: Array<{ nome: string; quantidadeDisponivel: number; lotacaoTotal: number }>;
 };
 
 const normalizeText = (value: string) =>
@@ -126,6 +131,17 @@ const UTADFastTicket = () => {
 
         return events
             .filter((event) => {
+                const status = getEventStatus({
+                    estado: event.estado,
+                    dataInicio: event.dataInicio,
+                    dataFim: event.dataFim,
+                    lotes: event.lotes
+                });
+
+                if (status === 'TERMINADO' || status === 'RASCUNHO' || status === 'CANCELADO') {
+                    return false;
+                }
+
                 if (search) {
                     const searchableText = normalizeText([
                         event.title,
@@ -338,7 +354,7 @@ const UTADFastTicket = () => {
                         {/* Sorting Bar */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                             <span className="text-[13px] text-slate-500 font-medium">
-                                A mostrar {filteredEvents.length} de {events.length} eventos
+                                A mostrar {filteredEvents.length} de {filteredEvents.length} eventos
                             </span>
                             <div className="flex items-center gap-3">
                                 <span className="text-[13px] text-slate-700 font-medium">Ordenar por:</span>
@@ -359,44 +375,56 @@ const UTADFastTicket = () => {
 
                         {/* Event Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {filteredEvents.map((event) => (
-                                <Link href={`/evento/${event.id}`} key={event.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-100 flex flex-col">
-                                    <div className={`relative h-44 overflow-hidden ${!event.bannerUrl ? 'bg-gradient-to-br from-[#0b2818] to-[#006837]' : ''} flex items-center justify-center p-6 text-center`}>
-                                        {event.bannerUrl && <img src={event.bannerUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />}
-                                        {event.bannerUrl && <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />}
-                                        <div className={`absolute top-4 left-4 bg-white/20 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md border border-white/30 z-10`}>
-                                            {event.category}
-                                        </div>
-                                        <h2 className="text-2xl font-bold text-white opacity-90 drop-shadow-md relative z-10">
-                                            {event.title}
-                                        </h2>
-                                    </div>
-                                    <div className="p-6 flex flex-col flex-1">
-                                        <div className="flex items-center gap-1.5 text-[#006837] font-bold text-[11px] mb-3">
-                                            <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-                                            {event.date}
-                                        </div>
-                                        <h3 className="text-lg font-bold text-[#0f172a] mb-2 leading-tight">
-                                            {event.title}
-                                        </h3>
-                                        <div className="flex items-center gap-1.5 text-slate-500 text-[13px] mb-6 flex-1">
-                                            <span className="material-symbols-outlined text-[18px]">location_on</span>
-                                            {event.location}
-                                        </div>
-                                        <div className="flex items-center justify-between mt-auto">
-                                            <div>
-                                                <p className="text-[9px] text-[#64748b] uppercase font-bold tracking-widest mb-0.5">
-                                                    {event.price === 'Gratuito' ? 'Preço' : 'Desde'}
-                                                </p>
-                                                <p className="text-lg font-extrabold text-[#006837]">{event.price}</p>
+                            {filteredEvents.map((event) => {
+                                const status = getEventStatus({
+                                    estado: event.estado,
+                                    dataInicio: event.dataInicio,
+                                    dataFim: event.dataFim,
+                                    lotes: event.lotes
+                                });
+                                return (
+                                    <Link href={`/evento/${event.id}`} key={event.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-100 flex flex-col">
+                                        <div className={`relative h-44 overflow-hidden ${!event.bannerUrl ? 'bg-gradient-to-br from-[#0b2818] to-[#006837]' : ''} flex items-center justify-center p-6 text-center`}>
+                                            {event.bannerUrl && <img src={event.bannerUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />}
+                                            {event.bannerUrl && <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />}
+                                            <div className={`absolute top-4 left-4 bg-white/20 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md border border-white/30 z-10`}>
+                                                {event.category}
                                             </div>
-                                            <button className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center hover:bg-[#006837] transition-colors group/btn">
-                                                <span className="material-symbols-outlined text-slate-600 group-hover/btn:text-white transition-colors">arrow_forward</span>
-                                            </button>
+                                            {/* Status Badge */}
+                                            <div className={`absolute top-4 right-4 text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow ${getEventStatusColor(status)}`}>
+                                                {getEventStatusLabel(status)}
+                                            </div>
+                                            <h2 className="text-2xl font-bold text-white opacity-90 drop-shadow-md relative z-10">
+                                                {event.title}
+                                            </h2>
                                         </div>
-                                    </div>
-                                </Link>
-                            ))}
+                                        <div className="p-6 flex flex-col flex-1">
+                                            <div className="flex items-center gap-1.5 text-[#006837] font-bold text-[11px] mb-3">
+                                                <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+                                                {event.date}
+                                            </div>
+                                            <h3 className="text-lg font-bold text-[#0f172a] mb-2 leading-tight">
+                                                {event.title}
+                                            </h3>
+                                            <div className="flex items-center gap-1.5 text-slate-500 text-[13px] mb-6 flex-1">
+                                                <span className="material-symbols-outlined text-[18px]">location_on</span>
+                                                {event.location}
+                                            </div>
+                                            <div className="flex items-center justify-between mt-auto">
+                                                <div>
+                                                    <p className="text-[9px] text-[#64748b] uppercase font-bold tracking-widest mb-0.5">
+                                                        {event.price === 'Gratuito' ? 'Preço' : 'Desde'}
+                                                    </p>
+                                                    <p className="text-lg font-extrabold text-[#006837]">{event.price}</p>
+                                                </div>
+                                                <button className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center hover:bg-[#006837] transition-colors group/btn">
+                                                    <span className="material-symbols-outlined text-slate-600 group-hover/btn:text-white transition-colors">arrow_forward</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                );
+                            })}
                             {filteredEvents.length === 0 && (
                                 <div className="md:col-span-2 xl:col-span-3 bg-white border border-slate-200 rounded-xl px-6 py-12 text-center">
                                     <p className="text-base font-bold text-slate-800 mb-2">Nenhum evento encontrado</p>
@@ -407,19 +435,19 @@ const UTADFastTicket = () => {
 
                         {/* Pagination */}
                         {filteredEvents.length > 0 && (
-                        <nav className="mt-16 mb-8 flex justify-center items-center gap-2">
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
-                                <span className="material-symbols-outlined text-slate-600 text-sm">chevron_left</span>
-                            </button>
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#006837] text-white font-bold text-sm">1</button>
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors">2</button>
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors">3</button>
-                            <span className="mx-1 text-slate-400">...</span>
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors">8</button>
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
-                                <span className="material-symbols-outlined text-slate-600 text-sm">chevron_right</span>
-                            </button>
-                        </nav>
+                            <nav className="mt-16 mb-8 flex justify-center items-center gap-2">
+                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+                                    <span className="material-symbols-outlined text-slate-600 text-sm">chevron_left</span>
+                                </button>
+                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#006837] text-white font-bold text-sm">1</button>
+                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors">2</button>
+                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors">3</button>
+                                <span className="mx-1 text-slate-400">...</span>
+                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors">8</button>
+                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+                                    <span className="material-symbols-outlined text-slate-600 text-sm">chevron_right</span>
+                                </button>
+                            </nav>
                         )}
                     </div>
                 </div>

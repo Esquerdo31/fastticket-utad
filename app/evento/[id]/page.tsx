@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getActiveSession, logoutUser } from '../../actions/auth';
 import { getEventoById } from '../../actions/event';
+import { getEventStatus, getEventStatusLabel, getEventStatusColor } from '@/lib/eventStatus';
 import Link from 'next/link';
 
 export default function EventDetailsDynamic() {
@@ -65,6 +66,19 @@ export default function EventDetailsDynamic() {
     }
 
     if (!evento) return null;
+
+    const status = getEventStatus({
+        estado: evento.estado,
+        dataInicio: evento.dataInicio,
+        dataFim: evento.dataFim,
+        lotes: evento.lotes ? evento.lotes.map((l: any) => ({
+            nome: l.name,
+            quantidadeDisponivel: l.quantidadeDisponivel,
+            lotacaoTotal: l.lotacaoTotal
+        })) : []
+    });
+
+    const isTerminado = status === 'TERMINADO';
 
     return (
         <div className="bg-slate-50 font-sans text-slate-800 min-h-screen">
@@ -170,6 +184,26 @@ export default function EventDetailsDynamic() {
                                 </div>
                             </section>
 
+                            {/* Localização (Map) */}
+                            <section className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/60 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-[#006837]"></div>
+                                <h2 className="text-2xl font-bold mb-6 text-slate-800 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[#006837] font-normal">location_on</span>
+                                    Localização
+                                </h2>
+                                <p className="text-sm text-slate-600 mb-4 font-semibold">{evento.location}</p>
+                                <div className="w-full h-72 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                                    <iframe 
+                                        width="100%" 
+                                        height="100%" 
+                                        style={{ border: 0 }} 
+                                        loading="lazy" 
+                                        allowFullScreen 
+                                        src={`https://maps.google.com/maps?q=${encodeURIComponent(evento.location || 'UTAD, Vila Real')}&t=&z=16&ie=UTF8&iwloc=&output=embed`} 
+                                    />
+                                </div>
+                            </section>
+
                             {/* Additional Info */}
                             <section className="grid md:grid-cols-2 gap-8 pt-6">
                                 <div className="bg-slate-100 p-6 rounded-xl border border-slate-200">
@@ -208,9 +242,22 @@ export default function EventDetailsDynamic() {
                                     </div>
 
                                     <div className="p-6 space-y-4 bg-white">
+                                        {isTerminado && (
+                                            <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-sm font-semibold flex items-start gap-2 mb-4">
+                                                <span className="material-symbols-outlined text-lg shrink-0">warning</span>
+                                                <span>Este evento já terminou. Não é possível adquirir bilhetes.</span>
+                                            </div>
+                                        )}
                                         {evento.lotes && evento.lotes.length > 0 ? evento.lotes.map((ticket: any) => {
                                             const isSelected = selectedTicket === ticket.id;
                                             const isSoldOut = ticket.esgotado;
+                                            const now = new Date();
+                                            const vStart = ticket.vendaInicio ? new Date(ticket.vendaInicio) : null;
+                                            const vEnd = ticket.vendaFim ? new Date(ticket.vendaFim) : null;
+                                            const isNotYetOpen = vStart ? now < vStart : false;
+                                            const isSalesClosed = vEnd ? now > vEnd : false;
+                                            const isSalesInactive = isNotYetOpen || isSalesClosed;
+
                                             // Matemática da ocupação
                                             const ocupados = ticket.lotacaoTotal - ticket.quantidadeDisponivel;
                                             const percentagem = Math.min(100, Math.max(0, Math.round((ocupados / ticket.lotacaoTotal) * 100)));
@@ -219,7 +266,7 @@ export default function EventDetailsDynamic() {
                                             return (
                                                 <div key={ticket.id} className="block relative">
                                                     <label
-                                                        className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${isSoldOut ? 'opacity-50 cursor-not-allowed border-slate-200 bg-slate-50' : isSelected
+                                                        className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${isSoldOut || isTerminado || isSalesInactive ? 'opacity-50 cursor-not-allowed border-slate-200 bg-slate-50' : isSelected
                                                             ? 'border-[#006837] bg-emerald-50/50 shadow-md shadow-emerald-100'
                                                             : 'border-slate-200 hover:border-[#006837]/40 hover:bg-slate-50'
                                                             }`}
@@ -231,7 +278,7 @@ export default function EventDetailsDynamic() {
                                                                     name="ticket"
                                                                     className="mt-1 outline-none accent-[#006837] h-4 w-4 shrink-0"
                                                                     checked={isSelected}
-                                                                    disabled={isSoldOut}
+                                                                    disabled={isSoldOut || isTerminado || isSalesInactive}
                                                                     onChange={() => setSelectedTicket(ticket.id)}
                                                                 />
                                                                 <div>
@@ -244,6 +291,16 @@ export default function EventDetailsDynamic() {
                                                                         }`}>
                                                                             {ticket.tipo === 'GERAL' ? 'Passe Geral' : 'Diário'}
                                                                         </span>
+                                                                        {isNotYetOpen && (
+                                                                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200">
+                                                                                Abre a {new Date(ticket.vendaInicio!).toLocaleString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                                            </span>
+                                                                        )}
+                                                                        {isSalesClosed && (
+                                                                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider bg-slate-200 text-slate-500 border border-slate-300">
+                                                                                Vendas Encerradas
+                                                                            </span>
+                                                                        )}
                                                                     </div>
                                                                     {ticket.tipo === 'DIARIO' && ticket.diasValidos && (
                                                                         <p className="text-[10px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
@@ -296,17 +353,17 @@ export default function EventDetailsDynamic() {
                                         )}
 
                                         <button
-                                            disabled={!selectedTicket || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
+                                            disabled={isTerminado || !selectedTicket || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
                                             onClick={() => {
                                                 const urlParams = new URLSearchParams(window.location.search);
                                                 const ref = urlParams.get('ref');
                                                 router.push(`/checkout/${evento.id}/${selectedTicket}${ref ? `?ref=${ref}` : ''}`);
                                             }}
                                             className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6
-                                                ${(selectedTicket && userSession?.role !== "ORGANIZADOR" && userSession?.role !== "STAFF" && userSession?.role !== "ADMIN") ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}
+                                                ${(!isTerminado && selectedTicket && userSession?.role !== "ORGANIZADOR" && userSession?.role !== "STAFF" && userSession?.role !== "ADMIN") ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}
                                             `}
                                         >
-                                            Prosseguir para Checkout
+                                            {isTerminado ? "Vendas Encerradas" : "Prosseguir para Checkout"}
                                             <span className="material-symbols-outlined text-lg">arrow_forward</span>
                                         </button>
 

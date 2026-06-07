@@ -2,10 +2,28 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getEventoById, updateEvento, deleteEvento } from '@/app/actions/evento';
+import { 
+    getEventoById, 
+    updateEvento, 
+    deleteEvento, 
+    getOrganizerEventsForTransfer, 
+    reembolsarBilhetesEvento, 
+    transferirBilhetesEvento 
+} from '@/app/actions/evento';
 
 type Tab = 'detalhes' | 'bilheteira' | 'media' | 'personalizacao' | 'config';
-interface Lote { nome: string; descricao: string; preco: number; lotacaoTotal: number; }
+interface Lote { 
+    id?: number; 
+    nome: string; 
+    descricao: string; 
+    preco: number; 
+    lotacaoTotal: number; 
+    quantidadeDisponivel?: number;
+    tipo?: string;
+    diasValidos?: string;
+    vendaInicio?: string;
+    vendaFim?: string;
+}
 
 export default function EditarEventoPage() {
     const params = useParams();
@@ -41,6 +59,20 @@ export default function EditarEventoPage() {
     const [ticketLogoUrl, setTicketLogoUrl] = useState('');
     const [ticketGlow, setTicketGlow] = useState(false);
 
+    // Confirmação de Publicação
+    const [originalEstado, setOriginalEstado] = useState<string>('');
+    const [showPublishConfirmModal, setShowPublishConfirmModal] = useState(false);
+    const [confirmText, setConfirmText] = useState('');
+
+    // Estados para Reembolso e Transferência
+    const [transferEvents, setTransferEvents] = useState<any[]>([]);
+    const [selectedDestEventId, setSelectedDestEventId] = useState<number | ''>('');
+    const [selectedDestLoteId, setSelectedDestLoteId] = useState<number | ''>('');
+    const [compensationMsg, setCompensationMsg] = useState('');
+    const [compensationMsgType, setCompensationMsgType] = useState<'ok'|'err'>('ok');
+    const [showRefundConfirm, setShowRefundConfirm] = useState(false);
+    const [showTransferConfirm, setShowTransferConfirm] = useState(false);
+
     useEffect(() => {
         if (!eventoId) return;
         getEventoById(eventoId).then(res => {
@@ -49,7 +81,7 @@ export default function EditarEventoPage() {
                 setTitulo(d.titulo); setDescricao(d.descricao); setDataInicio(d.dataInicio);
                 setDataFim(d.dataFim || ''); setLocalizacao(d.localizacao);
                 setFormato(d.formato || 'presencial'); setCategoria(d.categoria || 'Conferência');
-                setEstado(d.estado || 'RASCUNHO'); setBannerUrl(d.bannerUrl || '');
+                setEstado(d.estado || 'RASCUNHO'); setOriginalEstado(d.estado || 'RASCUNHO'); setBannerUrl(d.bannerUrl || '');
                 setThumbnailUrl(d.thumbnailUrl || ''); setOrganizadorId(d.organizadorId);
                 setMostrarBanner(d.mostrarBanner ?? true); setMostrarLogo(d.mostrarLogo ?? true);
                 setTicketCorFundo(d.ticketCorFundo || '#ffffff');
@@ -59,15 +91,125 @@ export default function EditarEventoPage() {
                 setTicketTemplate((d as any).ticketTemplate || 'classic');
                 setTicketLogoUrl((d as any).ticketLogoUrl || '');
                 setTicketGlow((d as any).ticketGlow ?? false);
-                setLotes(d.lotes.map((l: any) => ({ nome: l.nome, descricao: l.descricao, preco: l.preco, lotacaoTotal: l.lotacaoTotal })));
+                setLotes(d.lotes.map((l: any) => ({
+                    id: l.id,
+                    nome: l.nome,
+                    descricao: l.descricao || '',
+                    preco: l.preco,
+                    lotacaoTotal: l.lotacaoTotal,
+                    quantidadeDisponivel: l.quantidadeDisponivel,
+                    tipo: l.tipo || 'DIARIO',
+                    diasValidos: l.diasValidos || '',
+                    vendaInicio: l.vendaInicio || '',
+                    vendaFim: l.vendaFim || ''
+                })));
             }
             setLoading(false);
         });
     }, [eventoId]);
 
+    const soldTicketsCount = lotes.reduce((sum, l) => sum + (l.id && l.quantidadeDisponivel !== undefined ? l.lotacaoTotal - l.quantidadeDisponivel : 0), 0);
+
+    // Carregar outros eventos para transferência
+    useEffect(() => {
+        if (tab === 'config' && soldTicketsCount > 0) {
+            getOrganizerEventsForTransfer(eventoId).then(res => {
+                if (res.success && res.data) {
+                    setTransferEvents(res.data);
+                }
+            });
+        }
+    }, [tab, soldTicketsCount, eventoId]);
+
+    const handleRefund = () => {
+        startTransition(async () => {
+            const res = await reembolsarBilhetesEvento(eventoId);
+            if (res.success) {
+                setCompensationMsg(res.message);
+                setCompensationMsgType('ok');
+                setShowRefundConfirm(false);
+                // Atualizar dados locais
+                getEventoById(eventoId).then(res2 => {
+                    if (res2.success && res2.data) {
+                        setEstado(res2.data.estado);
+                        setOriginalEstado(res2.data.estado);
+                        setLotes(res2.data.lotes.map((l: any) => ({
+                            id: l.id,
+                            nome: l.nome,
+                            descricao: l.descricao || '',
+                            preco: l.preco,
+                            lotacaoTotal: l.lotacaoTotal,
+                            quantidadeDisponivel: l.quantidadeDisponivel,
+                            tipo: l.tipo || 'DIARIO',
+                            diasValidos: l.diasValidos || '',
+                            vendaInicio: l.vendaInicio || '',
+                            vendaFim: l.vendaFim || ''
+                        })));
+                    }
+                });
+            } else {
+                setCompensationMsg(res.message || 'Erro ao processar reembolso.');
+                setCompensationMsgType('err');
+            }
+        });
+    };
+
+    const handleTransfer = () => {
+        if (!selectedDestLoteId) return;
+        startTransition(async () => {
+            const res = await transferirBilhetesEvento(eventoId, selectedDestLoteId as number);
+            if (res.success) {
+                setCompensationMsg(res.message);
+                setCompensationMsgType('ok');
+                setShowTransferConfirm(false);
+                setSelectedDestEventId('');
+                setSelectedDestLoteId('');
+                // Atualizar dados locais
+                getEventoById(eventoId).then(res2 => {
+                    if (res2.success && res2.data) {
+                        setEstado(res2.data.estado);
+                        setOriginalEstado(res2.data.estado);
+                        setLotes(res2.data.lotes.map((l: any) => ({
+                            id: l.id,
+                            nome: l.nome,
+                            descricao: l.descricao || '',
+                            preco: l.preco,
+                            lotacaoTotal: l.lotacaoTotal,
+                            quantidadeDisponivel: l.quantidadeDisponivel,
+                            tipo: l.tipo || 'DIARIO',
+                            diasValidos: l.diasValidos || '',
+                            vendaInicio: l.vendaInicio || '',
+                            vendaFim: l.vendaFim || ''
+                        })));
+                    }
+                });
+            } else {
+                setCompensationMsg(res.message || 'Erro ao transferir bilhetes.');
+                setCompensationMsgType('err');
+            }
+        });
+    };
+
     const flash = (text: string, type: 'ok'|'err') => { setMsg(text); setMsgType(type); setTimeout(() => setMsg(''), 4000); };
 
-    const handleSave = () => {
+    const handleSave = (bypassConfirm = false) => {
+        if (!titulo.trim()) { flash('O título do evento é obrigatório.', 'err'); return; }
+        if (titulo.trim().length < 3) { flash('O título deve ter pelo menos 3 caracteres.', 'err'); return; }
+        if (!descricao.trim()) { flash('A descrição do evento é obrigatória.', 'err'); return; }
+        if (descricao.trim().length < 10) { flash('A descrição deve ter pelo menos 10 caracteres.', 'err'); return; }
+        if (!dataInicio) { flash('A data de início é obrigatória.', 'err'); return; }
+        if (!dataFim) { flash('A data de fim é obrigatória.', 'err'); return; }
+        if (new Date(dataFim) <= new Date(dataInicio)) { flash('A data de fim deve ser posterior à data de início.', 'err'); return; }
+        if (!localizacao.trim()) { flash('A localização é obrigatória.', 'err'); return; }
+        if (localizacao.trim().length < 2) { flash('A localização deve ter pelo menos 2 caracteres.', 'err'); return; }
+        if (lotes.length === 0) { flash('É necessário pelo menos um lote de bilhetes.', 'err'); return; }
+        if (lotes.some(l => !l.nome.trim())) { flash('Preencha o nome de todos os lotes de bilhetes.', 'err'); return; }
+        if (lotes.some(l => l.lotacaoTotal < 1)) { flash('A quantidade de todos os lotes deve ser de pelo menos 1.', 'err'); return; }
+
+        if (!bypassConfirm && originalEstado !== 'PUBLICADO' && estado === 'PUBLICADO') {
+            setShowPublishConfirmModal(true);
+            return;
+        }
         startTransition(async () => {
             const res = await updateEvento(eventoId, { 
                 titulo, 
@@ -92,7 +234,10 @@ export default function EditarEventoPage() {
                 ticketLogoUrl,
                 ticketGlow
             });
-            if (res.success) flash('Evento guardado com sucesso!', 'ok');
+            if (res.success) {
+                flash('Evento guardado com sucesso!', 'ok');
+                setOriginalEstado(estado);
+            }
             else flash(res.message || 'Erro ao guardar.', 'err');
         });
     };
@@ -120,7 +265,7 @@ export default function EditarEventoPage() {
         setUploading(false);
     };
 
-    const addLote = () => setLotes([...lotes, { nome: '', descricao: '', preco: 0, lotacaoTotal: 10 }]);
+    const addLote = () => setLotes([...lotes, { nome: '', descricao: '', preco: 0, lotacaoTotal: 10, tipo: 'DIARIO', diasValidos: '', vendaInicio: '', vendaFim: '' }]);
     const removeLote = (i: number) => { if (lotes.length > 1) setLotes(lotes.filter((_, idx) => idx !== i)); };
     const updateLote = (i: number, f: keyof Lote, v: string|number) => { const u = [...lotes]; (u[i] as any)[f] = v; setLotes(u); };
     const totalBilhetes = lotes.reduce((s, l) => s + l.lotacaoTotal, 0);
@@ -156,7 +301,7 @@ export default function EditarEventoPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         {msg && <span className={`text-xs font-bold px-3 py-1.5 rounded-lg ${msgType === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg}</span>}
-                        <button onClick={handleSave} disabled={isPending} className="bg-violet-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-violet-800 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
+                        <button onClick={() => handleSave(false)} disabled={isPending} className="bg-violet-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-violet-800 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
                             <span className="material-symbols-outlined text-[18px]">{isPending ? 'hourglass_top' : 'save'}</span>{isPending ? 'A guardar...' : 'Guardar'}
                         </button>
                     </div>
@@ -206,6 +351,19 @@ export default function EditarEventoPage() {
                                         </div>
                                         <div><label className={labelCls}>Localização</label><input type="text" value={localizacao} onChange={e => setLocalizacao(e.target.value)} className={inputCls} /></div>
                                     </div>
+                                    <div>
+                                        <label className={labelCls}>Mapa de Localização</label>
+                                        <div className="w-full h-64 rounded-xl overflow-hidden relative border border-slate-200 bg-slate-100 mt-2">
+                                            <iframe 
+                                                width="100%" 
+                                                height="100%" 
+                                                style={{ border: 0 }} 
+                                                loading="lazy" 
+                                                allowFullScreen 
+                                                src={`https://maps.google.com/maps?q=${encodeURIComponent(localizacao || 'UTAD, Vila Real')}&t=&z=16&ie=UTF8&iwloc=&output=embed`} 
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div><label className={labelCls}>Data e Hora de Início</label><input type="datetime-local" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className={inputCls} /></div>
                                         <div><label className={labelCls}>Data e Hora de Fim</label><input type="datetime-local" value={dataFim} onChange={e => setDataFim(e.target.value)} className={inputCls} /></div>
@@ -225,17 +383,66 @@ export default function EditarEventoPage() {
                                     <button type="button" onClick={addLote} className="bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-violet-800 active:scale-95 transition-all flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">add</span>Novo Lote</button>
                                 </div>
                                 <div className="space-y-4">
-                                    {lotes.map((lote, i) => (
-                                        <div key={i} className="bg-slate-50 rounded-xl p-6 border border-slate-200 relative group">
-                                            {lotes.length > 1 && <button type="button" onClick={() => removeLote(i)} className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"><span className="material-symbols-outlined text-[20px]">delete</span></button>}
-                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                                <div className="md:col-span-2"><label className={labelCls}>Nome do Lote</label><input type="text" value={lote.nome} onChange={e => updateLote(i, 'nome', e.target.value)} className={inputCls} placeholder="Ex: Geral, VIP" /></div>
-                                                <div><label className={labelCls}>Preço (€)</label><input type="number" min={0} step={0.01} value={lote.preco} onChange={e => updateLote(i, 'preco', parseFloat(e.target.value) || 0)} className={inputCls} /></div>
-                                                <div><label className={labelCls}>Quantidade</label><input type="number" min={1} value={lote.lotacaoTotal} onChange={e => updateLote(i, 'lotacaoTotal', parseInt(e.target.value) || 0)} className={inputCls} /></div>
+                                    {lotes.map((lote, i) => {
+                                        const vendidos = lote.id && lote.quantidadeDisponivel !== undefined ? lote.lotacaoTotal - lote.quantidadeDisponivel : 0;
+                                        const hasSoldTickets = vendidos > 0;
+
+                                        return (
+                                            <div key={i} className="bg-slate-50 rounded-xl p-6 border border-slate-200 relative group">
+                                                {lotes.length > 1 && (
+                                                    hasSoldTickets ? (
+                                                        <div className="absolute top-3 right-3 p-1 bg-amber-50 rounded px-2.5 py-1 border border-amber-200 text-amber-700 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider shadow-sm select-none" title="Lote com bilhetes emitidos (não pode ser removido)">
+                                                            <span className="material-symbols-outlined text-[14px]">lock</span>
+                                                            Ativo ({vendidos} vendidos)
+                                                        </div>
+                                                    ) : (
+                                                        <button type="button" onClick={() => removeLote(i)} className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer"><span className="material-symbols-outlined text-[20px]">delete</span></button>
+                                                    )
+                                                )}
+                                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                    <div className="md:col-span-2">
+                                                        <label className={labelCls}>Nome do Lote</label>
+                                                        <input type="text" value={lote.nome} onChange={e => updateLote(i, 'nome', e.target.value)} disabled={hasSoldTickets} className={inputCls + " disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"} placeholder="Ex: Geral, VIP" />
+                                                    </div>
+                                                    <div>
+                                                        <label className={labelCls}>Preço (€)</label>
+                                                        <input type="number" min={0} step={0.01} value={lote.preco} onChange={e => updateLote(i, 'preco', parseFloat(e.target.value) || 0)} disabled={hasSoldTickets} className={inputCls + " disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"} />
+                                                        {hasSoldTickets && (
+                                                            <span className="text-[9px] text-slate-400 font-medium mt-1 block">Bloqueado (bilhetes vendidos)</span>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <label className={labelCls}>Quantidade</label>
+                                                        <input type="number" min={hasSoldTickets ? vendidos : 1} value={lote.lotacaoTotal} onChange={e => updateLote(i, 'lotacaoTotal', parseInt(e.target.value) || 0)} className={inputCls} />
+                                                        {hasSoldTickets && (
+                                                            <span className="text-[9px] text-amber-600 font-bold mt-1 block">Mínimo: {vendidos} (vendidos)</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4"><label className={labelCls}>Descrição (Opcional)</label><input type="text" value={lote.descricao} onChange={e => updateLote(i, 'descricao', e.target.value)} className={inputCls} placeholder="Descrição do lote" /></div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
+                                                    <div>
+                                                        <label className={labelCls}>Início das Vendas (Opcional)</label>
+                                                        <input 
+                                                            type="datetime-local" 
+                                                            value={lote.vendaInicio || ''} 
+                                                            onChange={e => updateLote(i, 'vendaInicio', e.target.value)} 
+                                                            className={inputCls} 
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className={labelCls}>Fim das Vendas (Opcional)</label>
+                                                        <input 
+                                                            type="datetime-local" 
+                                                            value={lote.vendaFim || ''} 
+                                                            onChange={e => updateLote(i, 'vendaFim', e.target.value)} 
+                                                            className={inputCls} 
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="mt-4"><label className={labelCls}>Descrição (Opcional)</label><input type="text" value={lote.descricao} onChange={e => updateLote(i, 'descricao', e.target.value)} className={inputCls} placeholder="Descrição do lote" /></div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                             <div className="grid grid-cols-3 gap-4">
@@ -605,25 +812,239 @@ export default function EditarEventoPage() {
                                     ))}
                                 </div>
                             </div>
-                            <div className="bg-red-50 rounded-2xl p-8 border border-red-200">
-                                <h2 className="text-xl font-bold text-red-700 mb-2 flex items-center gap-2"><span className="material-symbols-outlined">warning</span>Zona de Perigo</h2>
-                                <p className="text-sm text-red-600/80 mb-6">Esta ação é irreversível. Todos os dados do evento serão permanentemente apagados.</p>
-                                {!showDeleteConfirm ? (
-                                    <button onClick={() => setShowDeleteConfirm(true)} className="bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-red-700 active:scale-95 transition-all flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">delete_forever</span>Apagar Evento</button>
-                                ) : (
-                                    <div className="bg-white p-4 rounded-xl border border-red-200 flex items-center justify-between">
-                                        <p className="text-sm font-bold text-red-700">Tem a certeza? Esta ação não pode ser desfeita.</p>
-                                        <div className="flex gap-2">
-                                            <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
-                                            <button onClick={handleDelete} disabled={isPending} className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-700 disabled:opacity-50">{isPending ? 'A apagar...' : 'Confirmar'}</button>
+
+                            {soldTicketsCount > 0 && (
+                                <div className="bg-violet-50 rounded-2xl p-8 border border-violet-200">
+                                    <h2 className="text-xl font-bold text-violet-900 mb-2 flex items-center gap-2">
+                                        <span className="material-symbols-outlined">payments</span>
+                                        Cancelamento & Compensação de Participantes
+                                    </h2>
+                                    <p className="text-sm text-slate-600 mb-6">
+                                        Este evento já tem <strong className="text-violet-700">{soldTicketsCount} bilhete(s) vendido(s)</strong>. 
+                                        Como tal, a eliminação direta está bloqueada. Pode cancelar o evento escolhendo uma das opções de compensação abaixo:
+                                    </p>
+
+                                    {compensationMsg && (
+                                        <div className={`mb-6 p-4 rounded-xl border text-sm font-semibold flex items-center gap-2 ${
+                                            compensationMsgType === 'ok' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'
+                                        }`}>
+                                            <span className="material-symbols-outlined">{compensationMsgType === 'ok' ? 'check_circle' : 'error'}</span>
+                                            {compensationMsg}
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* Opção Reembolso */}
+                                        <div className="bg-white p-6 rounded-xl border border-violet-100 flex flex-col justify-between">
+                                            <div>
+                                                <span className="text-xs font-bold text-violet-600 uppercase tracking-widest block mb-1">Opção A</span>
+                                                <h3 className="text-base font-bold text-slate-800 mb-2">Reembolso Completo (Simulado)</h3>
+                                                <p className="text-xs text-slate-500 leading-relaxed mb-6">
+                                                    Cancela o evento, marca todas as compras associadas como "Canceladas" e apaga os bilhetes emitidos. 
+                                                    Isto libertará a base de dados permitindo-lhe apagar o evento permanentemente se desejar.
+                                                </p>
+                                            </div>
+                                            <div>
+                                                {!showRefundConfirm ? (
+                                                    <button
+                                                        onClick={() => setShowRefundConfirm(true)}
+                                                        className="w-full bg-violet-700 hover:bg-violet-800 text-white py-3 px-4 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">assignment_return</span>
+                                                        Reembolsar e Cancelar
+                                                    </button>
+                                                ) : (
+                                                    <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                                                        <p className="text-xs font-bold text-amber-800 mb-3 text-center">Tem a certeza? Esta ação cancela todas as compras e apaga os bilhetes.</p>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => setShowRefundConfirm(false)}
+                                                                className="flex-1 bg-white hover:bg-slate-100 text-slate-600 py-2 rounded-lg font-bold text-xs border border-slate-200 transition-colors"
+                                                            >
+                                                                Voltar
+                                                            </button>
+                                                            <button
+                                                                onClick={handleRefund}
+                                                                disabled={isPending}
+                                                                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-bold text-xs transition-colors"
+                                                            >
+                                                                {isPending ? 'A processar...' : 'Sim, Reembolsar'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Opção Transferência */}
+                                        <div className="bg-white p-6 rounded-xl border border-violet-100 flex flex-col justify-between">
+                                            <div>
+                                                <span className="text-xs font-bold text-violet-600 uppercase tracking-widest block mb-1">Opção B</span>
+                                                <h3 className="text-base font-bold text-slate-800 mb-2">Transferir para Outro Evento</h3>
+                                                <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                                                    Transfere todos os {soldTicketsCount} bilhetes deste evento para um lote correspondente de outro evento ativo seu.
+                                                </p>
+
+                                                <div className="space-y-3 mb-6">
+                                                    <div>
+                                                        <label className="block text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1">Evento de Destino</label>
+                                                        <select
+                                                            value={selectedDestEventId}
+                                                            onChange={(e) => {
+                                                                const val = Number(e.target.value);
+                                                                setSelectedDestEventId(val);
+                                                                setSelectedDestLoteId('');
+                                                            }}
+                                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:border-violet-700"
+                                                        >
+                                                            <option value="">Escolher evento...</option>
+                                                            {transferEvents.map(ev => (
+                                                                <option key={ev.id} value={ev.id}>{ev.titulo}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    {selectedDestEventId && (
+                                                        <div>
+                                                            <label className="block text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1">Lote de Destino</label>
+                                                            <select
+                                                                value={selectedDestLoteId}
+                                                                onChange={(e) => setSelectedDestLoteId(Number(e.target.value))}
+                                                                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:border-violet-700"
+                                                            >
+                                                                <option value="">Escolher lote...</option>
+                                                                {transferEvents
+                                                                    .find(ev => ev.id === selectedDestEventId)
+                                                                    ?.lotes.map((l: any) => (
+                                                                        <option key={l.id} value={l.id} disabled={l.quantidadeDisponivel < soldTicketsCount}>
+                                                                            {l.nome} ({l.preco}€) · {l.quantidadeDisponivel} vagas disponíveis {l.quantidadeDisponivel < soldTicketsCount ? '(Insuficiente)' : ''}
+                                                                        </option>
+                                                                    ))
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                {!showTransferConfirm ? (
+                                                    <button
+                                                        onClick={() => {
+                                                            if (!selectedDestLoteId) return;
+                                                            setShowTransferConfirm(true);
+                                                        }}
+                                                        disabled={!selectedDestLoteId}
+                                                        className="w-full bg-violet-700 hover:bg-violet-800 text-white py-3 px-4 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">move_down</span>
+                                                        Transferir Bilhetes
+                                                    </button>
+                                                ) : (
+                                                    <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                                                        <p className="text-xs font-bold text-amber-800 mb-3 text-center">Tem a certeza? Os {soldTicketsCount} bilhetes serão movidos permanentemente.</p>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => setShowTransferConfirm(false)}
+                                                                className="flex-1 bg-white hover:bg-slate-100 text-slate-600 py-2 rounded-lg font-bold text-xs border border-slate-200 transition-colors"
+                                                            >
+                                                                Voltar
+                                                            </button>
+                                                            <button
+                                                                onClick={handleTransfer}
+                                                                disabled={isPending}
+                                                                className="flex-1 bg-violet-700 hover:bg-violet-800 text-white py-2 rounded-lg font-bold text-xs transition-colors"
+                                                            >
+                                                                {isPending ? 'A processar...' : 'Sim, Transferir'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
+                                </div>
+                            )}
+
+                            <div className="bg-red-50 rounded-2xl p-8 border border-red-200">
+                                <h2 className="text-xl font-bold text-red-700 mb-2 flex items-center gap-2"><span className="material-symbols-outlined">warning</span>Zona de Perigo</h2>
+                                {soldTicketsCount > 0 ? (
+                                    <p className="text-sm text-red-600 font-semibold mb-2">
+                                        Não é possível apagar este evento diretamente porque já foram vendidos bilhetes. 
+                                        Utilize as opções de reembolso acima para cancelar as compras e libertar o evento para eliminação.
+                                    </p>
+                                ) : (
+                                    <>
+                                        <p className="text-sm text-red-600/80 mb-6">Esta ação é irreversível. Todos os dados do evento serão permanentemente apagados.</p>
+                                        {!showDeleteConfirm ? (
+                                            <button onClick={() => setShowDeleteConfirm(true)} className="bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-red-700 active:scale-95 transition-all flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">delete_forever</span>Apagar Evento</button>
+                                        ) : (
+                                            <div className="bg-white p-4 rounded-xl border border-red-200 flex items-center justify-between">
+                                                <p className="text-sm font-bold text-red-700">Tem a certeza? Esta ação não pode ser desfeita.</p>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
+                                                    <button onClick={handleDelete} disabled={isPending} className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-700 disabled:opacity-50">{isPending ? 'A apagar...' : 'Confirmar'}</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Modal de Confirmação de Publicação */}
+            {showPublishConfirmModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl p-8 max-w-md w-full border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-800 text-left">
+                        <div className="flex items-center gap-3 mb-4 text-violet-700">
+                            <span className="material-symbols-outlined text-3xl font-normal">campaign</span>
+                            <h3 className="text-xl font-bold">Publicar Evento</h3>
+                        </div>
+                        <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+                            Desejas mesmo publicar o evento? Ao fazê-lo, ele tornar-se-á <strong className="text-slate-900">Público</strong> e ficará imediatamente disponível para venda de bilhetes.
+                        </p>
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Escreva "Confirmar" para prosseguir</label>
+                                <input 
+                                    type="text" 
+                                    value={confirmText} 
+                                    onChange={e => setConfirmText(e.target.value)} 
+                                    placeholder="Escreva 'Confirmar'" 
+                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm font-semibold placeholder:text-slate-400"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <button 
+                                type="button" 
+                                onClick={() => {
+                                    setShowPublishConfirmModal(false);
+                                    setConfirmText('');
+                                }} 
+                                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-sm transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={() => {
+                                    setShowPublishConfirmModal(false);
+                                    setConfirmText('');
+                                    handleSave(true);
+                                }} 
+                                disabled={confirmText !== 'Confirmar' || isPending}
+                                className="flex-1 bg-violet-700 hover:bg-violet-850 text-white font-bold py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-violet-700/20 cursor-pointer"
+                            >
+                                {isPending ? 'A publicar...' : 'Publicar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

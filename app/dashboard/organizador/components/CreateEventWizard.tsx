@@ -11,6 +11,8 @@ interface Lote {
     quantidadeDisponivel?: number;
     tipo?: string; 
     diasValidos?: string; 
+    vendaInicio?: string;
+    vendaFim?: string;
 }
 interface Props { userName: string; userId: number; onEventCreated: () => void; editEventId?: number; }
 
@@ -44,7 +46,11 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
     const [dataFim, setDataFim] = useState('');
     const [descricao, setDescricao] = useState('');
     const [localizacao, setLocalizacao] = useState('');
-    const [lotes, setLotes] = useState<Lote[]>([{ nome: 'Geral', descricao: '', preco: 0, lotacaoTotal: 50, tipo: 'DIARIO', diasValidos: '' }]);
+    const [lotes, setLotes] = useState<Lote[]>([{ nome: 'Geral', descricao: '', preco: 0, lotacaoTotal: 50, tipo: 'DIARIO', diasValidos: '', vendaInicio: '', vendaFim: '' }]);
+
+    // Confirmação de Publicação
+    const [showPublishConfirmModal, setShowPublishConfirmModal] = useState(false);
+    const [confirmText, setConfirmText] = useState('');
     const [bannerUrl, setBannerUrl] = useState('');
     const [thumbnailUrl, setThumbnailUrl] = useState('');
     const [uploading, setUploading] = useState(false);
@@ -60,7 +66,10 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                 setTitulo(res.data.titulo);
                 setDescricao(res.data.descricao);
                 setDataInicio(res.data.dataInicio);
+                setDataFim(res.data.dataFim || '');
                 setLocalizacao(res.data.localizacao);
+                setCategoria(res.data.categoria || 'Conferência');
+                setFormato(res.data.formato || 'presencial');
                 setBannerUrl(res.data.bannerUrl || '');
                 setThumbnailUrl(res.data.thumbnailUrl || '');
                 setLotes(res.data.lotes.map((l: any) => ({ 
@@ -71,7 +80,9 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                     lotacaoTotal: l.lotacaoTotal,
                     quantidadeDisponivel: l.quantidadeDisponivel,
                     tipo: (l as any).tipo || 'DIARIO',
-                    diasValidos: (l as any).diasValidos || ''
+                    diasValidos: (l as any).diasValidos || '',
+                    vendaInicio: (l as any).vendaInicio || '',
+                    vendaFim: (l as any).vendaFim || ''
                 })));
             } else {
                 setError(res.message || 'Erro ao carregar evento.');
@@ -100,10 +111,48 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
         const u = [...lotes]; (u[i] as any)[field] = value; setLotes(u);
     };
 
+    const submitEvent = () => {
+        startTransition(async () => {
+            const payload = { 
+                titulo, 
+                descricao, 
+                dataInicio, 
+                dataFim, 
+                localizacao, 
+                organizadorId: userId, 
+                lotes, 
+                bannerUrl: bannerUrl || undefined, 
+                thumbnailUrl: thumbnailUrl || undefined,
+                formato,
+                categoria,
+                estado: isEditMode ? undefined : 'PUBLICADO'
+            };
+            const res = isEditMode
+                ? await updateEvento(editEventId!, payload)
+                : await createEvento(payload);
+            if (res.success) {
+                setShowPublishConfirmModal(false);
+                onEventCreated();
+            } else {
+                setError(res.message || 'Erro ao guardar evento.');
+                setShowPublishConfirmModal(false);
+            }
+        });
+    };
+
     const goNext = () => {
         setError('');
         if (step === 1) {
-            if (!titulo.trim() || !dataInicio || !localizacao.trim() || !descricao.trim()) { setError('Preencha todos os campos obrigatórios.'); return; }
+            if (!titulo.trim()) { setError('O título do evento é obrigatório.'); return; }
+            if (titulo.trim().length < 3) { setError('O título do evento deve ter pelo menos 3 caracteres.'); return; }
+            if (!descricao.trim()) { setError('A descrição do evento é obrigatória.'); return; }
+            if (descricao.trim().length < 10) { setError('A descrição do evento deve ter pelo menos 10 caracteres.'); return; }
+            if (!dataInicio) { setError('A data de início é obrigatória.'); return; }
+            if (!dataFim) { setError('A data de fim é obrigatória.'); return; }
+            if (new Date(dataFim) <= new Date(dataInicio)) { setError('A data de fim deve ser posterior à data de início.'); return; }
+            if (!localizacao.trim()) { setError('A localização é obrigatória.'); return; }
+            if (localizacao.trim().length < 2) { setError('A localização do evento deve ter pelo menos 2 caracteres.'); return; }
+
             const days = getDiasEvento(dataInicio, dataFim);
             setLotes(prev => prev.map(l => {
                 if (!l.diasValidos) {
@@ -117,17 +166,16 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
             }));
             setStep(2);
         } else if (step === 2) {
-            if (lotes.some(l => !l.nome.trim() || l.lotacaoTotal < 1)) { setError('Preencha o nome e quantidade de cada lote.'); return; }
+            if (lotes.length === 0) { setError('É necessário pelo menos um lote de bilhetes.'); return; }
+            if (lotes.some(l => !l.nome.trim())) { setError('Preencha o nome de todos os lotes de bilhetes.'); return; }
+            if (lotes.some(l => l.lotacaoTotal < 1)) { setError('A quantidade de todos os lotes deve ser de pelo menos 1.'); return; }
             setStep(3);
         } else {
-            startTransition(async () => {
-                const payload = { titulo, descricao, dataInicio, localizacao, organizadorId: userId, lotes, bannerUrl: bannerUrl || undefined, thumbnailUrl: thumbnailUrl || undefined };
-                const res = isEditMode
-                    ? await updateEvento(editEventId!, payload)
-                    : await createEvento(payload);
-                if (res.success) onEventCreated();
-                else setError(res.message || 'Erro ao guardar evento.');
-            });
+            if (!isEditMode) {
+                setShowPublishConfirmModal(true);
+            } else {
+                submitEvent();
+            }
         }
     };
     const goBack = () => { setStep(s => s - 1); setError(''); };
@@ -251,10 +299,15 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                             <input type="text" value={localizacao} onChange={e => setLocalizacao(e.target.value)} placeholder="Pesquisar endereço ou local (ex: Aula Magna UTAD)" className="w-full p-4 pl-12 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800 placeholder:text-slate-400" />
                                             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
                                         </div>
-                                        <div className="w-full h-64 rounded-xl overflow-hidden relative border border-slate-200" style={{ background: 'linear-gradient(135deg, #c084fc, #818cf8, #38bdf8)' }}>
-                                            <div className="absolute top-4 left-4 bg-white px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-2 text-xs font-bold text-slate-800">
-                                                <span className="w-2 h-2 rounded-full bg-red-500" /> {localizacao || 'UTAD, Vila Real'}
-                                            </div>
+                                        <div className="w-full h-64 rounded-xl overflow-hidden relative border border-slate-200 bg-slate-100">
+                                            <iframe 
+                                                width="100%" 
+                                                height="100%" 
+                                                style={{ border: 0 }} 
+                                                loading="lazy" 
+                                                allowFullScreen 
+                                                src={`https://maps.google.com/maps?q=${encodeURIComponent(localizacao || 'UTAD, Vila Real')}&t=&z=16&ie=UTF8&iwloc=&output=embed`} 
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -366,6 +419,16 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                                                 )}
                                                             </select>
                                                         )}
+                                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Início das Vendas (Opcional)</label>
+                                                            <input type="datetime-local" value={lote.vendaInicio || ''} onChange={e => updateLote(i, 'vendaInicio', e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Fim das Vendas (Opcional)</label>
+                                                            <input type="datetime-local" value={lote.vendaFim || ''} onChange={e => updateLote(i, 'vendaFim', e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -518,6 +581,53 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                     </div>
                 </div>
             </div>
+            
+            {/* Modal de Confirmação de Publicação */}
+            {showPublishConfirmModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl p-8 max-w-md w-full border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-800">
+                        <div className="flex items-center gap-3 mb-4 text-violet-700">
+                            <span className="material-symbols-outlined text-3xl">campaign</span>
+                            <h3 className="text-xl font-bold">Publicar Evento</h3>
+                        </div>
+                        <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+                            Desejas mesmo publicar o evento? Ao fazê-lo, ele tornar-se-á <strong className="text-slate-900">Público</strong> e ficará imediatamente disponível para venda de bilhetes.
+                        </p>
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Escreva "Confirmar" para prosseguir</label>
+                                <input 
+                                    type="text" 
+                                    value={confirmText} 
+                                    onChange={e => setConfirmText(e.target.value)} 
+                                    placeholder="Escreva 'Confirmar'" 
+                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm font-semibold placeholder:text-slate-400"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <button 
+                                type="button" 
+                                onClick={() => {
+                                    setShowPublishConfirmModal(false);
+                                    setConfirmText('');
+                                }} 
+                                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-sm transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={submitEvent} 
+                                disabled={confirmText !== 'Confirmar' || isPending}
+                                className="flex-1 bg-violet-700 hover:bg-violet-850 text-white font-bold py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-violet-700/20 cursor-pointer"
+                            >
+                                {isPending ? 'A publicar...' : 'Publicar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

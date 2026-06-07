@@ -17,13 +17,15 @@ const loteSchema = z.object({
     lotacaoTotal: z.number().int().positive('A lotação total deve ser um número positivo.'),
     tipo: z.string().optional(),
     diasValidos: z.string().optional(),
+    vendaInicio: z.string().optional().nullable(),
+    vendaFim: z.string().optional().nullable(),
 });
 
 const criarEventoSchema = z.object({
     titulo: z.string().min(3, 'O título deve ter pelo menos 3 caracteres.'),
     descricao: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres.'),
     dataInicio: z.string().min(1, 'A data de início é obrigatória.'),
-    dataFim: z.string().optional(),
+    dataFim: z.string().min(1, 'A data de fim é obrigatória.'),
     localizacao: z.string().min(2, 'A localização é obrigatória.'),
     organizadorId: z.number().int().positive('O ID do organizador é obrigatório.'),
     lotes: z.array(loteSchema).min(1, 'É necessário pelo menos um lote de bilhetes.'),
@@ -41,6 +43,14 @@ const criarEventoSchema = z.object({
     ticketTemplate: z.string().optional(),
     ticketLogoUrl: z.string().optional(),
     ticketGlow: z.boolean().optional(),
+}).refine(data => {
+    if (data.dataInicio && data.dataFim) {
+        return new Date(data.dataFim) > new Date(data.dataInicio);
+    }
+    return true;
+}, {
+    message: "A data de fim deve ser posterior à data de início.",
+    path: ["dataFim"]
 });
 
 // Tipo inferido do schema para reutilização
@@ -96,6 +106,8 @@ export async function createEvento(data: CreateEventoInput) {
                         quantidadeDisponivel: lote.lotacaoTotal,
                         tipo: lote.tipo || "DIARIO",
                         diasValidos: lote.diasValidos || "",
+                        vendaInicio: lote.vendaInicio ? new Date(lote.vendaInicio) : null,
+                        vendaFim: lote.vendaFim ? new Date(lote.vendaFim) : null,
                     })),
                 },
             },
@@ -160,6 +172,8 @@ export async function getEventoById(eventoId: number) {
                     quantidadeDisponivel: l.quantidadeDisponivel,
                     tipo: l.tipo,
                     diasValidos: l.diasValidos,
+                    vendaInicio: l.vendaInicio ? l.vendaInicio.toISOString().slice(0, 16) : null,
+                    vendaFim: l.vendaFim ? l.vendaFim.toISOString().slice(0, 16) : null,
                 })),
             },
         };
@@ -242,6 +256,8 @@ export async function updateEvento(eventoId: number, data: CreateEventoInput) {
                                 quantidadeDisponivel: novaQuantDisponivel,
                                 tipo: lote.tipo || "DIARIO",
                                 diasValidos: lote.diasValidos || "",
+                                vendaInicio: lote.vendaInicio ? new Date(lote.vendaInicio) : null,
+                                vendaFim: lote.vendaFim ? new Date(lote.vendaFim) : null,
                             } as any
                         });
                     }
@@ -257,6 +273,8 @@ export async function updateEvento(eventoId: number, data: CreateEventoInput) {
                             quantidadeDisponivel: lote.lotacaoTotal,
                             tipo: lote.tipo || "DIARIO",
                             diasValidos: lote.diasValidos || "",
+                            vendaInicio: lote.vendaInicio ? new Date(lote.vendaInicio) : null,
+                            vendaFim: lote.vendaFim ? new Date(lote.vendaFim) : null,
                         } as any
                     });
                 }
@@ -331,6 +349,8 @@ export async function deleteEvento(eventoId: number) {
         }
 
         // Delete related records first
+        await prisma.promotor.deleteMany({ where: { eventoId } });
+        await prisma.eventoStaff.deleteMany({ where: { eventoId } });
         await prisma.loteBilhete.deleteMany({ where: { eventoId } });
         await prisma.evento.delete({ where: { id: eventoId } });
 
@@ -340,3 +360,195 @@ export async function deleteEvento(eventoId: number) {
         return { success: false, message: `Erro: ${error.message}` };
     }
 }
+
+// ==========================================
+// Procurar Eventos de Organizador para Transferência
+// ==========================================
+export async function getOrganizerEventsForTransfer(eventoId: number) {
+    try {
+        const session = await getSession();
+        if (!session) return { success: false, message: "Não autenticado." };
+
+        const evento = await prisma.evento.findUnique({ where: { id: eventoId } });
+        if (!evento) return { success: false, message: "Evento original não encontrado." };
+
+        const eventos = await prisma.evento.findMany({
+            where: {
+                organizadorId: session.userId,
+                id: { not: eventoId },
+                estado: "PUBLICADO"
+            },
+            include: {
+                lotes: true
+            },
+            orderBy: { dataInicio: 'asc' }
+        });
+
+        return {
+            success: true,
+            data: eventos.map(ev => ({
+                id: ev.id,
+                titulo: ev.titulo,
+                lotes: ev.lotes.map(l => ({
+                    id: l.id,
+                    nome: l.nome,
+                    preco: l.preco,
+                    quantidadeDisponivel: l.quantidadeDisponivel,
+                    lotacaoTotal: l.lotacaoTotal
+                }))
+            }))
+        };
+    } catch (error: any) {
+        console.error("Erro ao procurar eventos para transferência:", error);
+        return { success: false, message: `Erro: ${error.message}` };
+    }
+}
+
+// ==========================================
+// Reembolsar Bilhetes (Simulado) e Cancelar Evento
+// ==========================================
+export async function reembolsarBilhetesEvento(eventoId: number) {
+    try {
+        const session = await getSession();
+        if (!session) return { success: false, message: "Não autenticado." };
+
+        const evento = await prisma.evento.findUnique({
+            where: { id: eventoId },
+            include: { lotes: true }
+        });
+        if (!evento) return { success: false, message: "Evento não encontrado." };
+        if (evento.organizadorId !== session.userId) {
+            return { success: false, message: "Sem permissão para cancelar este evento." };
+        }
+
+        // Encontrar todos os bilhetes do evento
+        const lotIds = evento.lotes.map(l => l.id);
+        const bilhetes = await prisma.bilhete.findMany({
+            where: { loteId: { in: lotIds } },
+            select: { pedidoId: true }
+        });
+
+        const uniquePedidoIds = Array.from(new Set(bilhetes.map(b => b.pedidoId)));
+
+        await prisma.$transaction(async (tx) => {
+            // Cancelar os pedidos relacionados
+            if (uniquePedidoIds.length > 0) {
+                await tx.pedido.updateMany({
+                    where: { id: { in: uniquePedidoIds } },
+                    data: { estado: 'CANCELADO' }
+                });
+            }
+
+            // Apagar os bilhetes para libertar as chaves e stock
+            if (lotIds.length > 0) {
+                await tx.bilhete.deleteMany({
+                    where: { loteId: { in: lotIds } }
+                });
+
+                // Repor a capacidade dos lotes
+                for (const lote of evento.lotes) {
+                    await tx.loteBilhete.update({
+                        where: { id: lote.id },
+                        data: { quantidadeDisponivel: lote.lotacaoTotal }
+                    });
+                }
+            }
+
+            // Mudar o estado do evento para CANCELADO
+            await tx.evento.update({
+                where: { id: eventoId },
+                data: { estado: 'CANCELADO' }
+            });
+        });
+
+        return { success: true, message: "Bilhetes reembolsados (simulado) e evento cancelado com sucesso." };
+    } catch (error: any) {
+        console.error("Erro ao reembolsar bilhetes:", error);
+        return { success: false, message: `Erro ao reembolsar: ${error.message}` };
+    }
+}
+
+// ==========================================
+// Transferir Bilhetes para Outro Evento e Cancelar Evento
+// ==========================================
+export async function transferirBilhetesEvento(eventoId: number, destinoLoteId: number) {
+    try {
+        const session = await getSession();
+        if (!session) return { success: false, message: "Não autenticado." };
+
+        // Procurar evento de origem e os seus lotes
+        const sourceEvento = await prisma.evento.findUnique({
+            where: { id: eventoId },
+            include: { lotes: true }
+        });
+        if (!sourceEvento) return { success: false, message: "Evento de origem não encontrado." };
+        if (sourceEvento.organizadorId !== session.userId) {
+            return { success: false, message: "Sem permissão para transferir bilhetes deste evento." };
+        }
+
+        // Procurar lote de destino
+        const destLote = await prisma.loteBilhete.findUnique({
+            where: { id: destinoLoteId },
+            include: { evento: true }
+        });
+        if (!destLote) return { success: false, message: "Lote de destino não encontrado." };
+        if (destLote.evento.organizadorId !== session.userId) {
+            return { success: false, message: "O lote de destino deve pertencer a um evento seu." };
+        }
+
+        // Encontrar todos os bilhetes a transferir
+        const sourceLoteIds = sourceEvento.lotes.map(l => l.id);
+        const bilhetesToTransfer = await prisma.bilhete.findMany({
+            where: { loteId: { in: sourceLoteIds } }
+        });
+
+        const ticketsCount = bilhetesToTransfer.length;
+        if (ticketsCount === 0) {
+            return { success: false, message: "Não existem bilhetes vendidos para este evento." };
+        }
+
+        // Verificar capacidade do lote de destino
+        if (destLote.quantidadeDisponivel < ticketsCount) {
+            return {
+                success: false,
+                message: `O lote de destino '${destLote.nome}' tem apenas ${destLote.quantidadeDisponivel} vagas disponíveis (são necessários ${ticketsCount}).`
+            };
+        }
+
+        await prisma.$transaction(async (tx) => {
+            // Transferir todos os bilhetes de lote
+            await tx.bilhete.updateMany({
+                where: { loteId: { in: sourceLoteIds } },
+                data: { loteId: destinoLoteId }
+            });
+
+            // Decrementar capacidade no lote de destino
+            await tx.loteBilhete.update({
+                where: { id: destinoLoteId },
+                data: {
+                    quantidadeDisponivel: destLote.quantidadeDisponivel - ticketsCount
+                }
+            });
+
+            // Repor capacidade no lote de origem (vazio)
+            for (const lote of sourceEvento.lotes) {
+                await tx.loteBilhete.update({
+                    where: { id: lote.id },
+                    data: { quantidadeDisponivel: lote.lotacaoTotal }
+                });
+            }
+
+            // Marcar evento de origem como CANCELADO
+            await tx.evento.update({
+                where: { id: eventoId },
+                data: { estado: 'CANCELADO' }
+            });
+        });
+
+        return { success: true, message: `Transferência de ${ticketsCount} bilhete(s) concluída e evento cancelado.` };
+    } catch (error: any) {
+        console.error("Erro ao transferir bilhetes:", error);
+        return { success: false, message: `Erro ao transferir: ${error.message}` };
+    }
+}
+

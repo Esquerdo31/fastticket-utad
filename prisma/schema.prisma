@@ -100,6 +100,10 @@ model LoteBilhete {
   tipo                 String    @default("DIARIO") // "DIARIO" ou "GERAL"
   diasValidos          String    @default("")       // Datas YYYY-MM-DD separadas por virgula
   
+  // Agendamento de Vendas (Pré-venda / Venda normal)
+  vendaInicio          DateTime?
+  vendaFim             DateTime?
+
   // Chaves Estrangeiras & Relacionamentos
   eventoId             Int
   evento               Evento    @relation(fields: [eventoId], references: [id])

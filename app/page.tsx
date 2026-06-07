@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getActiveSession, logoutUser } from "./actions/auth";
 import { getEventos } from "./actions/event";
+import { getEventStatus } from "@/lib/eventStatus";
 
 function MaterialIcon({ name, className = "" }: { name: string; className?: string }) {
     return <span className={`material-symbols-outlined ${className}`}>{name}</span>;
@@ -23,7 +24,16 @@ export default function UTADFastTicketPage() {
         getActiveSession().then(setUserSession);
         getEventos().then(res => {
             if (res.success && res.data) {
-                setDbEvents(res.data);
+                const activeEvents = res.data.filter((ev: any) => {
+                    const status = getEventStatus({
+                        estado: ev.estado,
+                        dataInicio: ev.dataInicio,
+                        dataFim: ev.dataFim,
+                        lotes: ev.lotes
+                    });
+                    return status !== 'TERMINADO' && status !== 'RASCUNHO' && status !== 'CANCELADO';
+                });
+                setDbEvents(activeEvents);
             }
         });
     }, []);

@@ -1,16 +1,21 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { getEventStatus, getEventStatusLabel, getEventStatusColor } from '@/lib/eventStatus';
 
 interface EventoStat {
     id: number;
     titulo: string;
     dataInicio: string;
+    dataInicioRaw: string;
+    dataFimRaw?: string | null;
+    estado: string;
     localizacao: string;
     lotacaoMaxima: number;
     bilhetesVendidos: number;
     receita: number;
+    lotes?: any[];
 }
 
 interface OrganizerEventsProps {
@@ -20,6 +25,42 @@ interface OrganizerEventsProps {
 }
 
 export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }: OrganizerEventsProps) {
+    const [activeFilterTab, setActiveFilterTab] = useState<'ativos' | 'terminados'>('ativos');
+
+    const activeCount = eventos.filter(e => {
+        const status = getEventStatus({
+            estado: e.estado,
+            dataInicio: e.dataInicioRaw,
+            dataFim: e.dataFimRaw,
+            lotes: e.lotes
+        });
+        return status !== 'TERMINADO';
+    }).length;
+
+    const endedCount = eventos.filter(e => {
+        const status = getEventStatus({
+            estado: e.estado,
+            dataInicio: e.dataInicioRaw,
+            dataFim: e.dataFimRaw,
+            lotes: e.lotes
+        });
+        return status === 'TERMINADO';
+    }).length;
+
+    const filtered = eventos.filter(e => {
+        const status = getEventStatus({
+            estado: e.estado,
+            dataInicio: e.dataInicioRaw,
+            dataFim: e.dataFimRaw,
+            lotes: e.lotes
+        });
+        if (activeFilterTab === 'ativos') {
+            return status !== 'TERMINADO';
+        } else {
+            return status === 'TERMINADO';
+        }
+    });
+
     return (
         <>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -30,6 +71,30 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                 <button onClick={onCreateEvent} className="bg-violet-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-violet-800 hover:shadow-xl hover:shadow-violet-700/25 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-700/20 cursor-pointer">
                     <span className="material-symbols-outlined">add_circle</span>
                     Criar Novo Evento
+                </button>
+            </div>
+
+            {/* Tab Filters */}
+            <div className="flex border-b border-slate-200 mb-6 gap-2">
+                <button
+                    onClick={() => setActiveFilterTab('ativos')}
+                    className={`px-4 py-2.5 text-sm font-bold border-b-2 cursor-pointer transition-all ${
+                        activeFilterTab === 'ativos'
+                            ? 'border-violet-700 text-violet-700'
+                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    Eventos Ativos ({activeCount})
+                </button>
+                <button
+                    onClick={() => setActiveFilterTab('terminados')}
+                    className={`px-4 py-2.5 text-sm font-bold border-b-2 cursor-pointer transition-all ${
+                        activeFilterTab === 'terminados'
+                            ? 'border-violet-700 text-violet-700'
+                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    Eventos Terminados ({endedCount})
                 </button>
             </div>
 
@@ -47,7 +112,7 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {eventos.length > 0 ? eventos.map(evento => {
+                            {filtered.length > 0 ? filtered.map(evento => {
                                 const lotacaoPercent = (evento.bilhetesVendidos / evento.lotacaoMaxima) * 100;
                                 let statusColor = 'bg-emerald-500';
                                 if (lotacaoPercent > 90) statusColor = 'bg-red-500';
@@ -61,8 +126,23 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                                                     <span className="material-symbols-outlined text-[20px]">campaign</span>
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-violet-700 line-clamp-1 hover:underline">{evento.titulo}</p>
-                                                    <p className="text-xs text-slate-500 font-mono">#{evento.id.toString().padStart(4, '0')}</p>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <p className="font-bold text-violet-700 line-clamp-1 hover:underline">{evento.titulo}</p>
+                                                        {(() => {
+                                                            const status = getEventStatus({
+                                                                estado: evento.estado,
+                                                                dataInicio: evento.dataInicioRaw,
+                                                                dataFim: evento.dataFimRaw,
+                                                                lotes: evento.lotes
+                                                            });
+                                                            return (
+                                                                <span className={`text-[8px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full ${getEventStatusColor(status)}`}>
+                                                                    {getEventStatusLabel(status)}
+                                                                </span>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 font-mono mt-0.5">#{evento.id.toString().padStart(4, '0')}</p>
                                                 </div>
                                             </Link>
                                         </td>
