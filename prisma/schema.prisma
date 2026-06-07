@@ -46,6 +46,8 @@ model Utilizador {
   passwordHash   String
   role           Role            @default(PARTICIPANTE)
   pedidoPromotores String          @default("NADA") // NADA, PENDENTE, APROVADO, REJEITADO
+  wishlist       Wishlist[]
+  waitlist       Waitlist[]
   
   // Relacionamentos
   eventos        Evento[]        // (Organiza) 1 Utilizador -> * Eventos
@@ -70,6 +72,8 @@ model Evento {
   thumbnailUrl   String?
   mostrarBanner  Boolean       @default(true)
   mostrarLogo    Boolean       @default(true)
+  wishlist       Wishlist[]
+  waitlist       Waitlist[]
   
   // Personalização de Bilhetes
   ticketCorFundo String        @default("#ffffff")
@@ -159,6 +163,30 @@ model RegistoAcesso {
   bilhete         Bilhete    @relation(fields: [bilheteId], references: [id])
   staffId         Int
   staff           Utilizador @relation(fields: [staffId], references: [id])
+}
+
+model Wishlist {
+  id           Int        @id @default(autoincrement())
+  createdAt    DateTime   @default(now())
+  utilizadorId Int
+  eventoId     Int
+  utilizador   Utilizador @relation(fields: [utilizadorId], references: [id], onDelete: Cascade)
+  evento       Evento     @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+
+  @@unique([utilizadorId, eventoId])
+  @@index([eventoId])
+}
+
+model Waitlist {
+  id           Int        @id @default(autoincrement())
+  createdAt    DateTime   @default(now())
+  utilizadorId Int
+  eventoId     Int
+  utilizador   Utilizador @relation(fields: [utilizadorId], references: [id], onDelete: Cascade)
+  evento       Evento     @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+
+  @@unique([utilizadorId, eventoId])
+  @@index([eventoId])
 }
 
 // ==============================

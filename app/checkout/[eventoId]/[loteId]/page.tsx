@@ -62,7 +62,7 @@ export default function CheckoutPage() {
 
     const handleCheckout = async () => {
         if (!evento || !lote) return;
-        
+
         if (userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") {
             setErrorMsg("Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.");
             return;
@@ -109,7 +109,7 @@ export default function CheckoutPage() {
 
     const handleSimulatePayment = async () => {
         if (!evento || !lote) return;
-        
+
         if (userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") {
             setErrorMsg("Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.");
             return;
@@ -187,18 +187,18 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Coluna Esquerda: Detalhes e Revisão */}
                     <div className="lg:col-span-8 space-y-8">
-                        
+
                         {/* Banner "Review Your Order" */}
                         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col sm:flex-row shadow-sm">
                             <div className="bg-[#006837] sm:w-1/3 p-6 relative overflow-hidden flex flex-col justify-center text-white min-h-[160px]">
                                 <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
                                 <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-300/80 mb-2 z-10">Official Portal</span>
-                                <h2 className="text-2xl font-bold leading-tight z-10">Secure Academic<br/>Checkout</h2>
+                                <h2 className="text-2xl font-bold leading-tight z-10">Secure Academic<br />Checkout</h2>
                             </div>
                             <div className="p-8 flex flex-col justify-center sm:w-2/3">
-                                <h2 className="text-2xl font-extrabold text-slate-800 mb-2">Review Your Order</h2>
+                                <h2 className="text-2xl font-extrabold text-slate-800 mb-2">Verifica a tua Compra</h2>
                                 <p className="text-slate-500 text-sm leading-relaxed">
-                                    Please verify your ticket selection. Once confirmed, you will be securely redirected to Stripe to finalize your payment. Tickets are held for 10 minutes.
+                                    Por favor verifica a seleção do bilhete. Quando confirmar, será redirecionado para o Stripe para finalizar o pagamento. Bilhetes são guardados por até 10 minutos.
                                 </p>
                             </div>
                         </div>
@@ -206,7 +206,7 @@ export default function CheckoutPage() {
                         {/* Selected Tickets */}
                         <div>
                             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Selected Tickets</h3>
-                            
+
                             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                     <div className="flex items-center gap-4">
@@ -218,14 +218,14 @@ export default function CheckoutPage() {
                                             <p className="text-slate-500 text-sm">{lote.name}</p>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="flex flex-col sm:items-end w-full sm:w-auto mt-4 sm:mt-0">
                                         <div className="text-xl font-extrabold text-slate-800 mb-2">
                                             {isFree ? 'Gratuito' : `€${basePrice.toFixed(2)}`}
                                         </div>
-                                        
+
                                         <div className="flex items-center bg-slate-100 rounded-lg p-1 w-fit">
-                                            <button 
+                                            <button
                                                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
                                                 className="w-8 h-8 rounded-md hover:bg-white hover:shadow-sm flex items-center justify-center text-slate-600 transition-all"
                                                 disabled={quantity <= 1}
@@ -233,7 +233,7 @@ export default function CheckoutPage() {
                                                 <span className="material-symbols-outlined text-[18px]">remove</span>
                                             </button>
                                             <span className="w-8 text-center font-bold text-sm">{quantity}</span>
-                                            <button 
+                                            <button
                                                 onClick={() => setQuantity(q => Math.min(10, q + 1))}
                                                 className="w-8 h-8 rounded-md hover:bg-white hover:shadow-sm flex items-center justify-center text-slate-600 transition-all"
                                                 disabled={quantity >= 10 || quantity >= lote.quantidadeDisponivel}
@@ -265,7 +265,7 @@ export default function CheckoutPage() {
                             <div className="bg-[#006837] px-6 py-5">
                                 <h3 className="text-white font-bold text-lg">Order Summary</h3>
                             </div>
-                            
+
                             <div className="p-6">
                                 <div className="space-y-4 text-sm text-slate-600 border-b border-slate-100 pb-6 mb-6">
                                     <div className="flex justify-between">
@@ -329,7 +329,7 @@ export default function CheckoutPage() {
                                         Simular Pagamento (Teste)
                                     </button>
                                 )}
-                                
+
                                 <p className="text-center text-[10px] text-slate-400 mt-4 leading-relaxed">
                                     By clicking Finalize Purchase, you agree to the <a href="#" className="underline hover:text-slate-600">Terms of Service</a> and <a href="#" className="underline hover:text-slate-600">Privacy Policy</a> of UTAD FastTicket.
                                 </p>
