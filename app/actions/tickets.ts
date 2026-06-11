@@ -340,17 +340,7 @@ export async function validarBilhete(data: {
         // --- SUPORTE MULTI-DIA (PASSES GERAIS / BILHETES DIÁRIOS) ---
 
         // Obter data de hoje no fuso horário Europe/Lisbon como YYYY-MM-DD
-        const formatter = new Intl.DateTimeFormat('pt-PT', {
-            timeZone: 'Europe/Lisbon',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-        const parts = formatter.formatToParts(new Date());
-        const year = parts.find(p => p.type === 'year')?.value;
-        const month = parts.find(p => p.type === 'month')?.value;
-        const day = parts.find(p => p.type === 'day')?.value;
-        const todayStr = `${year}-${month}-${day}`;
+        const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Lisbon' });
 
         const loteDb = bilhete.lote as any;
         const diasValidosRaw = loteDb.diasValidos || "";
@@ -401,21 +391,13 @@ export async function validarBilhete(data: {
         if (tipoLote === 'GERAL') {
             // Passe Geral: pode entrar em dias diferentes, mas apenas uma entrada por dia
             const jaEntrouHoje = bilhete.registosAcesso.some(r => {
-                const partsAcc = formatter.formatToParts(r.dataHoraEntrada);
-                const y = partsAcc.find(p => p.type === 'year')?.value;
-                const m = partsAcc.find(p => p.type === 'month')?.value;
-                const d = partsAcc.find(p => p.type === 'day')?.value;
-                const dateStr = `${y}-${m}-${d}`;
+                const dateStr = new Date(r.dataHoraEntrada).toLocaleDateString('sv-SE', { timeZone: 'Europe/Lisbon' });
                 return dateStr === todayStr;
             });
 
             if (jaEntrouHoje) {
                 const regHoje = bilhete.registosAcesso.find(r => {
-                    const partsAcc = formatter.formatToParts(r.dataHoraEntrada);
-                    const y = partsAcc.find(p => p.type === 'year')?.value;
-                    const m = partsAcc.find(p => p.type === 'month')?.value;
-                    const d = partsAcc.find(p => p.type === 'day')?.value;
-                    const dateStr = `${y}-${m}-${d}`;
+                    const dateStr = new Date(r.dataHoraEntrada).toLocaleDateString('sv-SE', { timeZone: 'Europe/Lisbon' });
                     return dateStr === todayStr;
                 });
 

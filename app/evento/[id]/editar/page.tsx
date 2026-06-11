@@ -11,6 +11,26 @@ import {
     transferirBilhetesEvento 
 } from '@/app/actions/evento';
 
+function getDiasEvento(start: string, end: string) {
+    if (!start) return [];
+    const startDate = new Date(start);
+    const endDate = end ? new Date(end) : startDate;
+    const dias = [];
+    let current = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const limit = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    
+    let safetyCounter = 0;
+    while (current <= limit && safetyCounter < 30) {
+        const y = current.getFullYear();
+        const m = String(current.getMonth() + 1).padStart(2, '0');
+        const d = String(current.getDate()).padStart(2, '0');
+        dias.push(`${y}-${m}-${d}`);
+        current.setDate(current.getDate() + 1);
+        safetyCounter++;
+    }
+    return dias;
+}
+
 type Tab = 'detalhes' | 'bilheteira' | 'media' | 'personalizacao' | 'config';
 interface Lote { 
     id?: number; 
@@ -420,6 +440,55 @@ export default function EditarEventoPage() {
                                                     </div>
                                                 </div>
                                                 <div className="mt-4"><label className={labelCls}>Descrição (Opcional)</label><input type="text" value={lote.descricao} onChange={e => updateLote(i, 'descricao', e.target.value)} className={inputCls} placeholder="Descrição do lote" /></div>
+                                                
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
+                                                    <div>
+                                                        <label className={labelCls}>Tipo de Bilhete</label>
+                                                        <select
+                                                            value={lote.tipo || 'DIARIO'}
+                                                            disabled={hasSoldTickets}
+                                                            onChange={e => {
+                                                                const type = e.target.value;
+                                                                const days = getDiasEvento(dataInicio, dataFim);
+                                                                updateLote(i, 'tipo', type);
+                                                                updateLote(i, 'diasValidos', type === 'GERAL' ? days.join(',') : (days[0] || ''));
+                                                            }}
+                                                            className={inputCls + " disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"}
+                                                        >
+                                                            <option value="DIARIO">Bilhete Diário</option>
+                                                            <option value="GERAL">Passe Geral (Todos os dias)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className={labelCls}>Dia(s) Válido(s)</label>
+                                                        {lote.tipo === 'GERAL' ? (
+                                                            <div className="w-full p-4 bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600">
+                                                                Todos os dias ({getDiasEvento(dataInicio, dataFim).length} dias)
+                                                            </div>
+                                                        ) : (
+                                                            <select
+                                                                value={lote.diasValidos || ''}
+                                                                disabled={hasSoldTickets}
+                                                                onChange={e => updateLote(i, 'diasValidos', e.target.value)}
+                                                                className={inputCls + " disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"}
+                                                            >
+                                                                {getDiasEvento(dataInicio, dataFim).map(day => {
+                                                                    const dateObj = new Date(day + 'T00:00:00');
+                                                                    const label = dateObj.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });
+                                                                    return (
+                                                                        <option key={day} value={day}>
+                                                                            {label}
+                                                                        </option>
+                                                                    );
+                                                                })}
+                                                                {getDiasEvento(dataInicio, dataFim).length === 0 && (
+                                                                    <option value="">(Defina primeiro as datas do evento)</option>
+                                                                )}
+                                                            </select>
+                                                        )}
+                                                    </div>
+                                                </div>
+
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
                                                     <div>
                                                         <label className={labelCls}>Início das Vendas (Opcional)</label>
