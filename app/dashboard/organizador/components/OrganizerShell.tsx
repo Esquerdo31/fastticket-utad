@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { logoutUser } from '@/app/actions/auth';
+import type { OrganizerStats } from '@/app/actions/organizador';
 import OrganizerDashboard from './OrganizerDashboard';
 import OrganizerEvents from './OrganizerEvents';
 import OrganizerSales from './OrganizerSales';
@@ -25,6 +26,7 @@ interface OrganizerShellProps {
     };
     eventos: any[];
     nextEvents: any[];
+    organizerStats: OrganizerStats;
     recentPurchases?: any[];
     salesByDate?: any[];
     promoterLeaderboard?: any[];
@@ -43,6 +45,7 @@ export default function OrganizerShell({
     summary, 
     eventos, 
     nextEvents, 
+    organizerStats,
     recentPurchases = [], 
     salesByDate = [], 
     promoterLeaderboard = [], 
@@ -144,7 +147,7 @@ export default function OrganizerShell({
                 {/* Main Content Canvas */}
                 <main className="flex-1 md:ml-64 p-6 lg:p-10 pb-24 md:pb-10">
                     <div key={activeTab} className="animate-fadeIn">
-                        {activeTab === 'dashboard' && <OrganizerDashboard userName={userName} summary={summary} nextEvents={nextEvents} pedidoPromotores={pedidoPromotores} parcerias={parcerias} onTabChange={handleTabChange} />}
+                        {activeTab === 'dashboard' && <OrganizerDashboard userName={userName} summary={summary} nextEvents={nextEvents} organizerStats={organizerStats} pedidoPromotores={pedidoPromotores} parcerias={parcerias} onTabChange={handleTabChange} />}
                         {activeTab === 'events' && <OrganizerEvents eventos={eventos} onCreateEvent={() => handleTabChange('create-event')} onEditEvent={handleEditEvent} />}
                         {activeTab === 'create-event' && <CreateEventWizard userName={userName} userId={user.id} onEventCreated={() => { handleTabChange('events'); router.refresh(); }} />}
                         {activeTab === 'edit-event' && editEventId && <CreateEventWizard userName={userName} userId={user.id} editEventId={editEventId} onEventCreated={() => { setEditEventId(null); handleTabChange('events'); router.refresh(); }} />}

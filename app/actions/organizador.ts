@@ -4,6 +4,172 @@ import prisma from "../../lib/prisma";
 import * as bcrypt from "bcryptjs";
 import { getSession } from "../../lib/session";
 
+export type OrganizerStats = {
+    receitaTotal: number;
+    bilhetesVendidos: number;
+    taxaCheckin: number;
+    vendasPorDia: {
+        date: string;
+        label: string;
+        receita: number;
+        bilhetes: number;
+    }[];
+    eventosAtivos: {
+        id: number;
+        titulo: string;
+        estado: string;
+        dataInicio: string;
+        lotacaoTotal: number;
+        bilhetesVendidos: number;
+        bilhetesUsados: number;
+        ocupacaoPercent: number;
+        receita: number;
+    }[];
+};
+
+export async function getOrganizerStats(organizadorId: number): Promise<OrganizerStats> {
+    const [paidOrders, bilhetesVendidos, bilhetesUsados, eventos] = await Promise.all([
+        prisma.pedido.findMany({
+            where: {
+                estado: "PAGO",
+                bilhetes: {
+                    some: {
+                        lote: {
+                            evento: {
+                                organizadorId,
+                            },
+                        },
+                    },
+                },
+            },
+            select: {
+                dataPedido: true,
+                valorTotal: true,
+                bilhetes: {
+                    select: {
+                        id: true,
+                    },
+                },
+            },
+            orderBy: {
+                dataPedido: "asc",
+            },
+        }),
+        prisma.bilhete.count({
+            where: {
+                estado: {
+                    in: ["PAGO", "USADO"],
+                },
+                lote: {
+                    evento: {
+                        organizadorId,
+                    },
+                },
+            },
+        }),
+        prisma.bilhete.count({
+            where: {
+                estado: "USADO",
+                lote: {
+                    evento: {
+                        organizadorId,
+                    },
+                },
+            },
+        }),
+        prisma.evento.findMany({
+            where: {
+                organizadorId,
+                estado: {
+                    not: "CANCELADO",
+                },
+            },
+            select: {
+                id: true,
+                titulo: true,
+                estado: true,
+                dataInicio: true,
+                lotacaoMaxima: true,
+                lotes: {
+                    select: {
+                        preco: true,
+                        lotacaoTotal: true,
+                        bilhetes: {
+                            where: {
+                                estado: {
+                                    in: ["PAGO", "USADO"],
+                                },
+                            },
+                            select: {
+                                estado: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: {
+                dataInicio: "asc",
+            },
+        }),
+    ]);
+
+    const receitaTotal = paidOrders.reduce((total, pedido) => total + pedido.valorTotal, 0);
+    const taxaCheckin = bilhetesVendidos > 0 ? Math.round((bilhetesUsados / bilhetesVendidos) * 100) : 0;
+
+    const vendasMap = new Map<string, { date: string; label: string; receita: number; bilhetes: number }>();
+
+    paidOrders.forEach((pedido) => {
+        const key = pedido.dataPedido.toISOString().slice(0, 10);
+        const current = vendasMap.get(key) || {
+            date: key,
+            label: pedido.dataPedido.toLocaleDateString("pt-PT", {
+                day: "2-digit",
+                month: "short",
+            }),
+            receita: 0,
+            bilhetes: 0,
+        };
+
+        current.receita += pedido.valorTotal;
+        current.bilhetes += pedido.bilhetes.length;
+        vendasMap.set(key, current);
+    });
+
+    const eventosAtivos = eventos.map((evento) => {
+        const lotacaoTotal = evento.lotes.reduce((total, lote) => total + lote.lotacaoTotal, 0) || evento.lotacaoMaxima;
+        const eventoBilhetesVendidos = evento.lotes.reduce((total, lote) => total + lote.bilhetes.length, 0);
+        const eventoBilhetesUsados = evento.lotes.reduce(
+            (total, lote) => total + lote.bilhetes.filter((bilhete) => bilhete.estado === "USADO").length,
+            0
+        );
+        const receita = evento.lotes.reduce((total, lote) => total + lote.bilhetes.length * lote.preco, 0);
+
+        return {
+            id: evento.id,
+            titulo: evento.titulo,
+            estado: evento.estado,
+            dataInicio: evento.dataInicio.toLocaleDateString("pt-PT", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+            }),
+            lotacaoTotal,
+            bilhetesVendidos: eventoBilhetesVendidos,
+            bilhetesUsados: eventoBilhetesUsados,
+            ocupacaoPercent: lotacaoTotal > 0 ? Math.round((eventoBilhetesVendidos / lotacaoTotal) * 100) : 0,
+            receita,
+        };
+    });
+
+    return {
+        receitaTotal,
+        bilhetesVendidos,
+        taxaCheckin,
+        vendasPorDia: Array.from(vendasMap.values()).sort((a, b) => a.date.localeCompare(b.date)),
+        eventosAtivos,
+    };
+}
+
 export async function getOrganizerDashboardData(userId: number) {
     try {
         const userObj = await prisma.utilizador.findUnique({

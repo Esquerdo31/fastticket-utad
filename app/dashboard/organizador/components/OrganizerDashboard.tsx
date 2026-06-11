@@ -4,6 +4,8 @@ import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { solicitarAcessoPromotores } from '@/app/actions/organizador';
+import type { OrganizerStats } from '@/app/actions/organizador';
+import OrganizerStatsPanel from './OrganizerStatsPanel';
 
 interface EventoStat {
     id: number;
@@ -23,12 +25,13 @@ interface OrganizerDashboardProps {
         receitaTotal: number;
     };
     nextEvents: EventoStat[];
+    organizerStats: OrganizerStats;
     pedidoPromotores: string;
     parcerias: any[];
     onTabChange: (tab: any) => void;
 }
 
-export default function OrganizerDashboard({ userName, summary, nextEvents, pedidoPromotores, parcerias = [], onTabChange }: OrganizerDashboardProps) {
+export default function OrganizerDashboard({ userName, summary, nextEvents, organizerStats, pedidoPromotores, parcerias = [], onTabChange }: OrganizerDashboardProps) {
     const [isPending, startTransition] = useTransition();
     const [msg, setMsg] = useState("");
     const router = useRouter();
@@ -88,6 +91,8 @@ export default function OrganizerDashboard({ userName, summary, nextEvents, pedi
             </section>
 
             {/* Secção de Solicitação de Promotores */}
+            <OrganizerStatsPanel stats={organizerStats} />
+
             {pedidoPromotores !== 'APROVADO' && (
                 <section className="mb-10 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-4">
@@ -138,8 +143,7 @@ export default function OrganizerDashboard({ userName, summary, nextEvents, pedi
                 </section>
             )}
 
-            {/* Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="hidden">
                 <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-violet-100 flex items-center justify-center text-violet-700">
                         <span className="material-symbols-outlined text-3xl">event</span>

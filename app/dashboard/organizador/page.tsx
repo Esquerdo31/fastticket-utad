@@ -1,7 +1,7 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
 import { getActiveSession } from '@/app/actions/auth';
-import { getOrganizerDashboardData } from '@/app/actions/organizador';
+import { getOrganizerDashboardData, getOrganizerStats } from '@/app/actions/organizador';
 import { getParceriasPromotor } from '@/app/actions/promotores';
 import OrganizerShell from './components/OrganizerShell';
 
@@ -12,13 +12,14 @@ export default async function OrganizerDashboardPage() {
         redirect('/login');
     }
 
-    if (session.role !== 'ORGANIZADOR' && session.role !== 'STAFF') {
+    if (session.role !== 'ORGANIZADOR') {
         redirect('/dashboard');
     }
 
-    const [dashboardResult, parceriasResult] = await Promise.all([
+    const [dashboardResult, parceriasResult, organizerStats] = await Promise.all([
         getOrganizerDashboardData(session.userId),
-        getParceriasPromotor()
+        getParceriasPromotor(),
+        getOrganizerStats(session.userId)
     ]);
 
     const summary = dashboardResult.summary || { totalEventos: 0, totalBilhetesVendidos: 0, receitaTotal: 0, totalCapacity: 0 };
@@ -44,6 +45,7 @@ export default async function OrganizerDashboardPage() {
             summary={summary}
             eventos={eventos}
             nextEvents={nextEvents}
+            organizerStats={organizerStats}
             recentPurchases={recentPurchases}
             salesByDate={salesByDate}
             promoterLeaderboard={promoterLeaderboard}
