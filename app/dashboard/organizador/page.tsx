@@ -5,7 +5,11 @@ import { getOrganizerDashboardData, getOrganizerStats } from '@/app/actions/orga
 import { getParceriasPromotor } from '@/app/actions/promotores';
 import OrganizerShell from './components/OrganizerShell';
 
-export default async function OrganizerDashboardPage() {
+export default async function OrganizerDashboardPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ tab?: string }> | { tab?: string };
+}) {
     const session = await getActiveSession();
 
     if (!session || !session.userId) {
@@ -15,6 +19,11 @@ export default async function OrganizerDashboardPage() {
     if (session.role !== 'ORGANIZADOR') {
         redirect('/dashboard');
     }
+
+    const resolvedSearchParams = await searchParams;
+    const initialTab = (resolvedSearchParams?.tab === 'profile' || resolvedSearchParams?.tab === 'events' || resolvedSearchParams?.tab === 'sales' || resolvedSearchParams?.tab === 'dashboard' || resolvedSearchParams?.tab === 'promoters' || resolvedSearchParams?.tab === 'staff' || resolvedSearchParams?.tab === 'promotor')
+        ? resolvedSearchParams.tab
+        : 'dashboard';
 
     const [dashboardResult, parceriasResult, organizerStats] = await Promise.all([
         getOrganizerDashboardData(session.userId),
@@ -52,6 +61,7 @@ export default async function OrganizerDashboardPage() {
             user={user}
             pedidoPromotores={pedidoPromotores}
             parcerias={parcerias}
+            initialTab={initialTab as any}
         />
     );
 }

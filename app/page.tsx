@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { getActiveSession, logoutUser } from "./actions/auth";
 import { getEventos } from "./actions/event";
 import { getEventStatus } from "@/lib/eventStatus";
+import Header from "@/app/components/Header";
 
 function MaterialIcon({ name, className = "" }: { name: string; className?: string }) {
     return <span className={`material-symbols-outlined ${className}`}>{name}</span>;
@@ -13,7 +13,6 @@ function MaterialIcon({ name, className = "" }: { name: string; className?: stri
 
 export default function UTADFastTicketPage() {
     const router = useRouter();
-    const [userSession, setUserSession] = useState<any>(null);
     const [dbEvents, setDbEvents] = useState<any[]>([]);
     const [heroIdx, setHeroIdx] = useState(0);
     const [imagesLoaded, setImagesLoaded] = useState<Set<number>>(new Set());
@@ -21,7 +20,6 @@ export default function UTADFastTicketPage() {
     const carouselRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        getActiveSession().then(setUserSession);
         getEventos().then(res => {
             if (res.success && res.data) {
                 const activeEvents = res.data.filter((ev: any) => {
@@ -48,11 +46,6 @@ export default function UTADFastTicketPage() {
             }
         });
     }, [dbEvents]);
-
-    const handleLogout = async () => {
-        await logoutUser();
-        setUserSession(null);
-    };
 
     // Auto-advance hero
     const resetTimer = useCallback(() => {
@@ -99,34 +92,8 @@ export default function UTADFastTicketPage() {
                 .hero-progress { animation: heroProgress 6s linear; }
             `}</style>
 
-            <div className="bg-[#0d1117] font-sans text-slate-800 antialiased min-h-screen">
-                {/* Header */}
-                <header className="bg-[#161b22]/90 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
-                    <div className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-                        <div className="flex items-center gap-8">
-                            <Link href="/" className="text-2xl font-bold tracking-tighter text-white hover:text-emerald-400 transition-colors">
-                                UTAD FastTicket
-                            </Link>
-                            <nav className="hidden md:flex gap-6">
-                                <Link href="/eventos" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Explorar</Link>
-                                <Link href="/sobre" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Sobre</Link>
-                            </nav>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            {userSession ? (
-                                <div className="flex items-center gap-4">
-                                    <Link href="/dashboard" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-700 transition-colors flex items-center gap-2">
-                                        <MaterialIcon name="person" className="text-sm" />
-                                        {userSession.nome || userSession.email.split("@")[0]}
-                                    </Link>
-                                    <button onClick={handleLogout} className="text-sm font-semibold text-red-400 hover:text-red-300 transition-colors bg-red-500/10 px-3 py-2 rounded-lg border border-red-500/20">Sair</button>
-                                </div>
-                            ) : (
-                                <Link href="/login" className="bg-[#006837] text-white px-6 py-2 rounded-lg font-medium shadow-lg shadow-[#006837]/20 hover:bg-emerald-700 active:scale-95 transition-all">Sign In</Link>
-                            )}
-                        </div>
-                    </div>
-                </header>
+            <div className="bg-[#0d1117] font-sans text-slate-800 antialiased min-h-screen pt-16">
+                <Header />
 
                 <main>
                     {/* Hero — Clean background with text overlay, NO flash */}

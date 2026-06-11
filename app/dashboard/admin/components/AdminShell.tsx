@@ -151,10 +151,6 @@ export default function AdminShell({ userName, summary, users, eventos, promoter
 
                     {/* Right utilities & Super Admin profile card */}
                     <div className="flex items-center gap-4 pl-4 border-l border-slate-100">
-                        <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative">
-                            <span className="material-symbols-outlined">notifications</span>
-                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500" />
-                        </button>
                         <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
                             <span className="material-symbols-outlined">settings</span>
                         </button>

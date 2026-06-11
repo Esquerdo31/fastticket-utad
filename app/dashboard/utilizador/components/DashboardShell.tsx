@@ -38,6 +38,12 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
 
+    React.useEffect(() => {
+        if (initialTab) {
+            setActiveTab(initialTab);
+        }
+    }, [initialTab]);
+
     const handleTabChange = (tab: ActiveTab) => {
         setActiveTab(tab);
     };
@@ -78,16 +84,21 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                         <a className="text-slate-600 hover:bg-slate-50 transition-colors px-2 py-1 rounded font-medium" href="#">Ajuda</a>
                     </div>
                     <div className="flex items-center gap-4">
-                        <button className="p-2 text-slate-600 hover:bg-slate-50 hover:text-[#006837] rounded-full transition-all active:scale-95 cursor-pointer">
-                            <span className="material-symbols-outlined">notifications</span>
-                        </button>
                         <div
                             onClick={() => handleTabChange('profile')}
-                            className="flex items-center gap-2 border-l border-slate-200 pl-4 cursor-pointer hover:opacity-80 transition-opacity"
+                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                         >
                             <span className="text-sm font-semibold text-[#006837]">{userName}</span>
                             <span className="material-symbols-outlined text-[#006837]">account_circle</span>
                         </div>
+                        <button 
+                            onClick={handleLogout} 
+                            disabled={isPending}
+                            className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1 pl-4 border-l border-slate-200 cursor-pointer disabled:opacity-50"
+                        >
+                            <span className="material-symbols-outlined text-sm">logout</span>
+                            <span className="hidden sm:inline">{isPending ? 'Saindo...' : 'Sair'}</span>
+                        </button>
                     </div>
                 </div>
             </header>

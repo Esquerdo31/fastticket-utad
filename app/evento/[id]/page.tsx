@@ -103,6 +103,7 @@ export default function EventDetailsDynamic() {
     });
 
     const isTerminado = status === 'TERMINADO';
+    const isSuspenso = status === 'SUSPENSO';
 
     return (
         <div className="bg-slate-50 font-sans text-slate-800 min-h-screen">
@@ -321,7 +322,7 @@ export default function EventDetailsDynamic() {
                                             return (
                                                 <div key={ticket.id} className="block relative">
                                                     <label
-                                                        className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${isSoldOut || isTerminado || isSalesInactive ? 'opacity-50 cursor-not-allowed border-slate-200 bg-slate-50' : isSelected
+                                                        className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${isSoldOut || isTerminado || isSalesInactive || isSuspenso ? 'opacity-50 cursor-not-allowed border-slate-200 bg-slate-50' : isSelected
                                                             ? 'border-[#006837] bg-emerald-50/50 shadow-md shadow-emerald-100'
                                                             : 'border-slate-200 hover:border-[#006837]/40 hover:bg-slate-50'
                                                             }`}
@@ -333,7 +334,7 @@ export default function EventDetailsDynamic() {
                                                                     name="ticket"
                                                                     className="mt-1 outline-none accent-[#006837] h-4 w-4 shrink-0"
                                                                     checked={isSelected}
-                                                                    disabled={isSoldOut || isTerminado || isSalesInactive}
+                                                                    disabled={isSoldOut || isTerminado || isSalesInactive || isSuspenso}
                                                                     onChange={() => setSelectedTicket(ticket.id)}
                                                                 />
                                                                 <div>
@@ -406,7 +407,21 @@ export default function EventDetailsDynamic() {
                                             <p className="text-center text-slate-500 py-4 text-sm font-medium">Sem bilhetes disponíveis de momento.</p>
                                         )}
 
-                                        {isTerminado ? (
+                                        {isSuspenso ? (
+                                            <div className="space-y-4 mt-6">
+                                                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-xs font-semibold leading-relaxed flex items-start gap-2.5">
+                                                    <span className="material-symbols-outlined text-amber-700 shrink-0 text-[20px]">warning_amber</span>
+                                                    <p>Este evento encontra-se temporariamente suspenso pela administração. As vendas de novos bilhetes estão indisponíveis de momento.</p>
+                                                </div>
+                                                <button
+                                                    disabled
+                                                    className="w-full py-4 text-white font-bold rounded-xl bg-slate-300 cursor-not-allowed flex items-center justify-center gap-2"
+                                                >
+                                                    Vendas Suspensas
+                                                    <span className="material-symbols-outlined text-lg">block</span>
+                                                </button>
+                                            </div>
+                                        ) : isTerminado ? (
                                             <button
                                                 disabled
                                                 className="w-full py-4 text-white font-bold rounded-xl bg-slate-300 cursor-not-allowed flex items-center justify-center gap-2 mt-6"

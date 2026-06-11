@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from 'react';
-import { updateProfileData } from '@/app/actions/profile';
+import { updateProfileData, changePassword } from '@/app/actions/profile';
 
 interface ProfileContentProps {
     user: {
@@ -26,6 +26,14 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
 
     const [isPending, startTransition] = useTransition();
     const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    // States for change password modal
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [modalMessage, setModalMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [isModalPending, startModalTransition] = useTransition();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -56,7 +64,50 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
         setSaveMessage(null);
     };
 
-    const roleLabel = user.role === 'ORGANIZADOR' ? 'Organizador' : user.role === 'STAFF' ? 'Staff' : 'Participante';
+    const handlePasswordChange = () => {
+        if (newPassword !== confirmNewPassword) {
+            setModalMessage({ type: 'error', text: 'As palavras-passes não coincidem.' });
+            return;
+        }
+
+        if (newPassword.trim().length < 6) {
+            setModalMessage({ type: 'error', text: 'A nova palavra-passe deve ter pelo menos 6 caracteres.' });
+            return;
+        }
+
+        setModalMessage(null);
+        startModalTransition(async () => {
+            const result = await changePassword(user.id, {
+                currentPassword,
+                newPassword
+            });
+
+            if (result.success) {
+                setModalMessage({ type: 'success', text: result.message || 'Palavra-passe alterada!' });
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmNewPassword('');
+                setTimeout(() => {
+                    setShowPasswordModal(false);
+                    setModalMessage(null);
+                }, 1500);
+            } else {
+                setModalMessage({ type: 'error', text: result.message || 'Erro ao alterar palavra-passe.' });
+            }
+        });
+    };
+
+    const isOrg = user.role === 'ORGANIZADOR';
+    const roleLabel = isOrg ? 'Organizador' : user.role === 'STAFF' ? 'Staff' : 'Participante';
+
+    // Theme values
+    const primaryBg = isOrg ? 'bg-violet-700' : 'bg-[#006837]';
+    const primaryText = isOrg ? 'text-violet-700' : 'text-[#006837]';
+    const focusRing = isOrg ? 'focus:ring-violet-700/20 focus:border-violet-700' : 'focus:ring-[#006837]/20 focus:border-[#006837]';
+    const hoverBgLight = isOrg ? 'hover:bg-violet-50 hover:text-violet-800' : 'hover:bg-emerald-50 hover:text-emerald-800';
+    const badgeBg = isOrg ? 'bg-violet-50 text-violet-700 border-violet-100' : 'bg-emerald-50 text-[#006837] border-emerald-100';
+    const toggleBg = isOrg ? 'bg-violet-700' : 'bg-[#006837]';
+    const buttonPrimary = isOrg ? 'bg-violet-700 hover:bg-violet-800 shadow-violet-700/20' : 'bg-[#006837] hover:bg-emerald-800 shadow-emerald-900/20';
 
     return (
         <>
@@ -74,14 +125,14 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                     {/* Card de Perfil */}
                     <div className="bg-white rounded-2xl p-8 shadow-sm flex flex-col items-center text-center border border-slate-100">
                         <div className="relative mb-4">
-                            <div className="w-32 h-32 rounded-full border-4 border-emerald-50 overflow-hidden bg-slate-100">
+                            <div className="w-32 h-32 rounded-full border-4 border-slate-50 overflow-hidden bg-slate-100">
                                 <img
                                     src={`https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(user.nome)}&backgroundColor=e2e8f0`}
                                     alt="Avatar"
                                     className="w-full h-full object-cover"
                                 />
                             </div>
-                            <button className="absolute bottom-1 right-1 w-8 h-8 bg-[#006837] text-white rounded-full border-2 border-white flex items-center justify-center hover:bg-emerald-800 transition-colors">
+                            <button className={`absolute bottom-1 right-1 w-8 h-8 ${primaryBg} text-white rounded-full border-2 border-white flex items-center justify-center hover:opacity-90 transition-colors`}>
                                 <span className="material-symbols-outlined text-sm">edit</span>
                             </button>
                         </div>
@@ -90,7 +141,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                         <p className="text-sm text-slate-500 mb-6">{roleLabel} — {user.email}</p>
 
                         <div className="w-full border-t border-slate-100 pt-6">
-                            <div className="flex items-center justify-center gap-2 text-[#006837] font-bold text-sm bg-emerald-50 py-2 px-4 rounded-lg w-fit mx-auto">
+                            <div className={`flex items-center justify-center gap-2 ${badgeBg} font-bold text-xs border py-2 px-4 rounded-lg w-fit mx-auto`}>
                                 <span className="material-symbols-outlined text-[18px]">verified</span>
                                 CONTA VERIFICADA
                             </div>
@@ -98,7 +149,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                     </div>
 
                     {/* Conditional Status Card based on Role */}
-                    {user.role === 'PARTICIPANTE' ? (
+                    {!isOrg && user.role !== 'STAFF' ? (
                         <div className="bg-[#004d29] rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
                             <span className="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl opacity-10 rotate-12 select-none">school</span>
                             <div className="relative z-10">
@@ -142,10 +193,10 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
 
                     {/* Card de Dados Pessoais */}
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative overflow-hidden">
-                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#006837]"></div>
+                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${primaryBg}`}></div>
 
                         <div className="flex items-center gap-3 mb-6">
-                            <span className="material-symbols-outlined text-[#006837]">badge</span>
+                            <span className={`material-symbols-outlined ${primaryText}`}>badge</span>
                             <h3 className="text-lg font-bold text-slate-900">Dados Pessoais</h3>
                         </div>
 
@@ -157,7 +208,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                                     name="fullName"
                                     value={formData.fullName}
                                     onChange={handleInputChange}
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#006837]/20 focus:border-[#006837] transition-all"
+                                    className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 ${focusRing} transition-all`}
                                 />
                             </div>
 
@@ -169,7 +220,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                                         name="email"
                                         value={formData.email}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#006837]/20 focus:border-[#006837] transition-all"
+                                        className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 ${focusRing} transition-all`}
                                     />
                                 </div>
                                 <div>
@@ -180,7 +231,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                                         value={formData.phone}
                                         onChange={handleInputChange}
                                         placeholder="+351 9XX XXX XXX"
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#006837]/20 focus:border-[#006837] transition-all"
+                                        className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 ${focusRing} transition-all`}
                                     />
                                 </div>
                             </div>
@@ -203,7 +254,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                             <button
                                 onClick={handleSave}
                                 disabled={isPending}
-                                className="px-6 py-2.5 bg-[#006837] text-white text-sm font-semibold rounded-lg hover:bg-emerald-800 hover:shadow-md hover:shadow-emerald-900/20 active:scale-95 transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                className={`px-6 py-2.5 ${buttonPrimary} text-white text-sm font-semibold rounded-lg hover:shadow-md active:scale-95 transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed`}
                             >
                                 {isPending ? 'A guardar...' : 'Guardar Alterações'}
                             </button>
@@ -221,7 +272,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                             {/* Toggle Email */}
                             <div className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-xl">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-[#006837]">
+                                    <div className={`w-10 h-10 rounded-full ${isOrg ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-[#006837]'} flex items-center justify-center`}>
                                         <span className="material-symbols-outlined text-[20px]">mail</span>
                                     </div>
                                     <div>
@@ -231,7 +282,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                                 </div>
                                 <button
                                     onClick={() => setEmailNotif(!emailNotif)}
-                                    className={`w-12 h-6 rounded-full transition-all duration-300 flex items-center px-1 cursor-pointer hover:shadow-md ${emailNotif ? 'bg-[#006837]' : 'bg-slate-300 hover:bg-slate-400'}`}
+                                    className={`w-12 h-6 rounded-full transition-all duration-300 flex items-center px-1 cursor-pointer hover:shadow-md ${emailNotif ? toggleBg : 'bg-slate-300 hover:bg-slate-400'}`}
                                 >
                                     <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${emailNotif ? 'translate-x-6' : 'translate-x-0'}`} />
                                 </button>
@@ -250,7 +301,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                                 </div>
                                 <button
                                     onClick={() => setSmsNotif(!smsNotif)}
-                                    className={`w-12 h-6 rounded-full transition-all duration-300 flex items-center px-1 cursor-pointer hover:shadow-md ${smsNotif ? 'bg-[#006837]' : 'bg-slate-300 hover:bg-slate-400'}`}
+                                    className={`w-12 h-6 rounded-full transition-all duration-300 flex items-center px-1 cursor-pointer hover:shadow-md ${smsNotif ? toggleBg : 'bg-slate-300 hover:bg-slate-400'}`}
                                 >
                                     <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${smsNotif ? 'translate-x-6' : 'translate-x-0'}`} />
                                 </button>
@@ -259,7 +310,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                             {/* Toggle Push */}
                             <div className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-xl">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-[#006837]">
+                                    <div className={`w-10 h-10 rounded-full ${isOrg ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-[#006837]'} flex items-center justify-center`}>
                                         <span className="material-symbols-outlined text-[20px]">smartphone</span>
                                     </div>
                                     <div>
@@ -269,7 +320,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                                 </div>
                                 <button
                                     onClick={() => setPushNotif(!pushNotif)}
-                                    className={`w-12 h-6 rounded-full transition-all duration-300 flex items-center px-1 cursor-pointer hover:shadow-md ${pushNotif ? 'bg-[#006837]' : 'bg-slate-300 hover:bg-slate-400'}`}
+                                    className={`w-12 h-6 rounded-full transition-all duration-300 flex items-center px-1 cursor-pointer hover:shadow-md ${pushNotif ? toggleBg : 'bg-slate-300 hover:bg-slate-400'}`}
                                 >
                                     <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${pushNotif ? 'translate-x-6' : 'translate-x-0'}`} />
                                 </button>
@@ -281,10 +332,19 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                            <span className="material-symbols-outlined text-[#006837] mb-3 block">lock_reset</span>
+                            <span className={`material-symbols-outlined ${primaryText} mb-3 block`}>lock_reset</span>
                             <h4 className="font-bold text-slate-900 mb-2">Alterar Password</h4>
                             <p className="text-xs text-slate-500 mb-4 leading-relaxed">Mantenha a sua conta segura atualizando a sua chave de acesso periodicamente.</p>
-                            <button className="text-sm font-bold text-[#006837] hover:text-emerald-800 hover:bg-emerald-50 transition-all flex items-center gap-1 px-3 py-2 -ml-3 rounded-lg cursor-pointer">
+                            <button 
+                                onClick={() => {
+                                    setShowPasswordModal(true);
+                                    setCurrentPassword('');
+                                    setNewPassword('');
+                                    setConfirmNewPassword('');
+                                    setModalMessage(null);
+                                }}
+                                className={`text-sm font-bold ${primaryText} ${hoverBgLight} transition-all flex items-center gap-1 px-3 py-2 -ml-3 rounded-lg cursor-pointer`}
+                            >
                                 Atualizar agora <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                             </button>
                         </div>
@@ -302,6 +362,92 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
 
                 </div>
             </div>
+
+            {/* Modal Alterar Password */}
+            {showPasswordModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl p-8 max-w-md w-full border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-800 text-left">
+                        <div className={`flex items-center gap-3 mb-6 ${primaryText}`}>
+                            <span className="material-symbols-outlined text-3xl">lock_reset</span>
+                            <h3 className="text-xl font-bold">Alterar Password</h3>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            {user.role !== 'GUEST' && (
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Password Atual</label>
+                                    <input 
+                                        type="password" 
+                                        value={currentPassword} 
+                                        onChange={e => setCurrentPassword(e.target.value)} 
+                                        placeholder="Palavra-passe atual" 
+                                        className={`w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 ${focusRing} text-sm font-semibold placeholder:text-slate-400`}
+                                    />
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Nova Password</label>
+                                <input 
+                                    type="password" 
+                                    value={newPassword} 
+                                    onChange={e => setNewPassword(e.target.value)} 
+                                    placeholder="Nova palavra-passe (mín. 6 caract.)" 
+                                    className={`w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 ${focusRing} text-sm font-semibold placeholder:text-slate-400`}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Confirmar Nova Password</label>
+                                <input 
+                                    type="password" 
+                                    value={confirmNewPassword} 
+                                    onChange={e => setConfirmNewPassword(e.target.value)} 
+                                    placeholder="Confirmar nova palavra-passe" 
+                                    className={`w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 ${focusRing} text-sm font-semibold placeholder:text-slate-400`}
+                                />
+                            </div>
+                        </div>
+
+                        {modalMessage && (
+                            <div className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${
+                                modalMessage.type === 'success' 
+                                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                                    : 'bg-red-50 text-red-800 border border-red-200'
+                            }`}>
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[18px]">
+                                        {modalMessage.type === 'success' ? 'check_circle' : 'error'}
+                                    </span>
+                                    {modalMessage.text}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex gap-3">
+                            <button 
+                                type="button" 
+                                onClick={() => {
+                                    setShowPasswordModal(false);
+                                    setCurrentPassword('');
+                                    setNewPassword('');
+                                    setConfirmNewPassword('');
+                                    setModalMessage(null);
+                                }} 
+                                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-sm transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={handlePasswordChange}
+                                disabled={isModalPending || !newPassword || !confirmNewPassword}
+                                className={`flex-1 ${buttonPrimary} text-white font-bold py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer`}
+                            >
+                                {isModalPending ? 'A guardar...' : 'Guardar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

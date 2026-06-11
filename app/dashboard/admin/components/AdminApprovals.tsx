@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from 'react';
-import { aprovarEvento, rejeitarEvento, avaliarPedidoPromotores } from '@/app/actions/admin';
+import { aprovarEvento, rejeitarEvento, avaliarPedidoPromotores, suspenderEvento, reativarEvento } from '@/app/actions/admin';
 
 interface EventoItem {
     id: number;
@@ -33,7 +33,7 @@ export default function AdminApprovals({ eventos, promoterRequests, onRefresh }:
 
     // Filter pending and large scale events
     const pendingEvents = eventos.filter(e => e.estado === 'PENDENTE');
-    const publishedEvents = eventos.filter(e => e.estado === 'PUBLICADO');
+    const publishedEvents = eventos.filter(e => e.estado === 'PUBLICADO' || e.estado === 'SUSPENSO');
 
     const handleAprovar = (id: number) => {
         setFeedback({ type: null, message: '' });
@@ -57,6 +57,32 @@ export default function AdminApprovals({ eventos, promoterRequests, onRefresh }:
                 onRefresh();
             } else {
                 setFeedback({ type: 'error', message: res.message || 'Erro ao rejeitar evento.' });
+            }
+        });
+    };
+
+    const handleSuspender = (id: number) => {
+        setFeedback({ type: null, message: '' });
+        startTransition(async () => {
+            const res = await suspenderEvento(id);
+            if (res.success) {
+                setFeedback({ type: 'success', message: res.message });
+                onRefresh();
+            } else {
+                setFeedback({ type: 'error', message: res.message || 'Erro ao suspender evento.' });
+            }
+        });
+    };
+
+    const handleReativar = (id: number) => {
+        setFeedback({ type: null, message: '' });
+        startTransition(async () => {
+            const res = await reativarEvento(id);
+            if (res.success) {
+                setFeedback({ type: 'success', message: res.message });
+                onRefresh();
+            } else {
+                setFeedback({ type: 'error', message: res.message || 'Erro ao reativar evento.' });
             }
         });
     };
@@ -244,7 +270,14 @@ export default function AdminApprovals({ eventos, promoterRequests, onRefresh }:
                                 <tr key={ev.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="p-4 pl-6 font-mono text-slate-400">#{ev.id.toString().padStart(4, '0')}</td>
                                     <td className="p-4">
-                                        <p className="font-bold text-slate-900 line-clamp-1">{ev.titulo}</p>
+                                        <div className="flex items-center">
+                                            <p className="font-bold text-slate-900 line-clamp-1">{ev.titulo}</p>
+                                            {ev.estado === 'SUSPENSO' && (
+                                                <span className="bg-amber-100 text-amber-700 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ml-2">
+                                                    Suspenso
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">{ev.totalLotes} lotes de bilhetes</p>
                                     </td>
                                     <td className="p-4">
@@ -256,14 +289,25 @@ export default function AdminApprovals({ eventos, promoterRequests, onRefresh }:
                                     </td>
                                     <td className="p-4 text-center font-bold text-slate-700">{ev.lotacaoMaxima}</td>
                                     <td className="p-4 text-right pr-6">
-                                        <button 
-                                            disabled={isPending}
-                                            onClick={() => handleRejeitar(ev.id)}
-                                            className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-100 transition-colors text-xs font-bold rounded-lg"
-                                            title="Suspender ou reverter para rascunho"
-                                        >
-                                            Suspender
-                                        </button>
+                                        {ev.estado === 'SUSPENSO' ? (
+                                            <button 
+                                                disabled={isPending}
+                                                onClick={() => handleReativar(ev.id)}
+                                                className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 transition-colors text-xs font-bold rounded-lg"
+                                                title="Reativar as vendas e validações do evento"
+                                            >
+                                                Reativar
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                disabled={isPending}
+                                                onClick={() => handleSuspender(ev.id)}
+                                                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-100 transition-colors text-xs font-bold rounded-lg"
+                                                title="Suspender temporariamente as vendas e validações do evento"
+                                            >
+                                                Suspender
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             )) : (

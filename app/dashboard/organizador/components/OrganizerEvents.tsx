@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { getEventStatus, getEventStatusLabel, getEventStatusColor } from '@/lib/eventStatus';
+import { publicarEvento } from '@/app/actions/evento';
 
 interface EventoStat {
     id: number;
@@ -26,6 +27,51 @@ interface OrganizerEventsProps {
 
 export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }: OrganizerEventsProps) {
     const [activeFilterTab, setActiveFilterTab] = useState<'ativos' | 'terminados'>('ativos');
+    const [isPublishing, setIsPublishing] = useState<number | null>(null);
+    const [publishConfirmId, setPublishConfirmId] = useState<number | null>(null);
+    const [confirmText, setConfirmText] = useState('');
+    const [feedbackModal, setFeedbackModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        success: boolean;
+    } | null>(null);
+
+    const handlePublish = (eventoId: number) => {
+        setPublishConfirmId(eventoId);
+        setConfirmText('');
+    };
+
+    const executePublish = async (eventoId: number) => {
+        setIsPublishing(eventoId);
+        try {
+            const res = await publicarEvento(eventoId);
+            if (res.success) {
+                setFeedbackModal({
+                    show: true,
+                    title: "Sucesso",
+                    message: res.message || "Evento publicado com sucesso!",
+                    success: true
+                });
+            } else {
+                setFeedbackModal({
+                    show: true,
+                    title: "Erro",
+                    message: res.message || "Ocorreu um erro ao publicar o evento.",
+                    success: false
+                });
+            }
+        } catch (err: any) {
+            setFeedbackModal({
+                show: true,
+                title: "Erro",
+                message: `Erro: ${err.message}`,
+                success: false
+            });
+        } finally {
+            setIsPublishing(null);
+        }
+    };
 
     const activeCount = eventos.filter(e => {
         const status = getEventStatus({
@@ -170,11 +216,18 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                                         </td>
                                         <td className="p-4 text-right pr-6">
                                             <div className="flex items-center justify-end gap-1">
-                                                <button onClick={() => onEditEvent?.(evento.id)} className="p-2 text-violet-600 hover:bg-violet-50 hover:text-violet-800 rounded-lg transition-all active:scale-95 cursor-pointer" title="Editar rápido">
+                                                {evento.estado === 'RASCUNHO' && (
+                                                    <button 
+                                                        onClick={() => handlePublish(evento.id)} 
+                                                        disabled={isPublishing === evento.id}
+                                                        className="p-2 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg transition-all active:scale-95 cursor-pointer disabled:opacity-50" 
+                                                        title="Publicar evento"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[20px]">publish</span>
+                                                    </button>
+                                                )}
+                                                <Link href={`/evento/${evento.id}/editar`} className="p-2 text-violet-600 hover:bg-violet-50 hover:text-violet-800 rounded-lg transition-all active:scale-95 cursor-pointer" title="Editar evento">
                                                     <span className="material-symbols-outlined text-[20px]">edit</span>
-                                                </button>
-                                                <Link href={`/evento/${evento.id}/editar`} className="p-2 text-slate-500 hover:bg-slate-50 hover:text-violet-600 rounded-lg transition-all active:scale-95 cursor-pointer" title="Edição avançada">
-                                                    <span className="material-symbols-outlined text-[20px]">open_in_new</span>
                                                 </Link>
                                             </div>
                                         </td>
@@ -191,6 +244,96 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                     </table>
                 </div>
             </div>
+
+            {/* Modal de Confirmação de Publicação */}
+            {publishConfirmId !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl p-8 max-w-md w-full border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-800 text-left">
+                        <div className="flex items-center gap-3 mb-4 text-violet-700">
+                            <span className="material-symbols-outlined text-3xl font-normal">campaign</span>
+                            <h3 className="text-xl font-bold">Publicar Evento</h3>
+                        </div>
+                        <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+                            Desejas mesmo publicar o evento? Ao fazê-lo, ele tornar-se-á <strong className="text-slate-900">Público</strong> e ficará imediatamente disponível para venda de bilhetes.
+                        </p>
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Escreva "Confirmar" para prosseguir</label>
+                                <input 
+                                    type="text" 
+                                    value={confirmText} 
+                                    onChange={e => setConfirmText(e.target.value)} 
+                                    placeholder="Escreva 'Confirmar'" 
+                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm font-semibold placeholder:text-slate-400"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <button 
+                                type="button" 
+                                onClick={() => {
+                                    setPublishConfirmId(null);
+                                    setConfirmText('');
+                                }} 
+                                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-sm transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={() => {
+                                    const id = publishConfirmId;
+                                    setPublishConfirmId(null);
+                                    setConfirmText('');
+                                    executePublish(id);
+                                }} 
+                                disabled={confirmText !== 'Confirmar' || isPublishing !== null}
+                                className="flex-1 bg-violet-700 hover:bg-violet-800 text-white font-bold py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-violet-700/20 cursor-pointer"
+                            >
+                                {isPublishing !== null ? 'A publicar...' : 'Publicar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Feedback (Sucesso/Erro) */}
+            {feedbackModal && feedbackModal.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl p-8 max-w-sm w-full border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-800 text-center">
+                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border ${
+                            feedbackModal.success 
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-600' 
+                                : 'bg-red-50 border-red-200 text-red-600'
+                        }`}>
+                            <span className="material-symbols-outlined text-3xl">
+                                {feedbackModal.success ? 'check_circle' : 'error'}
+                            </span>
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">{feedbackModal.title}</h3>
+                        <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+                            {feedbackModal.message}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const isSuccess = feedbackModal.success;
+                                setFeedbackModal(null);
+                                if (isSuccess) {
+                                    window.location.reload();
+                                }
+                            }}
+                            className={`w-full py-3 rounded-xl text-sm font-bold text-white transition-all shadow-md cursor-pointer ${
+                                feedbackModal.success
+                                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/10'
+                                    : 'bg-red-600 hover:bg-red-700 shadow-red-600/10'
+                            }`}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

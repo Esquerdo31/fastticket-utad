@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getActiveSession, logoutUser } from "../actions/auth";
+import Header from "@/app/components/Header";
 
 function MaterialIcon({ name, className = "" }: { name: string; className?: string }) {
     return <span className={`material-symbols-outlined ${className}`}>{name}</span>;
@@ -11,21 +11,12 @@ function MaterialIcon({ name, className = "" }: { name: string; className?: stri
 
 export default function SobrePage() {
     const router = useRouter();
-    const [userSession, setUserSession] = useState<any>(null);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
     useEffect(() => {
         // Set page title for SEO client-side
         document.title = "Sobre Nós - UTAD FastTicket";
-        
-        getActiveSession().then(setUserSession);
     }, []);
-
-    const handleLogout = async () => {
-        await logoutUser();
-        setUserSession(null);
-        router.push("/");
-    };
 
     const toggleFaq = (index: number) => {
         setActiveFaq(activeFaq === index ? null : index);
@@ -103,34 +94,8 @@ export default function SobrePage() {
                 }
             `}</style>
 
-            <div className="bg-[#0d1117] font-sans text-slate-200 antialiased min-h-screen flex flex-col justify-between">
-                {/* Header */}
-                <header className="bg-[#161b22]/90 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
-                    <div className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-                        <div className="flex items-center gap-8">
-                            <Link href="/" className="text-2xl font-bold tracking-tighter text-white hover:text-emerald-400 transition-colors">
-                                UTAD FastTicket
-                            </Link>
-                            <nav className="hidden md:flex gap-6">
-                                <Link href="/eventos" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Explorar</Link>
-                                <Link href="/sobre" className="text-sm font-medium text-white border-b-2 border-emerald-500 pb-1 transition-colors">Sobre</Link>
-                            </nav>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            {userSession ? (
-                                <div className="flex items-center gap-4">
-                                    <Link href="/dashboard" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-700 transition-colors flex items-center gap-2">
-                                        <MaterialIcon name="person" className="text-sm" />
-                                        {userSession.nome || userSession.email.split("@")[0]}
-                                    </Link>
-                                    <button onClick={handleLogout} className="text-sm font-semibold text-red-400 hover:text-red-300 transition-colors bg-red-500/10 px-3 py-2 rounded-lg border border-red-500/20">Sair</button>
-                                </div>
-                            ) : (
-                                <Link href="/login" className="bg-[#006837] text-white px-6 py-2 rounded-lg font-medium shadow-lg shadow-[#006837]/20 hover:bg-emerald-700 active:scale-95 transition-all">Sign In</Link>
-                            )}
-                        </div>
-                    </div>
-                </header>
+            <div className="bg-[#0d1117] font-sans text-slate-200 antialiased min-h-screen flex flex-col justify-between pt-16">
+                <Header />
 
                 <main className="flex-grow">
                     {/* Hero Section */}

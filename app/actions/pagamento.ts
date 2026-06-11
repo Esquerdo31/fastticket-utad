@@ -107,6 +107,17 @@ export async function criarSessaoCheckout(data: {
         const { nomeBilhete, preco, quantidade, eventoId, loteId } = parseResult.data;
         const finalQuantityToMint = data.actualQuantity || quantidade;
 
+        // Verificar se o evento está suspenso
+        const dbEvento = await prisma.evento.findUnique({
+            where: { id: eventoId }
+        });
+        if (!dbEvento) {
+            return { success: false, message: 'Evento não encontrado.' };
+        }
+        if (dbEvento.estado === 'SUSPENSO') {
+            return { success: false, message: 'Este evento encontra-se temporariamente suspenso. Não é possível comprar bilhetes.' };
+        }
+
         // Procurar o ID do promotor se houver slug
         let promotorId = "";
         if (data.promotorSlug) {
@@ -226,6 +237,17 @@ export async function simularPagamento(data: {
                 return { success: false, message: 'Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.' };
             }
             finalUserId = session.userId;
+        }
+
+        // Verificar se o evento está suspenso
+        const dbEvento = await prisma.evento.findUnique({
+            where: { id: data.eventoId }
+        });
+        if (!dbEvento) {
+            return { success: false, message: 'Evento não encontrado.' };
+        }
+        if (dbEvento.estado === 'SUSPENSO') {
+            return { success: false, message: 'Este evento encontra-se temporariamente suspenso. Não é possível comprar bilhetes.' };
         }
 
         // 1. Procurar o ID do promotor se houver slug

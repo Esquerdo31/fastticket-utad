@@ -1,4 +1,4 @@
-export type EventStatus = 'RASCUNHO' | 'CANCELADO' | 'TERMINADO' | 'A_DECORRER' | 'ESGOTADO' | 'PRE_VENDA' | 'VENDA' | 'SEM_VENDAS';
+export type EventStatus = 'RASCUNHO' | 'CANCELADO' | 'TERMINADO' | 'A_DECORRER' | 'ESGOTADO' | 'PRE_VENDA' | 'VENDA' | 'SEM_VENDAS' | 'SUSPENSO';
 
 export function getEventStatus(evento: {
   estado: string;
@@ -14,6 +14,7 @@ export function getEventStatus(evento: {
 }): EventStatus {
   if (evento.estado === 'CANCELADO') return 'CANCELADO';
   if (evento.estado === 'RASCUNHO') return 'RASCUNHO';
+  if (evento.estado === 'SUSPENSO') return 'SUSPENSO';
 
   const now = new Date();
   const start = new Date(evento.dataInicio);
@@ -72,6 +73,8 @@ export function getEventStatusLabel(status: EventStatus): string {
       return 'Rascunho';
     case 'CANCELADO':
       return 'Cancelado';
+    case 'SUSPENSO':
+      return 'Suspenso';
     case 'TERMINADO':
       return 'Terminado';
     case 'A_DECORRER':
@@ -94,6 +97,8 @@ export function getEventStatusColor(status: EventStatus): string {
       return 'bg-slate-100 text-slate-700 border border-slate-200';
     case 'CANCELADO':
       return 'bg-red-100 text-red-700 border border-red-200';
+    case 'SUSPENSO':
+      return 'bg-amber-100 text-amber-700 border border-amber-300';
     case 'TERMINADO':
       return 'bg-slate-100 text-slate-400 border border-slate-200';
     case 'A_DECORRER':

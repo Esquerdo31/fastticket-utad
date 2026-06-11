@@ -24,7 +24,9 @@ export default async function StaffDashboardPage() {
                     lotes: {
                         include: {
                             bilhetes: {
-                                where: { estado: 'USADO' }
+                                include: {
+                                    registosAcesso: true
+                                }
                             }
                         }
                     }
@@ -38,10 +40,12 @@ export default async function StaffDashboardPage() {
     // Formatar os eventos para passar ao componente
     const eventos = staffEvents.map(se => {
         const ev = se.evento;
-        // Contar quantos check-ins já foram feitos
+        // Contar quantos check-ins já foram feitos (registos de acesso)
         let checkinsCount = 0;
         ev.lotes.forEach(l => {
-            checkinsCount += l.bilhetes.length;
+            l.bilhetes.forEach(b => {
+                checkinsCount += b.registosAcesso.length;
+            });
         });
 
         return {

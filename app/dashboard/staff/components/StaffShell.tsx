@@ -38,7 +38,47 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
 
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Auto-focus input when event is selected
+    // Camera QR Scanning states & refs
+    const [isJsQrLoaded, setIsJsQrLoaded] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
+    const [cameraError, setCameraError] = useState<string | null>(null);
+
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const scanAnimationFrameRef = useRef<number | null>(null);
+
+    // Load jsQR script dynamically
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        if ((window as any).jsQR) {
+            setIsJsQrLoaded(true);
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+        script.async = true;
+        script.onload = () => {
+            setIsJsQrLoaded(true);
+        };
+        script.onerror = () => {
+            console.error('Falha ao carregar a biblioteca jsQR de digitalização.');
+        };
+        document.body.appendChild(script);
+
+        return () => {
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+            }
+            if (scanAnimationFrameRef.current) {
+                cancelAnimationFrame(scanAnimationFrameRef.current);
+            }
+        };
+    }, []);
+
+    // Auto-focus input when event is selected, and clean up camera
     useEffect(() => {
         if (selectedEvent) {
             setDynamicCheckinCount(selectedEvent.checkinsCount || 0);
@@ -49,8 +89,92 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
         } else {
             setFeedback({ type: null, message: '' });
             setQrCodeToken('');
+            stopCamera();
         }
     }, [selectedEvent]);
+
+    const startCamera = async () => {
+        setCameraError(null);
+        setIsScanning(true);
+        setFeedback({ type: null, message: '' });
+        
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+            streamRef.current = stream;
+            
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.setAttribute('playsinline', 'true');
+                videoRef.current.play();
+                scanAnimationFrameRef.current = requestAnimationFrame(scanFrameLoop);
+            }
+        } catch (err: any) {
+            console.error('Erro ao aceder à câmara:', err);
+            setCameraError('Permissão da câmara negada ou câmara não disponível.');
+            setIsScanning(false);
+        }
+    };
+
+    const stopCamera = () => {
+        setIsScanning(false);
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        if (scanAnimationFrameRef.current) {
+            cancelAnimationFrame(scanAnimationFrameRef.current);
+            scanAnimationFrameRef.current = null;
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+    };
+
+    const scanFrameLoop = () => {
+        if (!videoRef.current || !canvasRef.current || !streamRef.current) {
+            scanAnimationFrameRef.current = requestAnimationFrame(scanFrameLoop);
+            return;
+        }
+
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
+
+        if (video.readyState === video.HAVE_ENOUGH_DATA && context) {
+            const width = video.videoWidth;
+            const height = video.videoHeight;
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            context.drawImage(video, 0, 0, width, height);
+            
+            const imageData = context.getImageData(0, 0, width, height);
+            const jsQR = (window as any).jsQR;
+            
+            if (jsQR) {
+                const code = jsQR(imageData.data, width, height, {
+                    inversionAttempts: 'dontInvert',
+                });
+                
+                if (code && code.data) {
+                    const token = code.data;
+                    
+                    // Stop scanning
+                    stopCamera();
+                    
+                    // Set token and validate
+                    setQrCodeToken(token);
+                    validateTokenDirectly(token);
+                    return;
+                }
+            }
+        }
+        
+        scanAnimationFrameRef.current = requestAnimationFrame(scanFrameLoop);
+    };
 
     const loadEventData = async (eventId: number) => {
         setLoadingSubData(true);
@@ -98,6 +222,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
             setQrCodeToken('');
             // Reload history and simulated list
             loadEventData(selectedEvent.id);
+            router.refresh();
         } else {
             if (res.alreadyUsed) {
                 setFeedback({
@@ -147,6 +272,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
             setDynamicCheckinCount(prev => prev + 1);
             setQrCodeToken('');
             loadEventData(selectedEvent.id);
+            router.refresh();
         } else {
             if (res.alreadyUsed) {
                 setFeedback({
@@ -270,7 +396,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                                         
                                         {feedback.type === 'success' && feedback.details && (
                                             <div className="text-xs opacity-90 font-medium space-y-0.5 mt-2">
-                                                <p><span className="font-bold">Participante:</span> {feedback.details.participanteId ? `Utilizador #${feedback.details.participanteId}` : 'Convidado'}</p>
+                                                <p><span className="font-bold">Participante:</span> {feedback.details.participanteNome || (feedback.details.participanteId ? `Utilizador #${feedback.details.participanteId}` : 'Convidado')}</p>
                                                 <p><span className="font-bold">Lote:</span> {feedback.details.lote}</p>
                                                 <p><span className="font-bold">Evento:</span> {feedback.details.evento}</p>
                                             </div>
@@ -286,8 +412,77 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                             )}
 
                             {/* Verification Form */}
-                            <form onSubmit={handleValidate} className="space-y-4">
-                                <div>
+                            <form onSubmit={handleValidate} className="space-y-6">
+                                {/* Camera Scanner Viewport */}
+                                {isScanning ? (
+                                    <div className="space-y-3">
+                                        <div className="relative h-64 sm:h-80 bg-slate-950 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-inner flex items-center justify-center">
+                                            {/* Video preview */}
+                                            <video 
+                                                ref={videoRef}
+                                                className="w-full h-full object-cover"
+                                                playsInline
+                                            />
+                                            {/* Offscreen canvas for frame analysis */}
+                                            <canvas 
+                                                ref={canvasRef}
+                                                className="hidden"
+                                            />
+                                            
+                                            {/* Premium Scanner Overlay */}
+                                            <div className="absolute inset-0 border-[24px] border-black/40 pointer-events-none flex items-center justify-center">
+                                                {/* Target box */}
+                                                <div className="w-48 h-48 sm:w-56 sm:h-56 border-2 border-emerald-400/80 rounded-2xl relative shadow-[0_0_0_9999px_rgba(0,0,0,0.4)]">
+                                                    {/* Corners */}
+                                                    <div className="absolute -top-1.5 -left-1.5 w-6 h-6 border-t-4 border-l-4 border-emerald-500 rounded-tl-lg" />
+                                                    <div className="absolute -top-1.5 -right-1.5 w-6 h-6 border-t-4 border-r-4 border-emerald-500 rounded-tr-lg" />
+                                                    <div className="absolute -bottom-1.5 -left-1.5 w-6 h-6 border-b-4 border-l-4 border-emerald-500 rounded-bl-lg" />
+                                                    <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 border-b-4 border-r-4 border-emerald-500 rounded-br-lg" />
+                                                    
+                                                    {/* Laser line scanning up and down */}
+                                                    <div className="absolute left-0 right-0 h-0.5 bg-emerald-500 shadow-[0_0_8px_2px_rgba(16,185,129,0.7)] animate-[scan_2s_ease-in-out_infinite]" />
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Status indicators */}
+                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/75 px-3.5 py-1.5 rounded-full text-[11px] font-black tracking-wider text-emerald-400 uppercase flex items-center gap-1.5 backdrop-blur-sm border border-emerald-500/20">
+                                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                                                Câmara Ativa • A ler QR Code
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={stopCamera}
+                                            className="w-full py-2.5 bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100 hover:text-rose-700 transition-all active:scale-[0.98] text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">videocam_off</span>
+                                            Desativar Câmara
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {cameraError && (
+                                            <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-xs font-bold text-red-700 flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-base">error</span>
+                                                {cameraError}
+                                            </div>
+                                        )}
+                                        <button
+                                            type="button"
+                                            disabled={!isJsQrLoaded}
+                                            onClick={startCamera}
+                                            className={`w-full py-3 bg-slate-900 text-white hover:bg-slate-800 transition-all active:scale-[0.98] text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm border border-slate-800 cursor-pointer ${
+                                                !isJsQrLoaded ? 'opacity-60 cursor-not-allowed' : ''
+                                            }`}
+                                        >
+                                            <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+                                            {isJsQrLoaded ? 'Ativar Câmara para Digitalizar QR' : 'A carregar leitor de câmara...'}
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="border-t border-slate-100 pt-4">
                                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Introduzir Token QR Code</label>
                                     <div className="relative">
                                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">qr_code</span>

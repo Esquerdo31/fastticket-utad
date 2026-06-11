@@ -114,6 +114,19 @@ export async function rejeitarEvento(eventoId: number) {
         if (!session || session.role !== 'ADMIN') {
             return { success: false, message: 'Não autorizado.' };
         }
+
+        // Check if there are tickets sold/issued
+        const ticketsCount = await prisma.bilhete.count({
+            where: {
+                lote: {
+                    eventoId: eventoId
+                }
+            }
+        });
+        if (ticketsCount > 0) {
+            return { success: false, message: 'Não é possível reverter este evento para rascunho porque já existem bilhetes vendidos.' };
+        }
+
         await prisma.evento.update({
             where: { id: eventoId },
             data: { estado: 'RASCUNHO' }
@@ -231,6 +244,44 @@ export async function avaliarPedidoPromotores(userId: number, aprovado: boolean)
         return { success: true, message: `Pedido de promotores ${aprovado ? 'aprovado' : 'recusado'} com sucesso!` };
     } catch (error: any) {
         console.error('Erro ao avaliar pedido de promotores:', error);
+        return { success: false, message: error.message };
+    }
+}
+
+export async function suspenderEvento(eventoId: number) {
+    try {
+        const session = await getActiveSession();
+        if (!session || session.role !== 'ADMIN') {
+            return { success: false, message: 'Não autorizado.' };
+        }
+
+        await prisma.evento.update({
+            where: { id: eventoId },
+            data: { estado: 'SUSPENSO' }
+        });
+
+        return { success: true, message: 'Evento suspenso com sucesso!' };
+    } catch (error: any) {
+        console.error('Erro ao suspender evento:', error);
+        return { success: false, message: error.message };
+    }
+}
+
+export async function reativarEvento(eventoId: number) {
+    try {
+        const session = await getActiveSession();
+        if (!session || session.role !== 'ADMIN') {
+            return { success: false, message: 'Não autorizado.' };
+        }
+
+        await prisma.evento.update({
+            where: { id: eventoId },
+            data: { estado: 'PUBLICADO' }
+        });
+
+        return { success: true, message: 'Evento reativado com sucesso!' };
+    } catch (error: any) {
+        console.error('Erro ao reativar evento:', error);
         return { success: false, message: error.message };
     }
 }

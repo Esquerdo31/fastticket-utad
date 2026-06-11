@@ -49,6 +49,9 @@ export default function CheckoutPage() {
             getEventoById(eventoId).then(res => {
                 if (res.success && res.data) {
                     setEvento(res.data);
+                    if (res.data.estado === 'SUSPENSO') {
+                        setErrorMsg("Este evento encontra-se temporariamente suspenso. Não é possível comprar bilhetes.");
+                    }
                     const selectedLote = res.data.lotes?.find((l: any) => l.id === loteId);
                     if (selectedLote) {
                         setLote(selectedLote);
@@ -65,6 +68,11 @@ export default function CheckoutPage() {
 
     const handleCheckout = async () => {
         if (!evento || !lote) return;
+
+        if (evento.estado === 'SUSPENSO') {
+            setErrorMsg("Este evento encontra-se temporariamente suspenso. Não é possível comprar bilhetes.");
+            return;
+        }
 
         if (userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") {
             setErrorMsg("Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.");
@@ -143,6 +151,11 @@ export default function CheckoutPage() {
 
     const handleSimulatePayment = async () => {
         if (!evento || !lote) return;
+
+        if (evento.estado === 'SUSPENSO') {
+            setErrorMsg("Este evento encontra-se temporariamente suspenso. Não é possível comprar bilhetes.");
+            return;
+        }
 
         if (userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") {
             setErrorMsg("Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.");

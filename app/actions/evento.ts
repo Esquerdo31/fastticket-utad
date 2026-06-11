@@ -205,6 +205,30 @@ export async function updateEvento(eventoId: number, data: CreateEventoInput) {
         const validated = parseResult.data;
         const lotacaoMaxima = validated.lotes.reduce((sum, l) => sum + l.lotacaoTotal, 0);
 
+        // Check if there are tickets sold/issued for this event
+        const ticketsCount = await prisma.bilhete.count({
+            where: {
+                lote: {
+                    eventoId: eventoId
+                }
+            }
+        });
+
+        if (ticketsCount > 0) {
+            if (validated.estado === 'RASCUNHO') {
+                return {
+                    success: false,
+                    message: "Não é possível alterar o estado do evento para Rascunho porque já existem bilhetes vendidos."
+                };
+            }
+            if (validated.estado === 'CANCELADO') {
+                return {
+                    success: false,
+                    message: "Não é possível alterar o estado do evento para Cancelado diretamente. Utilize a funcionalidade de Cancelamento (Reembolso/Transferência)."
+                };
+            }
+        }
+
         // Fetch existing lots from database
         const existingLots = await prisma.loteBilhete.findMany({
             where: { eventoId },
@@ -425,10 +449,11 @@ export async function reembolsarBilhetesEvento(eventoId: number) {
         const lotIds = evento.lotes.map(l => l.id);
         const bilhetes = await prisma.bilhete.findMany({
             where: { loteId: { in: lotIds } },
-            select: { pedidoId: true }
+            select: { id: true, pedidoId: true }
         });
 
         const uniquePedidoIds = Array.from(new Set(bilhetes.map(b => b.pedidoId)));
+        const bilheteIds = bilhetes.map(b => b.id);
 
         await prisma.$transaction(async (tx) => {
             // Cancelar os pedidos relacionados
@@ -436,6 +461,13 @@ export async function reembolsarBilhetesEvento(eventoId: number) {
                 await tx.pedido.updateMany({
                     where: { id: { in: uniquePedidoIds } },
                     data: { estado: 'CANCELADO' }
+                });
+            }
+
+            // Apagar os registos de acesso relacionados com estes bilhetes para evitar violação de chaves estrangeiras
+            if (bilheteIds.length > 0) {
+                await tx.registoAcesso.deleteMany({
+                    where: { bilheteId: { in: bilheteIds } }
                 });
             }
 
@@ -549,6 +581,36 @@ export async function transferirBilhetesEvento(eventoId: number, destinoLoteId: 
     } catch (error: any) {
         console.error("Erro ao transferir bilhetes:", error);
         return { success: false, message: `Erro ao transferir: ${error.message}` };
+    }
+}
+
+export async function publicarEvento(eventoId: number) {
+    try {
+        const session = await getSession();
+        if (!session || session.role !== 'ORGANIZADOR') {
+            return { success: false, message: 'Não autorizado. Apenas organizadores podem publicar eventos.' };
+        }
+
+        const ev = await prisma.evento.findUnique({
+            where: { id: eventoId }
+        });
+
+        if (!ev) {
+            return { success: false, message: 'Evento não encontrado.' };
+        }
+
+        if (ev.organizadorId !== session.userId) {
+            return { success: false, message: 'Não autorizado. Este evento pertence a outro organizador.' };
+        }
+
+        await prisma.evento.update({
+            where: { id: eventoId },
+            data: { estado: 'PUBLICADO' }
+        });
+
+        return { success: true, message: 'Evento publicado com sucesso!' };
+    } catch (e: any) {
+        return { success: false, message: `Erro ao publicar evento: ${e.message}` };
     }
 }
 

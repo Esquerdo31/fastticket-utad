@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { getActiveSession, logoutUser } from '../actions/auth';
 import { getEventos } from '../actions/event';
 import { getEventStatus, getEventStatusLabel, getEventStatusColor } from '@/lib/eventStatus';
+import Header from '@/app/components/Header';
 
 type EventCard = {
     id: number;
@@ -86,21 +86,14 @@ const UTADFastTicket = () => {
     const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
 
     const [events, setEvents] = useState<EventCard[]>([]);
-    const [userSession, setUserSession] = useState<any>(null);
 
     useEffect(() => {
-        getActiveSession().then(setUserSession);
         getEventos().then((res) => {
             if (res.success && res.data) {
                 setEvents(res.data as EventCard[]);
             }
         });
     }, []);
-
-    const handleLogout = async () => {
-        await logoutUser();
-        setUserSession(null);
-    };
 
     // --- Funções de Manipulação ---
     const handleCategoryChange = (category: string) => {
@@ -205,63 +198,28 @@ const UTADFastTicket = () => {
     }, [events, searchTerm, selectedCategories, selectedDate, location, selectedPrices, sortBy]);
 
     return (
-        <div className="bg-[#f5f7f8] font-sans text-[#0f172a] antialiased min-h-screen">
-            {/* ------------------------------------------------------------------ */}
-            {/* Header / TopAppBar                                                 */}
-            {/* ------------------------------------------------------------------ */}
-            <header className="bg-white sticky top-0 z-50 border-b border-slate-100">
-                <div className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-                    <div className="flex items-center gap-8">
-                        <Link href="/" className="text-2xl font-bold tracking-tighter text-[#006837] hover:opacity-80 transition-opacity">
-                            UTAD FastTicket
-                        </Link>
-                        <nav className="hidden md:flex gap-6">
-                            <Link href="/eventos" className="text-sm font-medium text-slate-600 hover:text-[#006837]">Explorar</Link>
-                            <Link href="/sobre" className="text-sm font-medium text-slate-600 hover:text-[#006837]">Sobre</Link>
-                        </nav>
-                    </div>
-
-                    <div className="flex items-center gap-4 ml-auto">
-                        <div className="relative hidden lg:block border border-slate-200 rounded-lg overflow-hidden focus-within:border-[#006837] transition-colors">
-                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
-                            <input
-                                className="pl-9 pr-4 py-2 bg-slate-50 border-none outline-none text-[13px] w-64 placeholder:text-slate-400"
-                                placeholder="Procurar eventos..."
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        {userSession ? (
-                            <div className="flex items-center gap-4">
-                                <Link href="/wishlist" className="text-sm font-bold text-red-600 bg-red-50 px-4 py-2 rounded-lg whitespace-nowrap border border-red-100 hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-sm">favorite</span>
-                                    Favoritos
-                                </Link>
-                                <Link href="/dashboard" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-800 transition-colors flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-sm">person</span>
-                                    {userSession.nome || userSession.email.split("@")[0]}
-                                </Link>
-                                <button onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:text-red-800 transition-colors bg-red-50 px-3 py-2 rounded-lg border border-red-100">
-                                    Sair
-                                </button>
-                            </div>
-                        ) : (
-                            <Link href="/login" className="bg-[#006837] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-800 transition-colors whitespace-nowrap">
-                                Sign In
-                            </Link>
-                        )}
-                    </div>
-                </div>
-            </header>
+        <div className="bg-[#f5f7f8] font-sans text-[#0f172a] antialiased min-h-screen pt-16">
+            <Header />
 
             <main className="max-w-[1400px] mx-auto px-6 md:px-8 py-12">
                 {/* Page Header */}
-                <div className="mb-12">
-                    <h1 className="text-4xl md:text-[44px] font-bold tracking-tight text-[#0f172a] mb-4">Explorar Eventos</h1>
-                    <p className="text-slate-500 text-base max-w-2xl leading-relaxed">
-                        Descubra conferências, galas e workshops na principal plataforma de bilheteira<br />académica da UTAD.
-                    </p>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                    <div>
+                        <h1 className="text-4xl md:text-[44px] font-bold tracking-tight text-[#0f172a] mb-4">Explorar Eventos</h1>
+                        <p className="text-slate-500 text-base max-w-2xl leading-relaxed">
+                            Descubra conferências, galas e workshops na principal plataforma de bilheteira<br />académica da UTAD.
+                        </p>
+                    </div>
+                    <div className="relative border border-slate-200 rounded-xl overflow-hidden focus-within:border-[#006837] transition-colors bg-white shadow-sm self-start md:self-end">
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                        <input
+                            className="pl-12 pr-4 py-3 bg-slate-50/50 border-none outline-none text-sm w-full md:w-80 placeholder:text-slate-400 font-medium"
+                            placeholder="Procurar eventos..."
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-10">

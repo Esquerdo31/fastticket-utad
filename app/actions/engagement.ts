@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { getEventStatus } from "@/lib/eventStatus";
 
 export async function getAvailabilityStatus(eventoId: number) {
     const lotes = await prisma.loteBilhete.findMany({
@@ -165,7 +166,17 @@ export async function getWishlistEventos() {
             },
         });
 
-        const data = wishlistItems.map((item: any) => {
+        const activeItems = wishlistItems.filter((item: any) => {
+            const status = getEventStatus({
+                estado: item.evento.estado,
+                dataInicio: item.evento.dataInicio,
+                dataFim: item.evento.dataFim,
+                lotes: item.evento.lotes
+            });
+            return status !== 'TERMINADO';
+        });
+
+        const data = activeItems.map((item: any) => {
             const evento = item.evento;
             const dataObj = new Date(evento.dataInicio);
             const dateStr = dataObj.toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });

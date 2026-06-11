@@ -37,6 +37,8 @@ export async function getTicketsData(userId: number) {
         const tickets = await Promise.all(bilhetes.map(async b => {
             const ev = b.lote.evento as any;
             const dateObj = new Date(ev.dataInicio);
+            const dateFim = ev.dataFim ? new Date(ev.dataFim) : new Date(dateObj.getTime() + 4 * 60 * 60 * 1000);
+            const isExpired = new Date() > dateFim;
             const qrCodeBase64 = await gerarQRCodeBase64(b.qrCodeToken);
             return {
                 id: b.id,
@@ -55,6 +57,7 @@ export async function getTicketsData(userId: number) {
                 pedidoEstado: b.pedido.estado,
                 dataCompra: b.pedido.dataPedido.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }),
                 usado: b.registosAcesso.length > 0,
+                isExpired,
                 ticketCorFundo: ev.ticketCorFundo || "#ffffff",
                 ticketCorTexto: ev.ticketCorTexto || "#000000",
                 ticketMensagem: ev.ticketMensagem || "Apresente este bilhete impresso ou no telemóvel na entrada do recinto.",
@@ -301,7 +304,9 @@ export async function validarBilhete(data: {
                 lote: {
                     include: { evento: true },
                 },
-                pedido: true,
+                pedido: {
+                    include: { utilizador: true }
+                },
                 registosAcesso: true,
             },
         });
@@ -335,6 +340,11 @@ export async function validarBilhete(data: {
         // 3.2 Verificar se o pedido está pago
         if (bilhete.pedido.estado !== 'PAGO') {
             return { success: false, message: 'Este bilhete ainda não foi pago.' };
+        }
+
+        // 3.2.1 Verificar se o evento está suspenso
+        if (bilhete.lote.evento.estado === 'SUSPENSO') {
+            return { success: false, message: 'Não é possível validar este bilhete. O evento encontra-se temporariamente suspenso.' };
         }
 
         // --- SUPORTE MULTI-DIA (PASSES GERAIS / BILHETES DIÁRIOS) ---
@@ -464,6 +474,7 @@ export async function validarBilhete(data: {
                 evento: bilhete.lote.evento.titulo,
                 lote: bilhete.lote.nome,
                 participanteId: bilhete.pedido.utilizadorId,
+                participanteNome: bilhete.pedido.utilizador.nome,
             },
         };
     } catch (error: any) {

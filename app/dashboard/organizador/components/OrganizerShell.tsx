@@ -38,6 +38,7 @@ interface OrganizerShellProps {
     };
     pedidoPromotores: string;
     parcerias: any[];
+    initialTab?: ActiveTab;
 }
 
 export default function OrganizerShell({ 
@@ -51,12 +52,19 @@ export default function OrganizerShell({
     promoterLeaderboard = [], 
     user, 
     pedidoPromotores, 
-    parcerias 
+    parcerias,
+    initialTab = 'dashboard'
 }: OrganizerShellProps) {
-    const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+    const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab);
     const [editEventId, setEditEventId] = useState<number | null>(null);
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
+
+    React.useEffect(() => {
+        if (initialTab) {
+            setActiveTab(initialTab);
+        }
+    }, [initialTab]);
 
     const handleTabChange = (tab: ActiveTab) => {
         setActiveTab(tab);
@@ -101,13 +109,18 @@ export default function OrganizerShell({
                     <span className="bg-violet-100 text-violet-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest hidden sm:inline-block">Organizador</span>
                 </div>
                 <div className="flex items-center gap-4">
-                    <button className="p-2 text-slate-600 hover:bg-slate-50 hover:text-violet-700 rounded-full transition-all active:scale-95 cursor-pointer">
-                        <span className="material-symbols-outlined">notifications</span>
-                    </button>
-                    <div onClick={() => handleTabChange('profile')} className="flex items-center gap-2 border-l border-slate-200 pl-4 cursor-pointer hover:opacity-80 transition-opacity">
+                    <div onClick={() => handleTabChange('profile')} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
                         <span className="text-sm font-semibold text-violet-700">{userName}</span>
                         <span className="material-symbols-outlined text-violet-700">account_circle</span>
                     </div>
+                    <button 
+                        onClick={handleLogout} 
+                        disabled={isPending}
+                        className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1 pl-4 border-l border-slate-200 cursor-pointer disabled:opacity-50"
+                    >
+                        <span className="material-symbols-outlined text-sm">logout</span>
+                        <span className="hidden sm:inline">{isPending ? 'Saindo...' : 'Sair'}</span>
+                    </button>
                 </div>
             </header>
 

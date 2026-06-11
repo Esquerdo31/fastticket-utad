@@ -232,32 +232,40 @@ interface TicketsContentProps {
     tickets: TicketItem[];
 }
 
-type FilterType = 'all' | 'PAGO' | 'PENDENTE' | 'USADO';
+type FilterType = 'all' | 'PAGO' | 'PENDENTE' | 'USADO' | 'EXPIRADO';
 
 const estadoConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
     PENDENTE: { label: 'Pendente', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', icon: 'hourglass_top' },
     PAGO: { label: 'Válido', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', icon: 'check_circle' },
     USADO: { label: 'Utilizado', color: 'text-slate-500', bg: 'bg-slate-100 border-slate-200', icon: 'task_alt' },
+    EXPIRADO: { label: 'Expirado', color: 'text-rose-700', bg: 'bg-rose-50 border-rose-200', icon: 'cancel' },
 };
 
 export default function TicketsContent({ tickets }: TicketsContentProps) {
     const [filter, setFilter] = useState<FilterType>('all');
     const [expandedTicket, setExpandedTicket] = useState<number | null>(null);
 
-    const filteredTickets = tickets.filter(t => filter === 'all' || t.estado === filter);
+    const filteredTickets = tickets.filter(t => {
+        const isTicketExpired = (t as any).isExpired && t.estado !== 'USADO';
+        if (filter === 'all') return true;
+        if (filter === 'PAGO') return t.estado === 'PAGO' && !isTicketExpired;
+        if (filter === 'EXPIRADO') return isTicketExpired;
+        return t.estado === filter;
+    });
 
     const filterButtons: { id: FilterType; label: string; count: number }[] = [
         { id: 'all', label: 'Todos', count: tickets.length },
-        { id: 'PAGO', label: 'Válidos', count: tickets.filter(t => t.estado === 'PAGO').length },
+        { id: 'PAGO', label: 'Válidos', count: tickets.filter(t => t.estado === 'PAGO' && !(t as any).isExpired).length },
         { id: 'PENDENTE', label: 'Pendentes', count: tickets.filter(t => t.estado === 'PENDENTE').length },
         { id: 'USADO', label: 'Utilizados', count: tickets.filter(t => t.estado === 'USADO').length },
+        { id: 'EXPIRADO', label: 'Expirados', count: tickets.filter(t => (t as any).isExpired && t.estado !== 'USADO').length },
     ];
 
     const statCards = [
         { icon: 'confirmation_number', iconBg: 'bg-[#006837]/10', iconColor: 'text-[#006837]', value: tickets.length, label: 'Total Bilhetes' },
-        { icon: 'check_circle', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', value: tickets.filter(t => t.estado === 'PAGO').length, label: 'Válidos' },
+        { icon: 'check_circle', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', value: tickets.filter(t => t.estado === 'PAGO' && !(t as any).isExpired).length, label: 'Válidos' },
         { icon: 'hourglass_top', iconBg: 'bg-amber-50', iconColor: 'text-amber-600', value: tickets.filter(t => t.estado === 'PENDENTE').length, label: 'Pendentes' },
-        { icon: 'task_alt', iconBg: 'bg-slate-100', iconColor: 'text-slate-500', value: tickets.filter(t => t.estado === 'USADO').length, label: 'Utilizados' },
+        { icon: 'cancel', iconBg: 'bg-rose-50', iconColor: 'text-rose-600', value: tickets.filter(t => (t as any).isExpired && t.estado !== 'USADO').length, label: 'Expirados' },
     ];
 
     return (
@@ -293,7 +301,9 @@ export default function TicketsContent({ tickets }: TicketsContentProps) {
             {/* Tickets */}
             <div className="space-y-4">
                 {filteredTickets.length > 0 ? filteredTickets.map(ticket => {
-                    const config = estadoConfig[ticket.estado] || estadoConfig.PENDENTE;
+                    const isTicketExpired = (ticket as any).isExpired && ticket.estado !== 'USADO';
+                    const resolvedEstado = isTicketExpired ? 'EXPIRADO' : ticket.estado;
+                    const config = estadoConfig[resolvedEstado] || estadoConfig.PENDENTE;
                     const isExpanded = expandedTicket === ticket.id;
                     return (
                         <div key={ticket.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">

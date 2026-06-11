@@ -150,6 +150,14 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
             if (!dataInicio) { setError('A data de início é obrigatória.'); return; }
             if (!dataFim) { setError('A data de fim é obrigatória.'); return; }
             if (new Date(dataFim) <= new Date(dataInicio)) { setError('A data de fim deve ser posterior à data de início.'); return; }
+            
+            const now = new Date();
+            const checkTime = new Date(now.getTime() - 15 * 60 * 1000); // 15 min buffer
+            if (!isEditMode && new Date(dataInicio) < checkTime) {
+                setError('A data de início do evento não pode ser no passado.');
+                return;
+            }
+
             if (!localizacao.trim()) { setError('A localização é obrigatória.'); return; }
             if (localizacao.trim().length < 2) { setError('A localização do evento deve ter pelo menos 2 caracteres.'); return; }
 
@@ -169,6 +177,19 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
             if (lotes.length === 0) { setError('É necessário pelo menos um lote de bilhetes.'); return; }
             if (lotes.some(l => !l.nome.trim())) { setError('Preencha o nome de todos os lotes de bilhetes.'); return; }
             if (lotes.some(l => l.lotacaoTotal < 1)) { setError('A quantidade de todos os lotes deve ser de pelo menos 1.'); return; }
+
+            const days = getDiasEvento(dataInicio, dataFim);
+            if (days.length > 1) {
+                const hasGeneral = lotes.some(l => l.tipo === 'GERAL');
+                const hasDaily = lotes.some(l => l.tipo === 'DIARIO');
+                if (hasDaily && !hasGeneral) {
+                    const confirmProceed = confirm(
+                        '⚠️ Aviso: O evento decorre em múltiplos dias, mas apenas foram criados bilhetes do tipo "Diário" (sem "Passe Geral"). Pretende mesmo continuar?'
+                    );
+                    if (!confirmProceed) return;
+                }
+            }
+
             setStep(3);
         } else {
             if (!isEditMode) {
