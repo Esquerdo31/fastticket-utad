@@ -406,7 +406,15 @@ export default function EventDetailsDynamic() {
                                             <p className="text-center text-slate-500 py-4 text-sm font-medium">Sem bilhetes disponíveis de momento.</p>
                                         )}
 
-                                        {eventoEsgotado ? (
+                                        {isTerminado ? (
+                                            <button
+                                                disabled
+                                                className="w-full py-4 text-white font-bold rounded-xl bg-slate-300 cursor-not-allowed flex items-center justify-center gap-2 mt-6"
+                                            >
+                                                Vendas Encerradas
+                                                <span className="material-symbols-outlined text-lg">block</span>
+                                            </button>
+                                        ) : eventoEsgotado ? (
                                             <button
                                                 onClick={handleJoinWaitlist}
                                                 disabled={joiningWaitlist || Boolean(evento.isWaitlisted)}
@@ -415,7 +423,7 @@ export default function EventDetailsDynamic() {
                                                         : 'bg-amber-600 shadow-lg shadow-amber-600/20 hover:bg-amber-700'
                                                     }`}
                                             >
-                                                {joiningWaitlist ? 'A registar...' : evento.isWaitlisted ? 'Ja esta na lista de espera' : 'Avisar-me quando houver vagas'}
+                                                {joiningWaitlist ? 'A registar...' : evento.isWaitlisted ? 'Já está na lista de espera' : 'Avisar-me quando houver vagas'}
                                                 <span className="material-symbols-outlined text-lg">notifications_active</span>
                                             </button>
                                         ) : (
@@ -436,22 +444,8 @@ export default function EventDetailsDynamic() {
                                         )}
 
                                         {waitlistMessage && (
-                                            <p className="text-center text-xs font-semibold text-amber-700">{waitlistMessage}</p>
+                                            <p className="text-center text-xs font-semibold text-amber-700 mt-2">{waitlistMessage}</p>
                                         )}
-                                        <button
-                                            disabled={isTerminado || !selectedTicket || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
-                                            onClick={() => {
-                                                const urlParams = new URLSearchParams(window.location.search);
-                                                const ref = urlParams.get('ref');
-                                                router.push(`/checkout/${evento.id}/${selectedTicket}${ref ? `?ref=${ref}` : ''}`);
-                                            }}
-                                            className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6
-                                                ${(!isTerminado && selectedTicket && userSession?.role !== "ORGANIZADOR" && userSession?.role !== "STAFF" && userSession?.role !== "ADMIN") ? 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800' : 'bg-slate-300 cursor-not-allowed'}
-                                            `}
-                                        >
-                                            {isTerminado ? "Vendas Encerradas" : "Prosseguir para Checkout"}
-                                            <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                                        </button>
 
                                         {(userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") && (
                                             <p className="text-red-600 text-xs font-semibold text-center mt-2">

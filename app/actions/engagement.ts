@@ -165,14 +165,14 @@ export async function getWishlistEventos() {
             },
         });
 
-        const data = wishlistItems.map((item) => {
+        const data = wishlistItems.map((item: any) => {
             const evento = item.evento;
             const dataObj = new Date(evento.dataInicio);
             const dateStr = dataObj.toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
             const timeStr = dataObj.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
-            const precos = evento.lotes.map((lote) => lote.preco);
+            const precos = evento.lotes.map((lote: any) => lote.preco);
             const minPrice = precos.length > 0 ? Math.min(...precos) : 0;
-            const bilhetesDisponiveis = evento.lotes.reduce((total, lote) => total + lote.quantidadeDisponivel, 0);
+            const bilhetesDisponiveis = evento.lotes.reduce((total: number, lote: any) => total + lote.quantidadeDisponivel, 0);
 
             return {
                 id: evento.id,

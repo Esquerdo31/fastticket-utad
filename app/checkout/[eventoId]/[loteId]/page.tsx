@@ -21,6 +21,8 @@ export default function CheckoutPage() {
     const [quantity, setQuantity] = useState(1);
     const [errorMsg, setErrorMsg] = useState("");
     const [userSession, setUserSession] = useState<any>(null);
+    const [guestEmail, setGuestEmail] = useState("");
+    const [guestName, setGuestName] = useState("");
 
     // Simulate service fees
     const serviceFeePercent = 0.045; // 4.5%
@@ -68,8 +70,30 @@ export default function CheckoutPage() {
             return;
         }
 
-        setProcessing(true);
         setErrorMsg("");
+
+        let finalGuestEmail = undefined;
+        let finalGuestName = undefined;
+
+        if (!userSession) {
+            if (!guestName.trim()) {
+                setErrorMsg("Por favor, introduza o seu nome completo.");
+                return;
+            }
+            if (!guestEmail.trim()) {
+                setErrorMsg("Por favor, introduza o seu e-mail.");
+                return;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(guestEmail)) {
+                setErrorMsg("Por favor, introduza um e-mail de contacto válido.");
+                return;
+            }
+            finalGuestEmail = guestEmail;
+            finalGuestName = guestName;
+        }
+
+        setProcessing(true);
 
         // Obter promotor do URL se existir, com fallback para localStorage
         const urlParams = new URLSearchParams(window.location.search);
@@ -96,7 +120,9 @@ export default function CheckoutPage() {
             loteId: lote.id,
             // Pass actual quantity to webhook via metadata inside action
             actualQuantity: quantity,
-            promotorSlug: ref || undefined
+            promotorSlug: ref || undefined,
+            guestEmail: finalGuestEmail,
+            guestName: finalGuestName
         } as any);
 
         if (res.success && res.url) {
@@ -115,8 +141,30 @@ export default function CheckoutPage() {
             return;
         }
 
-        setProcessing(true);
         setErrorMsg("");
+
+        let finalGuestEmail = undefined;
+        let finalGuestName = undefined;
+
+        if (!userSession) {
+            if (!guestName.trim()) {
+                setErrorMsg("Por favor, introduza o seu nome completo.");
+                return;
+            }
+            if (!guestEmail.trim()) {
+                setErrorMsg("Por favor, introduza o seu e-mail.");
+                return;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(guestEmail)) {
+                setErrorMsg("Por favor, introduza um e-mail de contacto válido.");
+                return;
+            }
+            finalGuestEmail = guestEmail;
+            finalGuestName = guestName;
+        }
+
+        setProcessing(true);
 
         // Obter promotor do URL se existir, com fallback para localStorage
         const urlParams = new URLSearchParams(window.location.search);
@@ -129,7 +177,9 @@ export default function CheckoutPage() {
             eventoId: evento.id,
             loteId: lote.id,
             quantidade: quantity,
-            promotorSlug: ref || undefined
+            promotorSlug: ref || undefined,
+            guestEmail: finalGuestEmail,
+            guestName: finalGuestName
         });
 
         if (res.success) {
@@ -245,6 +295,41 @@ export default function CheckoutPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Informação de Contacto para Convidados */}
+                        {!userSession && (
+                            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[18px] text-[#006837]">person</span>
+                                    Informação de Contacto (Pessoa de fora / Sem Login)
+                                </h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label htmlFor="guestName" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Nome Completo</label>
+                                        <input
+                                            id="guestName"
+                                            type="text"
+                                            value={guestName}
+                                            onChange={(e) => setGuestName(e.target.value)}
+                                            placeholder="Insira o seu nome completo"
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#006837] focus:ring-1 focus:ring-[#006837] outline-none transition-all text-sm text-slate-800"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="guestEmail" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Email de Contacto</label>
+                                        <input
+                                            id="guestEmail"
+                                            type="email"
+                                            value={guestEmail}
+                                            onChange={(e) => setGuestEmail(e.target.value)}
+                                            placeholder="ex: nome@dominio.com"
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#006837] focus:ring-1 focus:ring-[#006837] outline-none transition-all text-sm text-slate-800"
+                                        />
+                                        <p className="text-[10px] text-slate-400 mt-1">Este email será utilizado para o envio dos seus bilhetes e criação automática de conta.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {errorMsg && (
                             <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm font-medium flex items-start gap-3">

@@ -4,6 +4,7 @@ import prisma from "../../lib/prisma";
 import { z } from "zod";
 import { gerarQRCodeBase64 } from "../../lib/qrcode";
 import { getSession } from "../../lib/session";
+import { enviarEmailBilhete } from "../../lib/email";
 
 export async function getTicketsData(userId: number) {
     try {
@@ -534,6 +535,21 @@ export async function processarPagamentoWebhook(metadata: {
         });
 
         console.log(`[Webhook] ✅ Sucesso! Criados ${quantidade} bilhetes para utilizador ${userId}.`);
+
+        // Obter os detalhes do utilizador para enviar o e-mail simulado
+        const user = await prisma.utilizador.findUnique({
+            where: { id: userId },
+            select: { email: true, nome: true }
+        });
+
+        if (user) {
+            const bilhetesFormatados = resultado.bilhetes.map(b => ({
+                qrCodeToken: b.qrCodeToken,
+                loteNome: lote.nome,
+            }));
+            await enviarEmailBilhete(user.email, user.nome, bilhetesFormatados, lote.evento);
+        }
+
         return { success: true };
     } catch (error: any) {
         console.error('[Webhook] ❌ Erro ao processar webhook:', error);

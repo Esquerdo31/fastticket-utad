@@ -2,8 +2,9 @@
 
 import Stripe from 'stripe';
 import { z } from 'zod';
-import { getSession } from '../../lib/session';
+import { getSession, createSession } from '../../lib/session';
 import prisma from '../../lib/prisma';
+import * as bcrypt from 'bcryptjs';
 
 // ==========================================
 // Inicialização do Stripe
@@ -38,16 +39,54 @@ export async function criarSessaoCheckout(data: {
     loteId: number;
     actualQuantity?: number;
     promotorSlug?: string;
+    guestEmail?: string;
+    guestName?: string;
 }) {
     try {
+        let finalUserId: number;
+
         // 1. Verificar autenticação
         const session = await getSession();
         if (!session) {
-            return { success: false, message: 'Não autenticado. Faça login primeiro.' };
-        }
+            if (!data.guestEmail || !data.guestName) {
+                return { success: false, message: 'Não autenticado. Para comprar como convidado, forneça o seu nome e e-mail.' };
+            }
 
-        if (session.role === 'ORGANIZADOR' || session.role === 'STAFF' || session.role === 'ADMIN') {
-            return { success: false, message: 'Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.' };
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(data.guestEmail)) {
+                return { success: false, message: 'Formato de e-mail inválido.' };
+            }
+            if (data.guestName.trim().length < 2) {
+                return { success: false, message: 'O nome deve ter pelo menos 2 caracteres.' };
+            }
+
+            const existingUser = await prisma.utilizador.findUnique({
+                where: { email: data.guestEmail.trim().toLowerCase() }
+            });
+
+            if (existingUser) {
+                return { success: false, message: 'Este e-mail já se encontra registado. Por favor, inicie sessão para concluir a compra.' };
+            }
+
+            const dummyPassword = await bcrypt.hash(crypto.randomUUID(), 10);
+            const guestUser = await prisma.utilizador.create({
+                data: {
+                    nome: data.guestName.trim(),
+                    email: data.guestEmail.trim().toLowerCase(),
+                    passwordHash: dummyPassword,
+                    role: 'PARTICIPANTE'
+                }
+            });
+
+            finalUserId = guestUser.id;
+
+            // Iniciar sessão automaticamente para o redirecionamento funcionar com o cookie correto
+            await createSession(guestUser.id, guestUser.email, guestUser.nome, guestUser.role);
+        } else {
+            if (session.role === 'ORGANIZADOR' || session.role === 'STAFF' || session.role === 'ADMIN') {
+                return { success: false, message: 'Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.' };
+            }
+            finalUserId = session.userId;
         }
 
         // 2. Validar dados com Zod (ignoring actualQuantity/promotorSlug for this strict parse or omitting it)
@@ -92,7 +131,7 @@ export async function criarSessaoCheckout(data: {
                 },
             ],
             metadata: {
-                userId: session.userId.toString(),
+                userId: finalUserId.toString(),
                 eventoId: eventoId.toString(),
                 loteId: loteId.toString(),
                 quantidade: finalQuantityToMint.toString(),
@@ -122,15 +161,57 @@ export async function simularPagamento(data: {
     loteId: number;
     quantidade: number;
     promotorSlug?: string;
+    guestEmail?: string;
+    guestName?: string;
 }) {
     try {
         if (process.env.NODE_ENV !== 'development') {
             return { success: false, message: 'A simulação de pagamentos só é permitida em ambiente de desenvolvimento.' };
         }
 
+        let finalUserId: number;
+
         const session = await getSession();
         if (!session) {
-            return { success: false, message: 'Não autenticado. Faça login primeiro.' };
+            if (!data.guestEmail || !data.guestName) {
+                return { success: false, message: 'Não autenticado. Para comprar como convidado, forneça o seu nome e e-mail.' };
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(data.guestEmail)) {
+                return { success: false, message: 'Formato de e-mail inválido.' };
+            }
+            if (data.guestName.trim().length < 2) {
+                return { success: false, message: 'O nome deve ter pelo menos 2 caracteres.' };
+            }
+
+            const existingUser = await prisma.utilizador.findUnique({
+                where: { email: data.guestEmail.trim().toLowerCase() }
+            });
+
+            if (existingUser) {
+                return { success: false, message: 'Este e-mail já se encontra registado. Por favor, inicie sessão para concluir a compra.' };
+            }
+
+            const dummyPassword = await bcrypt.hash(crypto.randomUUID(), 10);
+            const guestUser = await prisma.utilizador.create({
+                data: {
+                    nome: data.guestName.trim(),
+                    email: data.guestEmail.trim().toLowerCase(),
+                    passwordHash: dummyPassword,
+                    role: 'PARTICIPANTE'
+                }
+            });
+
+            finalUserId = guestUser.id;
+
+            // Iniciar sessão automaticamente
+            await createSession(guestUser.id, guestUser.email, guestUser.nome, guestUser.role);
+        } else {
+            if (session.role === 'ORGANIZADOR' || session.role === 'STAFF' || session.role === 'ADMIN') {
+                return { success: false, message: 'Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.' };
+            }
+            finalUserId = session.userId;
         }
 
         // 1. Procurar o ID do promotor se houver slug
@@ -158,7 +239,7 @@ export async function simularPagamento(data: {
         // 3. Chamar diretamente o processador de pagamentos do webhook
         const { processarPagamentoWebhook } = await import('./tickets');
         const res = await processarPagamentoWebhook({
-            userId: session.userId,
+            userId: finalUserId,
             eventoId: data.eventoId,
             loteId: data.loteId,
             quantidade: data.quantidade,

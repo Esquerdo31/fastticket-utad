@@ -57,7 +57,7 @@ export default async function WishlistPage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                        {eventos.map((evento) => (
+                        {eventos.map((evento: any) => (
                             <Link
                                 key={evento.id}
                                 href={`/evento/${evento.id}`}
