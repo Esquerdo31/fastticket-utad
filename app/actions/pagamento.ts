@@ -41,6 +41,7 @@ export async function criarSessaoCheckout(data: {
     promotorSlug?: string;
     guestEmail?: string;
     guestName?: string;
+    guestPassword?: string;
 }) {
     try {
         let finalUserId: number;
@@ -59,6 +60,9 @@ export async function criarSessaoCheckout(data: {
             if (data.guestName.trim().length < 2) {
                 return { success: false, message: 'O nome deve ter pelo menos 2 caracteres.' };
             }
+            if (data.guestPassword && data.guestPassword.length < 6) {
+                return { success: false, message: 'A palavra-passe deve ter pelo menos 6 caracteres.' };
+            }
 
             const existingUser = await prisma.utilizador.findUnique({
                 where: { email: data.guestEmail.trim().toLowerCase() }
@@ -68,12 +72,15 @@ export async function criarSessaoCheckout(data: {
                 return { success: false, message: 'Este e-mail já se encontra registado. Por favor, inicie sessão para concluir a compra.' };
             }
 
-            const dummyPassword = await bcrypt.hash(crypto.randomUUID(), 10);
+            const hashedPassword = data.guestPassword && data.guestPassword.trim().length >= 6
+                ? await bcrypt.hash(data.guestPassword.trim(), 10)
+                : await bcrypt.hash(crypto.randomUUID(), 10);
+
             const guestUser = await prisma.utilizador.create({
                 data: {
                     nome: data.guestName.trim(),
                     email: data.guestEmail.trim().toLowerCase(),
-                    passwordHash: dummyPassword,
+                    passwordHash: hashedPassword,
                     role: 'PARTICIPANTE'
                 }
             });
@@ -163,6 +170,7 @@ export async function simularPagamento(data: {
     promotorSlug?: string;
     guestEmail?: string;
     guestName?: string;
+    guestPassword?: string;
 }) {
     try {
         if (process.env.NODE_ENV !== 'development') {
@@ -184,6 +192,9 @@ export async function simularPagamento(data: {
             if (data.guestName.trim().length < 2) {
                 return { success: false, message: 'O nome deve ter pelo menos 2 caracteres.' };
             }
+            if (data.guestPassword && data.guestPassword.length < 6) {
+                return { success: false, message: 'A palavra-passe deve ter pelo menos 6 caracteres.' };
+            }
 
             const existingUser = await prisma.utilizador.findUnique({
                 where: { email: data.guestEmail.trim().toLowerCase() }
@@ -193,12 +204,15 @@ export async function simularPagamento(data: {
                 return { success: false, message: 'Este e-mail já se encontra registado. Por favor, inicie sessão para concluir a compra.' };
             }
 
-            const dummyPassword = await bcrypt.hash(crypto.randomUUID(), 10);
+            const hashedPassword = data.guestPassword && data.guestPassword.trim().length >= 6
+                ? await bcrypt.hash(data.guestPassword.trim(), 10)
+                : await bcrypt.hash(crypto.randomUUID(), 10);
+
             const guestUser = await prisma.utilizador.create({
                 data: {
                     nome: data.guestName.trim(),
                     email: data.guestEmail.trim().toLowerCase(),
-                    passwordHash: dummyPassword,
+                    passwordHash: hashedPassword,
                     role: 'PARTICIPANTE'
                 }
             });

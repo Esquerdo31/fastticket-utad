@@ -23,6 +23,7 @@ export default function CheckoutPage() {
     const [userSession, setUserSession] = useState<any>(null);
     const [guestEmail, setGuestEmail] = useState("");
     const [guestName, setGuestName] = useState("");
+    const [guestPassword, setGuestPassword] = useState("");
 
     // Simulate service fees
     const serviceFeePercent = 0.045; // 4.5%
@@ -74,6 +75,7 @@ export default function CheckoutPage() {
 
         let finalGuestEmail = undefined;
         let finalGuestName = undefined;
+        let finalGuestPassword = undefined;
 
         if (!userSession) {
             if (!guestName.trim()) {
@@ -89,8 +91,13 @@ export default function CheckoutPage() {
                 setErrorMsg("Por favor, introduza um e-mail de contacto válido.");
                 return;
             }
+            if (guestPassword && guestPassword.length < 6) {
+                setErrorMsg("A palavra-passe deve ter pelo menos 6 caracteres.");
+                return;
+            }
             finalGuestEmail = guestEmail;
             finalGuestName = guestName;
+            finalGuestPassword = guestPassword || undefined;
         }
 
         setProcessing(true);
@@ -122,7 +129,8 @@ export default function CheckoutPage() {
             actualQuantity: quantity,
             promotorSlug: ref || undefined,
             guestEmail: finalGuestEmail,
-            guestName: finalGuestName
+            guestName: finalGuestName,
+            guestPassword: finalGuestPassword
         } as any);
 
         if (res.success && res.url) {
@@ -145,6 +153,7 @@ export default function CheckoutPage() {
 
         let finalGuestEmail = undefined;
         let finalGuestName = undefined;
+        let finalGuestPassword = undefined;
 
         if (!userSession) {
             if (!guestName.trim()) {
@@ -160,8 +169,13 @@ export default function CheckoutPage() {
                 setErrorMsg("Por favor, introduza um e-mail de contacto válido.");
                 return;
             }
+            if (guestPassword && guestPassword.length < 6) {
+                setErrorMsg("A palavra-passe deve ter pelo menos 6 caracteres.");
+                return;
+            }
             finalGuestEmail = guestEmail;
             finalGuestName = guestName;
+            finalGuestPassword = guestPassword || undefined;
         }
 
         setProcessing(true);
@@ -179,7 +193,8 @@ export default function CheckoutPage() {
             quantidade: quantity,
             promotorSlug: ref || undefined,
             guestEmail: finalGuestEmail,
-            guestName: finalGuestName
+            guestName: finalGuestName,
+            guestPassword: finalGuestPassword
         });
 
         if (res.success) {
@@ -326,6 +341,20 @@ export default function CheckoutPage() {
                                             className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#006837] focus:ring-1 focus:ring-[#006837] outline-none transition-all text-sm text-slate-800"
                                         />
                                         <p className="text-[10px] text-slate-400 mt-1">Este email será utilizado para o envio dos seus bilhetes e criação automática de conta.</p>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <label htmlFor="guestPassword" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Criar Palavra-passe (Opcional)</label>
+                                            <span className="text-[10px] text-slate-400">Aceda à sua conta mais tarde</span>
+                                        </div>
+                                        <input
+                                            id="guestPassword"
+                                            type="password"
+                                            value={guestPassword}
+                                            onChange={(e) => setGuestPassword(e.target.value)}
+                                            placeholder="Defina uma palavra-passe (mín. 6 caracteres)"
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#006837] focus:ring-1 focus:ring-[#006837] outline-none transition-all text-sm text-slate-800"
+                                        />
                                     </div>
                                 </div>
                             </div>

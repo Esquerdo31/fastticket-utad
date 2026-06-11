@@ -356,14 +356,44 @@ export async function validarBilhete(data: {
         const diasValidosRaw = loteDb.diasValidos || "";
         const tipoLote = loteDb.tipo || "DIARIO";
 
-        // 1. Validar se o dia de hoje está dentro dos dias permitidos
-        if (diasValidosRaw.trim() !== "") {
-            const diasList = diasValidosRaw.split(',').map((d: string) => d.trim());
-            if (!diasList.includes(todayStr)) {
+        // 1. Validar se o dia de hoje está dentro dos limites do evento ou dias válidos
+        if (tipoLote === 'GERAL') {
+            const dateInicio = new Date(bilhete.lote.evento.dataInicio);
+            dateInicio.setHours(0, 0, 0, 0);
+            
+            const dateFim = bilhete.lote.evento.dataFim ? new Date(bilhete.lote.evento.dataFim) : new Date(dateInicio);
+            dateFim.setHours(23, 59, 59, 999);
+            
+            const now = new Date();
+            if (now < dateInicio || now > dateFim) {
                 return {
                     success: false,
-                    message: `⚠️ Alerta: Este bilhete não é válido para o dia de hoje (${todayStr}).`
+                    message: `⚠️ Alerta: Este passe geral não é válido para o dia de hoje. O evento decorre de ${dateInicio.toLocaleDateString('pt-PT')} a ${dateFim.toLocaleDateString('pt-PT')}.`
                 };
+            }
+        } else {
+            // Bilhete Diário
+            if (diasValidosRaw.trim() !== "") {
+                const diasList = diasValidosRaw.split(',').map((d: string) => d.trim());
+                if (!diasList.includes(todayStr)) {
+                    return {
+                        success: false,
+                        message: `⚠️ Alerta: Este bilhete diário não é válido para o dia de hoje (${todayStr}).`
+                    };
+                }
+            } else {
+                const dateInicio = new Date(bilhete.lote.evento.dataInicio);
+                dateInicio.setHours(0, 0, 0, 0);
+                const dateFim = bilhete.lote.evento.dataFim ? new Date(bilhete.lote.evento.dataFim) : new Date(dateInicio);
+                dateFim.setHours(23, 59, 59, 999);
+                
+                const now = new Date();
+                if (now < dateInicio || now > dateFim) {
+                    return {
+                        success: false,
+                        message: `⚠️ Alerta: Este bilhete não é válido para o dia de hoje. O evento decorre de ${dateInicio.toLocaleDateString('pt-PT')} a ${dateFim.toLocaleDateString('pt-PT')}.`
+                    };
+                }
             }
         }
 
@@ -417,7 +447,17 @@ export async function validarBilhete(data: {
         // 3. Determinar se é a última utilização possível para marcar como USADO
         const diasValidosList = diasValidosRaw.trim() !== "" ? diasValidosRaw.split(',').map((d: string) => d.trim()) : [];
         const totalRegistosFuturos = bilhete.registosAcesso.length + 1;
-        const isLastCheckin = tipoLote === 'DIARIO' || totalRegistosFuturos >= diasValidosList.length;
+
+        const dateInicioVal = new Date(bilhete.lote.evento.dataInicio);
+        dateInicioVal.setHours(0, 0, 0, 0);
+        const dateFimVal = bilhete.lote.evento.dataFim ? new Date(bilhete.lote.evento.dataFim) : new Date(dateInicioVal);
+        dateFimVal.setHours(23, 59, 59, 999);
+        const todayObj = new Date();
+        const isLastDayOfEvent = todayObj.toDateString() === dateFimVal.toDateString();
+
+        const isLastCheckin = tipoLote === 'DIARIO' || 
+                              (diasValidosList.length > 0 && totalRegistosFuturos >= diasValidosList.length) ||
+                              (tipoLote === 'GERAL' && diasValidosList.length === 0 && isLastDayOfEvent);
 
         // 4. Executar check-in na base de dados
         await prisma.$transaction([
