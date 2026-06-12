@@ -2,9 +2,15 @@
 
 import prisma from "../../lib/prisma";
 import { gerarQRCodeBase64 } from "../../lib/qrcode";
+import { getSession } from "../../lib/session";
 
 export async function getDashboardData(userId: number) {
     try {
+        const session = await getSession();
+        if (!session || session.userId !== userId) {
+            return { success: false, message: "Não autorizado." };
+        }
+
         // 1. Obter Nome do Utilizador
         const user = await prisma.utilizador.findUnique({
             where: { id: userId },

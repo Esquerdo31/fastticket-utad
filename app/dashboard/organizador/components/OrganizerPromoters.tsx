@@ -80,6 +80,7 @@ export default function OrganizerPromoters({ eventos }: { eventos: any[] }) {
                             Leaderboard de Vendas
                         </h2>
                         <button 
+                            type="button"
                             onClick={() => { setMsg(""); setShowModal(true); }}
                             className="bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-violet-800 hover:shadow-lg hover:shadow-violet-700/20 transition-all active:scale-95 shadow-md shadow-violet-700/20 cursor-pointer"
                         >
@@ -167,7 +168,7 @@ export default function OrganizerPromoters({ eventos }: { eventos: any[] }) {
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold text-slate-800">Adicionar Parceiro/Núcleo</h3>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg p-1 transition-all active:scale-95 cursor-pointer">
+                            <button type="button" onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg p-1 transition-all active:scale-95 cursor-pointer">
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>

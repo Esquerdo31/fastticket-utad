@@ -84,14 +84,16 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                         <Link className="text-slate-600 hover:bg-slate-50 transition-colors px-2 py-1 rounded font-medium cursor-pointer" href="/ajuda">Ajuda</Link>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div
+                        <button
+                            type="button"
                             onClick={() => handleTabChange('profile')}
-                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                            className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none"
                         >
                             <span className="text-sm font-semibold text-[#006837]">{userName}</span>
                             <span className="material-symbols-outlined text-[#006837]">account_circle</span>
-                        </div>
+                        </button>
                         <button 
+                            type="button"
                             onClick={handleLogout} 
                             disabled={isPending}
                             className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1 pl-4 border-l border-slate-200 cursor-pointer disabled:opacity-50"
@@ -121,6 +123,7 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                             const isActive = activeTab === item.id;
                             return (
                                 <button
+                                    type="button"
                                     key={item.id}
                                     onClick={() => handleTabChange(item.id)}
                                     className={`w-full flex items-center gap-3 px-6 py-4 transition-all duration-200 text-left cursor-pointer ${
@@ -177,7 +180,7 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                     const isActive = activeTab === item.id;
                     if (item.href) {
                         return (
-                            <Link key={item.id} href={item.href} className="flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-slate-500 hover:text-[#006837] hover:bg-emerald-50 transition-all cursor-pointer">
+                            <Link key={item.id} href={item.href} className="flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-slate-500 hover:text-emerald-700 hover:bg-slate-100 transition-all cursor-pointer">
                                 <span className="material-symbols-outlined">{item.icon}</span>
                                 <span className="text-[10px]">{item.label}</span>
                             </Link>
@@ -185,9 +188,10 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                     }
                     return (
                         <button
+                            type="button"
                             key={item.id}
                             onClick={() => handleTabChange(item.id as ActiveTab)}
-                            className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 transition-all cursor-pointer active:scale-95 ${isActive ? 'text-[#006837] font-bold bg-emerald-50' : 'text-slate-500 hover:text-[#006837] hover:bg-emerald-50'}`}
+                            className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 transition-all cursor-pointer active:scale-95 ${isActive ? 'text-[#006837] font-bold bg-emerald-50' : 'text-slate-500 hover:text-emerald-700 hover:bg-slate-100'}`}
                         >
                             <span className="material-symbols-outlined">{item.icon}</span>
                             <span className="text-[10px]">{item.label}</span>

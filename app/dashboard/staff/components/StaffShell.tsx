@@ -80,10 +80,11 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
 
     // Auto-focus input when event is selected, and clean up camera
     useEffect(() => {
+        let timerId: NodeJS.Timeout | undefined;
         if (selectedEvent) {
             setDynamicCheckinCount(selectedEvent.checkinsCount || 0);
             loadEventData(selectedEvent.id);
-            setTimeout(() => {
+            timerId = setTimeout(() => {
                 inputRef.current?.focus();
             }, 100);
         } else {
@@ -91,6 +92,9 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
             setQrCodeToken('');
             stopCamera();
         }
+        return () => {
+            if (timerId) clearTimeout(timerId);
+        };
     }, [selectedEvent]);
 
     const startCamera = async () => {
@@ -304,6 +308,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                 <div className="flex items-center gap-3">
                     <span className="text-xs font-semibold text-slate-500 hidden sm:inline">{userName}</span>
                     <button 
+                        type="button"
                         onClick={handleLogout} 
                         className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 hover:text-red-700 transition-all active:scale-95 text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
                     >
@@ -323,9 +328,10 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
 
                         <div className="grid grid-cols-1 gap-4">
                             {eventos.map((ev) => (
-                                <div 
-                                    key={ev.id} 
-                                    className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-500 hover:shadow-md transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer group"
+                                <button
+                                    type="button"
+                                    key={ev.id}
+                                    className="w-full text-left bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-500 hover:shadow-md transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer group focus:outline-none"
                                     onClick={() => setSelectedEvent(ev)}
                                 >
                                     <div className="space-y-1">
@@ -348,7 +354,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                                         </div>
                                         <span className="material-symbols-outlined text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all">arrow_forward</span>
                                     </div>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -358,6 +364,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                         {/* Back navigation & Event Header */}
                         <div className="flex items-center gap-3">
                             <button 
+                                type="button"
                                 onClick={() => setSelectedEvent(null)}
                                 className="p-2 hover:bg-slate-200 hover:text-emerald-700 active:scale-95 rounded-full transition-all text-slate-600 flex items-center cursor-pointer"
                             >
@@ -422,6 +429,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                                                 ref={videoRef}
                                                 className="w-full h-full object-cover"
                                                 playsInline
+                                                aria-label="Câmara do leitor de código QR"
                                             />
                                             {/* Offscreen canvas for frame analysis */}
                                             <canvas 
@@ -483,10 +491,11 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                                 )}
 
                                 <div className="border-t border-slate-100 pt-4">
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Introduzir Token QR Code</label>
+                                    <label htmlFor="qr-token-input" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Introduzir Token QR Code</label>
                                     <div className="relative">
                                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">qr_code</span>
                                         <input
+                                            id="qr-token-input"
                                             ref={inputRef}
                                             type="text"
                                             placeholder="Cole ou leia o token do bilhete..."
@@ -536,6 +545,7 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                                                     <p className="text-[10px] text-slate-500 truncate">{t.lote} • <span className="font-mono">{t.token.slice(0, 10)}...</span></p>
                                                 </div>
                                                 <button
+                                                    type="button"
                                                     onClick={() => simulateScan(t.token)}
                                                     className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
                                                         t.estado === 'USADO' 

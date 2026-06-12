@@ -2,6 +2,11 @@ import { redirect } from 'next/navigation';
 import { getActiveSession } from '@/app/actions/auth';
 import prisma from '@/lib/prisma';
 
+export const metadata = {
+    title: "Área Pessoal - UTAD FastTicket",
+    description: "Painel de navegação pessoal para utilizadores da UTAD FastTicket."
+};
+
 export default async function DashboardRouter({
     searchParams,
 }: {

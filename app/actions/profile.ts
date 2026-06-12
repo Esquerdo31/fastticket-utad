@@ -2,9 +2,15 @@
 
 import prisma from "../../lib/prisma";
 import * as bcrypt from "bcryptjs";
+import { getSession } from "../../lib/session";
 
 export async function getProfileData(userId: number) {
     try {
+        const session = await getSession();
+        if (!session || session.userId !== userId) {
+            return { success: false, message: "Não autorizado." };
+        }
+
         const user = await prisma.utilizador.findUnique({
             where: { id: userId },
             select: {
@@ -35,6 +41,11 @@ export async function getProfileData(userId: number) {
 
 export async function updateProfileData(userId: number, data: { nome: string; email: string }) {
     try {
+        const session = await getSession();
+        if (!session || session.userId !== userId) {
+            return { success: false, message: "Não autorizado." };
+        }
+
         await prisma.utilizador.update({
             where: { id: userId },
             data: {
@@ -51,6 +62,11 @@ export async function updateProfileData(userId: number, data: { nome: string; em
 
 export async function changePassword(userId: number, data: { currentPassword?: string; newPassword: string }) {
     try {
+        const session = await getSession();
+        if (!session || session.userId !== userId) {
+            return { success: false, message: "Não autorizado." };
+        }
+
         const user = await prisma.utilizador.findUnique({
             where: { id: userId }
         });

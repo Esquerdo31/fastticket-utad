@@ -63,19 +63,19 @@ export default function AdminUsers({ users, onRefresh }: AdminUsersProps) {
             )}
 
             <div className="flex gap-2 mb-6 flex-wrap">
-                <button onClick={() => setFilter('ALL')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === 'ALL' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
+                <button type="button" onClick={() => setFilter('ALL')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === 'ALL' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
                     Todos <span className="ml-2 text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-full">{users.length}</span>
                 </button>
-                <button onClick={() => setFilter('PARTICIPANTE')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === 'PARTICIPANTE' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
+                <button type="button" onClick={() => setFilter('PARTICIPANTE')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === 'PARTICIPANTE' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
                     Participantes <span className="ml-2 text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-full">{users.filter(u => u.role === 'PARTICIPANTE').length}</span>
                 </button>
-                <button onClick={() => setFilter('ORGANIZADOR')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === 'ORGANIZADOR' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
+                <button type="button" onClick={() => setFilter('ORGANIZADOR')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === 'ORGANIZADOR' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
                     Organizadores <span className="ml-2 text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-full">{users.filter(u => u.role === 'ORGANIZADOR').length}</span>
                 </button>
-                <button onClick={() => setFilter('STAFF')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === 'STAFF' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
+                <button type="button" onClick={() => setFilter('STAFF')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === 'STAFF' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
                     Staff <span className="ml-2 text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-full">{users.filter(u => u.role === 'STAFF').length}</span>
                 </button>
-                <button onClick={() => setFilter('ADMIN')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === 'ADMIN' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
+                <button type="button" onClick={() => setFilter('ADMIN')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === 'ADMIN' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
                     Admins <span className="ml-2 text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-full">{users.filter(u => u.role === 'ADMIN').length}</span>
                 </button>
             </div>

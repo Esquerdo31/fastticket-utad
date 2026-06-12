@@ -5,6 +5,11 @@ import { getOrganizerDashboardData, getOrganizerStats } from '@/app/actions/orga
 import { getParceriasPromotor } from '@/app/actions/promotores';
 import OrganizerShell from './components/OrganizerShell';
 
+export const metadata = {
+    title: "Painel de Organizador - UTAD FastTicket",
+    description: "Criar e gerir eventos, lotes de bilhetes e promotores na plataforma UTAD FastTicket."
+};
+
 export default async function OrganizerDashboardPage({
     searchParams,
 }: {

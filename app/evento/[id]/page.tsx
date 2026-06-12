@@ -139,12 +139,12 @@ export default function EventDetailsDynamic() {
                                     <span className="material-symbols-outlined text-sm">person</span>
                                     {userSession.nome || userSession.email.split("@")[0]}
                                 </Link>
-                                <button onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:text-red-800 transition-colors bg-red-50 px-3 py-2 rounded-lg border border-red-100">
+                                <button type="button" onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:text-red-800 transition-colors bg-red-50 px-3 py-2 rounded-lg border border-red-100">
                                     Sair
                                 </button>
                             </div>
                         ) : (
-                            <button onClick={() => router.push('/login')} className="px-5 py-2 bg-[#006837] text-white font-medium rounded-lg hover:bg-emerald-800 active:scale-95 duration-200 transition-all shadow-md">
+                            <button type="button" onClick={() => router.push('/login')} className="px-5 py-2 bg-[#006837] text-white font-medium rounded-lg hover:bg-emerald-800 active:scale-95 duration-200 transition-all shadow-md">
                                 Sign In
                             </button>
                         )}
@@ -414,6 +414,7 @@ export default function EventDetailsDynamic() {
                                                     <p>Este evento encontra-se temporariamente suspenso pela administração. As vendas de novos bilhetes estão indisponíveis de momento.</p>
                                                 </div>
                                                 <button
+                                                    type="button"
                                                     disabled
                                                     className="w-full py-4 text-white font-bold rounded-xl bg-slate-300 cursor-not-allowed flex items-center justify-center gap-2"
                                                 >
@@ -423,6 +424,7 @@ export default function EventDetailsDynamic() {
                                             </div>
                                         ) : isTerminado ? (
                                             <button
+                                                type="button"
                                                 disabled
                                                 className="w-full py-4 text-white font-bold rounded-xl bg-slate-300 cursor-not-allowed flex items-center justify-center gap-2 mt-6"
                                             >
@@ -431,6 +433,7 @@ export default function EventDetailsDynamic() {
                                             </button>
                                         ) : eventoEsgotado ? (
                                             <button
+                                                type="button"
                                                 onClick={handleJoinWaitlist}
                                                 disabled={joiningWaitlist || Boolean(evento.isWaitlisted)}
                                                 className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-6 ${evento.isWaitlisted
@@ -443,6 +446,7 @@ export default function EventDetailsDynamic() {
                                             </button>
                                         ) : (
                                             <button
+                                                type="button"
                                                 disabled={!selectedTicket || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
                                                 onClick={() => {
                                                     const urlParams = new URLSearchParams(window.location.search);

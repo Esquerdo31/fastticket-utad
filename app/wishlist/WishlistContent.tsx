@@ -126,6 +126,7 @@ export default function WishlistContent({ initialResult, session }: WishlistCont
                                         </div>
                                         <div className="flex gap-2">
                                             <button
+                                                type="button"
                                                 onClick={(e) => handleRemoveFavorite(e, evento.id)}
                                                 disabled={isPending}
                                                 className="remove-fav-btn flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-500 border border-red-100 hover:bg-red-500 hover:text-white transition-all cursor-pointer active:scale-90"

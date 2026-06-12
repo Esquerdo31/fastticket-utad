@@ -149,7 +149,7 @@ export default function UTADFastTicketPage() {
                             {dbEvents.length > 1 && (
                                 <div className="flex items-center gap-2 mt-8">
                                     {dbEvents.map((_, i) => (
-                                        <button key={i} onClick={() => goToHero(i)} className="relative h-1 rounded-full overflow-hidden transition-all" style={{ width: i === heroIdx ? 40 : 10 }}>
+                                        <button type="button" key={i} onClick={() => goToHero(i)} className="relative h-1 rounded-full overflow-hidden transition-all" style={{ width: i === heroIdx ? 40 : 10 }}>
                                             <div className={`absolute inset-0 rounded-full ${i === heroIdx ? 'bg-white/30' : 'bg-white/15 hover:bg-white/25'}`} />
                                             {i === heroIdx && <div className="absolute inset-0 rounded-full bg-emerald-400 hero-progress" key={`hp-${heroIdx}`} />}
                                         </button>
@@ -168,10 +168,10 @@ export default function UTADFastTicketPage() {
                                     <p className="text-slate-500 text-sm mt-1">Os eventos mais recentes na plataforma</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => scrollCarousel('left')} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-all">
+                                    <button type="button" onClick={() => scrollCarousel('left')} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-all">
                                         <MaterialIcon name="chevron_left" className="text-xl" />
                                     </button>
-                                    <button onClick={() => scrollCarousel('right')} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-all">
+                                    <button type="button" onClick={() => scrollCarousel('right')} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-all">
                                         <MaterialIcon name="chevron_right" className="text-xl" />
                                     </button>
                                     <Link href="/eventos" className="ml-2 text-emerald-400 text-sm font-bold hover:text-emerald-300 transition-colors flex items-center gap-1">

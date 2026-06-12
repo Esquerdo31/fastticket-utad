@@ -67,6 +67,7 @@ export default function OrganizerDashboard({ userName, summary, nextEvents, orga
                         </p>
                     </div>
                     <button 
+                        type="button"
                         onClick={() => onTabChange('promotor')}
                         className="bg-violet-700 hover:bg-violet-800 hover:shadow-lg hover:shadow-violet-800/20 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all active:scale-95 shadow-md shadow-violet-800/10 shrink-0 cursor-pointer"
                     >
@@ -117,6 +118,7 @@ export default function OrganizerDashboard({ userName, summary, nextEvents, orga
                     <div className="shrink-0 w-full md:w-auto text-center">
                         {pedidoPromotores === 'NADA' && (
                             <button
+                                type="button"
                                 disabled={isPending}
                                 onClick={handleSolicitarAcesso}
                                 className="w-full md:w-auto bg-violet-700 hover:bg-violet-800 hover:shadow-lg hover:shadow-violet-700/25 text-white font-bold px-6 py-3 rounded-xl shadow-md shadow-violet-700/20 active:scale-95 transition-all text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
@@ -131,6 +133,7 @@ export default function OrganizerDashboard({ userName, summary, nextEvents, orga
                         )}
                         {pedidoPromotores === 'REJEITADO' && (
                             <button
+                                type="button"
                                 disabled={isPending}
                                 onClick={handleSolicitarAcesso}
                                 className="w-full md:w-auto bg-red-600 hover:bg-red-700 hover:shadow-lg hover:shadow-red-700/25 text-white font-bold px-6 py-3 rounded-xl shadow-md shadow-red-700/20 active:scale-95 transition-all text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"

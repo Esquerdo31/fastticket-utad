@@ -59,10 +59,10 @@ export default function AdminEvents({ eventos }: AdminEventsProps) {
                                         <span className="text-sm font-bold text-slate-700">{evento.lotacaoMaxima}</span>
                                     </td>
                                     <td className="p-4 text-right pr-6">
-                                        <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
+                                        <button type="button" className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
                                             <span className="material-symbols-outlined text-[20px]">visibility</span>
                                         </button>
-                                        <button className="p-2 text-slate-400 hover:text-red-600 transition-colors">
+                                        <button type="button" className="p-2 text-slate-400 hover:text-red-600 transition-colors">
                                             <span className="material-symbols-outlined text-[20px]">delete</span>
                                         </button>
                                     </td>

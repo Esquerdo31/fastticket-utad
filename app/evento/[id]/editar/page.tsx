@@ -321,7 +321,7 @@ export default function EditarEventoPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         {msg && <span className={`text-xs font-bold px-3 py-1.5 rounded-lg ${msgType === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg}</span>}
-                        <button onClick={() => handleSave(false)} disabled={isPending} className="bg-violet-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-violet-800 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
+                        <button type="button" onClick={() => handleSave(false)} disabled={isPending} className="bg-violet-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-violet-800 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
                             <span className="material-symbols-outlined text-[18px]">{isPending ? 'hourglass_top' : 'save'}</span>{isPending ? 'A guardar...' : 'Guardar'}
                         </button>
                     </div>
@@ -333,7 +333,7 @@ export default function EditarEventoPage() {
                 <nav className="w-56 shrink-0 hidden lg:block">
                     <div className="sticky top-24 space-y-1">
                         {tabs.map(t => (
-                            <button key={t.id} onClick={() => setTab(t.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all text-sm ${tab === t.id ? 'bg-violet-700 text-white font-bold shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}>
+                            <button key={t.id} type="button" onClick={() => setTab(t.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all text-sm ${tab === t.id ? 'bg-violet-700 text-white font-bold shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}>
                                 <span className="material-symbols-outlined text-[20px]">{t.icon}</span>{t.label}
                             </button>
                         ))}
@@ -343,7 +343,7 @@ export default function EditarEventoPage() {
                 {/* Mobile Tabs */}
                 <div className="lg:hidden flex gap-2 mb-6 overflow-x-auto pb-2 w-full">
                     {tabs.map(t => (
-                        <button key={t.id} onClick={() => setTab(t.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap ${tab === t.id ? 'bg-violet-700 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'}`}>
+                        <button key={t.id} type="button" onClick={() => setTab(t.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap ${tab === t.id ? 'bg-violet-700 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'}`}>
                             <span className="material-symbols-outlined text-[18px]">{t.icon}</span>{t.label}
                         </button>
                     ))}
@@ -416,7 +416,7 @@ export default function EditarEventoPage() {
                                                             Ativo ({vendidos} vendidos)
                                                         </div>
                                                     ) : (
-                                                        <button type="button" onClick={() => removeLote(i)} className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer"><span className="material-symbols-outlined text-[20px]">delete</span></button>
+                                                        <button type="button" onClick={() => removeLote(i)} className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-red-500 hover:bg-slate-100 rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer"><span className="material-symbols-outlined text-[20px]">delete</span></button>
                                                     )
                                                 )}
                                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -874,7 +874,7 @@ export default function EditarEventoPage() {
                                 <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><span className="material-symbols-outlined text-violet-700">visibility</span>Estado do Evento</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {(['RASCUNHO', 'PUBLICADO', 'CANCELADO'] as const).map(e => (
-                                        <button key={e} onClick={() => setEstado(e)} className={`p-5 rounded-xl border-2 transition-all text-left ${estado === e ? 'border-violet-700 bg-violet-50' : 'border-slate-200 hover:border-slate-300'}`}>
+                                        <button key={e} type="button" onClick={() => setEstado(e)} className={`p-5 rounded-xl border-2 transition-all text-left ${estado === e ? 'border-violet-700 bg-violet-50' : 'border-slate-200 hover:border-slate-300'}`}>
                                             <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest mb-2 ${estadoBadge[e]}`}>{e}</span>
                                             <p className="text-xs text-slate-500">{e === 'RASCUNHO' ? 'Evento visível apenas para si. Pode editar livremente.' : e === 'PUBLICADO' ? 'Evento visível publicamente. Bilhetes à venda.' : 'Evento cancelado. Não aceita mais compras.'}</p>
                                         </button>
@@ -916,6 +916,7 @@ export default function EditarEventoPage() {
                                             <div>
                                                 {!showRefundConfirm ? (
                                                     <button
+                                                        type="button"
                                                         onClick={() => setShowRefundConfirm(true)}
                                                         className="w-full bg-violet-700 hover:bg-violet-800 text-white py-3 px-4 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                                                     >
@@ -927,12 +928,14 @@ export default function EditarEventoPage() {
                                                         <p className="text-xs font-bold text-amber-800 mb-3 text-center">Tem a certeza? Esta ação cancela todas as compras e apaga os bilhetes.</p>
                                                         <div className="flex gap-2">
                                                             <button
+                                                                type="button"
                                                                 onClick={() => setShowRefundConfirm(false)}
                                                                 className="flex-1 bg-white hover:bg-slate-100 text-slate-600 py-2 rounded-lg font-bold text-xs border border-slate-200 transition-colors"
                                                             >
                                                                 Voltar
                                                             </button>
                                                             <button
+                                                                type="button"
                                                                 onClick={handleRefund}
                                                                 disabled={isPending}
                                                                 className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-bold text-xs transition-colors"
@@ -999,6 +1002,7 @@ export default function EditarEventoPage() {
                                             <div>
                                                 {!showTransferConfirm ? (
                                                     <button
+                                                        type="button"
                                                         onClick={() => {
                                                             if (!selectedDestLoteId) return;
                                                             setShowTransferConfirm(true);
@@ -1014,12 +1018,14 @@ export default function EditarEventoPage() {
                                                         <p className="text-xs font-bold text-amber-800 mb-3 text-center">Tem a certeza? Os {soldTicketsCount} bilhetes serão movidos permanentemente.</p>
                                                         <div className="flex gap-2">
                                                             <button
+                                                                type="button"
                                                                 onClick={() => setShowTransferConfirm(false)}
                                                                 className="flex-1 bg-white hover:bg-slate-100 text-slate-600 py-2 rounded-lg font-bold text-xs border border-slate-200 transition-colors"
                                                             >
                                                                 Voltar
                                                             </button>
                                                             <button
+                                                                type="button"
                                                                 onClick={handleTransfer}
                                                                 disabled={isPending}
                                                                 className="flex-1 bg-violet-700 hover:bg-violet-800 text-white py-2 rounded-lg font-bold text-xs transition-colors"
@@ -1046,13 +1052,13 @@ export default function EditarEventoPage() {
                                     <>
                                         <p className="text-sm text-red-600/80 mb-6">Esta ação é irreversível. Todos os dados do evento serão permanentemente apagados.</p>
                                         {!showDeleteConfirm ? (
-                                            <button onClick={() => setShowDeleteConfirm(true)} className="bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-red-700 active:scale-95 transition-all flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">delete_forever</span>Apagar Evento</button>
+                                            <button type="button" onClick={() => setShowDeleteConfirm(true)} className="bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-red-700 active:scale-95 transition-all flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">delete_forever</span>Apagar Evento</button>
                                         ) : (
                                             <div className="bg-white p-4 rounded-xl border border-red-200 flex items-center justify-between">
                                                 <p className="text-sm font-bold text-red-700">Tem a certeza? Esta ação não pode ser desfeita.</p>
                                                 <div className="flex gap-2">
-                                                    <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
-                                                    <button onClick={handleDelete} disabled={isPending} className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-700 disabled:opacity-50">{isPending ? 'A apagar...' : 'Confirmar'}</button>
+                                                    <button type="button" onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
+                                                    <button type="button" onClick={handleDelete} disabled={isPending} className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-700 disabled:opacity-50">{isPending ? 'A apagar...' : 'Confirmar'}</button>
                                                 </div>
                                             </div>
                                         )}

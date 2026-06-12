@@ -114,7 +114,7 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                     <h1 className="text-3xl font-bold text-slate-900 mb-2">Meus Eventos</h1>
                     <p className="text-slate-500">Faça a gestão dos seus eventos criados e acompanhe a lotação.</p>
                 </div>
-                <button onClick={onCreateEvent} className="bg-violet-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-violet-800 hover:shadow-xl hover:shadow-violet-700/25 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-700/20 cursor-pointer">
+                <button type="button" onClick={onCreateEvent} className="bg-violet-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-violet-800 hover:shadow-xl hover:shadow-violet-700/25 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-700/20 cursor-pointer">
                     <span className="material-symbols-outlined">add_circle</span>
                     Criar Novo Evento
                 </button>
@@ -123,6 +123,7 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
             {/* Tab Filters */}
             <div className="flex border-b border-slate-200 mb-6 gap-2">
                 <button
+                    type="button"
                     onClick={() => setActiveFilterTab('ativos')}
                     className={`px-4 py-2.5 text-sm font-bold border-b-2 cursor-pointer transition-all ${
                         activeFilterTab === 'ativos'
@@ -133,6 +134,7 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                     Eventos Ativos ({activeCount})
                 </button>
                 <button
+                    type="button"
                     onClick={() => setActiveFilterTab('terminados')}
                     className={`px-4 py-2.5 text-sm font-bold border-b-2 cursor-pointer transition-all ${
                         activeFilterTab === 'terminados'
@@ -218,6 +220,7 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                                             <div className="flex items-center justify-end gap-1">
                                                 {evento.estado === 'RASCUNHO' && (
                                                     <button 
+                                                        type="button"
                                                         onClick={() => handlePublish(evento.id)} 
                                                         disabled={isPublishing === evento.id}
                                                         className="p-2 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg transition-all active:scale-95 cursor-pointer disabled:opacity-50" 

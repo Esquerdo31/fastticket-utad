@@ -139,10 +139,11 @@ export default function PromotorContent({ parcerias, onRefresh }: PromotorConten
                                     {/* Inputs and Actions */}
                                     <div className="w-full lg:w-auto flex flex-col sm:flex-row items-end sm:items-center gap-4 shrink-0">
                                         <div className="w-full sm:w-48 text-left">
-                                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Link Personalizado (Opcional)</label>
+                                            <label htmlFor={`custom-slug-${invite.id}`} className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Link Personalizado (Opcional)</label>
                                             <div className="relative">
                                                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono">/</span>
                                                 <input 
+                                                    id={`custom-slug-${invite.id}`}
                                                     type="text"
                                                     disabled={isPending}
                                                     placeholder={invite.linkSlug}
@@ -154,6 +155,7 @@ export default function PromotorContent({ parcerias, onRefresh }: PromotorConten
                                         </div>
                                         <div className="flex gap-2 w-full sm:w-auto">
                                             <button
+                                                type="button"
                                                 disabled={isPending}
                                                 onClick={() => handleInviteResponse(invite.id, true)}
                                                 className="flex-1 sm:flex-initial bg-[#006837] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-800 transition-all active:scale-95 flex items-center justify-center gap-1.5"
@@ -161,6 +163,7 @@ export default function PromotorContent({ parcerias, onRefresh }: PromotorConten
                                                 <span className="material-symbols-outlined text-[16px]">check</span>Aceitar
                                             </button>
                                             <button
+                                                type="button"
                                                 disabled={isPending}
                                                 onClick={() => handleInviteResponse(invite.id, false)}
                                                 className="flex-1 sm:flex-initial border border-slate-200 bg-white text-red-600 px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-red-50 transition-all active:scale-95 flex items-center justify-center gap-1.5"
@@ -220,6 +223,7 @@ export default function PromotorContent({ parcerias, onRefresh }: PromotorConten
                                                     </p>
                                                 </div>
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleCopyLink(partnership)}
                                                     className="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-[#006837] text-white rounded-lg text-xs font-bold hover:bg-emerald-800 transition-all active:scale-95"
                                                 >

@@ -62,8 +62,19 @@ type CreateEventoInput = z.infer<typeof criarEventoSchema>;
 
 export async function createEvento(data: CreateEventoInput) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== 'ORGANIZADOR' && session.role !== 'ADMIN')) {
+            return { success: false, message: 'Não autorizado.' };
+        }
+
+        // Force the owner ID to be the logged-in user's ID unless they are an admin
+        const validatedInput = {
+            ...data,
+            organizadorId: session.role === 'ADMIN' ? data.organizadorId : session.userId
+        };
+
         // 1. Validar dados com Zod
-        const parseResult = criarEventoSchema.safeParse(data);
+        const parseResult = criarEventoSchema.safeParse(validatedInput);
         if (!parseResult.success) {
             const errors = parseResult.error.flatten().fieldErrors;
             const firstError = Object.values(errors).flat()[0] || 'Dados inválidos.';
@@ -126,6 +137,7 @@ export async function createEvento(data: CreateEventoInput) {
 
 export async function getEventoById(eventoId: number) {
     try {
+        const session = await getSession();
         // Validação simples do ID
         const idResult = z.number().int().positive().safeParse(eventoId);
         if (!idResult.success) {
@@ -188,14 +200,34 @@ export async function getEventoById(eventoId: number) {
 
 export async function updateEvento(eventoId: number, data: CreateEventoInput) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== 'ORGANIZADOR' && session.role !== 'ADMIN')) {
+            return { success: false, message: 'Não autorizado.' };
+        }
+
+        const existingEvento = await prisma.evento.findUnique({ where: { id: eventoId } });
+        if (!existingEvento) {
+            return { success: false, message: 'Evento não encontrado.' };
+        }
+
+        if (session.role !== 'ADMIN' && existingEvento.organizadorId !== session.userId) {
+            return { success: false, message: 'Não autorizado.' };
+        }
+
         // 1. Validar ID
         const idResult = z.number().int().positive().safeParse(eventoId);
         if (!idResult.success) {
             return { success: false, message: "ID de evento inválido." };
         }
 
+        // Force the owner ID to be the logged-in user's ID unless they are an admin
+        const validatedInput = {
+            ...data,
+            organizadorId: session.role === 'ADMIN' ? data.organizadorId : session.userId
+        };
+
         // 2. Validar dados com Zod
-        const parseResult = criarEventoSchema.safeParse(data);
+        const parseResult = criarEventoSchema.safeParse(validatedInput);
         if (!parseResult.success) {
             const errors = parseResult.error.flatten().fieldErrors;
             const firstError = Object.values(errors).flat()[0] || 'Dados inválidos.';

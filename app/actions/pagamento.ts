@@ -273,7 +273,7 @@ export async function simularPagamento(data: {
         const fakePaymentIntentId = `fake_pi_${crypto.randomUUID()}`;
 
         // 3. Chamar diretamente o processador de pagamentos do webhook
-        const { processarPagamentoWebhook } = await import('./tickets');
+        const { processarPagamentoWebhook } = await import('../../lib/ticketsInternal');
         const res = await processarPagamentoWebhook({
             userId: finalUserId,
             eventoId: data.eventoId,

@@ -2,9 +2,11 @@
 
 import prisma from "../../lib/prisma";
 import { getAvailabilityStatus, getUserEngagementStatus } from "./engagement";
+import { getSession } from "../../lib/session";
 
 export async function getEventos() {
     try {
+        const session = await getSession();
         const eventos = await prisma.evento.findMany({
             include: {
                 lotes: true,
@@ -67,6 +69,7 @@ export async function getEventos() {
 
 export async function getEventoById(id: number) {
     try {
+        const session = await getSession();
         const ev = await prisma.evento.findUnique({
             where: { id: id },
             include: {

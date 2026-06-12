@@ -1,10 +1,14 @@
 "use server";
 
 import prisma from "../../lib/prisma";
-import { getActiveSession } from "./auth";
+import { getSession } from "../../lib/session";
 
 export async function getAdminDashboardData() {
     try {
+        const session = await getSession();
+        if (!session || session.role !== 'ADMIN') {
+            return { success: false, message: 'Não autorizado.' };
+        }
         const [totalUsers, totalEventos, totalPedidos, totalReceita] = await Promise.all([
             prisma.utilizador.count(),
             prisma.evento.count(),
@@ -35,6 +39,10 @@ export async function getAdminDashboardData() {
 
 export async function getAdminUsers() {
     try {
+        const session = await getSession();
+        if (!session || session.role !== 'ADMIN') {
+            return { success: false, message: 'Não autorizado.' };
+        }
         const users = await prisma.utilizador.findMany({
             select: {
                 id: true,
@@ -61,6 +69,10 @@ export async function getAdminUsers() {
 
 export async function getAdminEvents() {
     try {
+        const session = await getSession();
+        if (!session || session.role !== 'ADMIN') {
+            return { success: false, message: 'Não autorizado.' };
+        }
         const eventos = await prisma.evento.findMany({
             include: {
                 organizador: {
@@ -94,7 +106,7 @@ export async function getAdminEvents() {
 
 export async function aprovarEvento(eventoId: number) {
     try {
-        const session = await getActiveSession();
+        const session = await getSession();
         if (!session || session.role !== 'ADMIN') {
             return { success: false, message: 'Não autorizado.' };
         }
@@ -110,7 +122,7 @@ export async function aprovarEvento(eventoId: number) {
 
 export async function rejeitarEvento(eventoId: number) {
     try {
-        const session = await getActiveSession();
+        const session = await getSession();
         if (!session || session.role !== 'ADMIN') {
             return { success: false, message: 'Não autorizado.' };
         }
@@ -139,7 +151,7 @@ export async function rejeitarEvento(eventoId: number) {
 
 export async function alterarUserRole(userId: number, newRole: 'PARTICIPANTE' | 'ORGANIZADOR' | 'STAFF' | 'ADMIN') {
     try {
-        const session = await getActiveSession();
+        const session = await getSession();
         if (!session || session.role !== 'ADMIN') {
             return { success: false, message: 'Não autorizado.' };
         }
@@ -155,7 +167,7 @@ export async function alterarUserRole(userId: number, newRole: 'PARTICIPANTE' | 
 
 export async function exportarRelatorioGlobal() {
     try {
-        const session = await getActiveSession();
+        const session = await getSession();
         if (!session || session.role !== 'ADMIN') {
             return { success: false, message: 'Não autorizado.' };
         }
@@ -199,7 +211,7 @@ export async function exportarRelatorioGlobal() {
 
 export async function getPendingPromoterRequests() {
     try {
-        const session = await getActiveSession();
+        const session = await getSession();
         if (!session || session.role !== 'ADMIN') {
             return { success: false, message: 'Não autorizado.', requests: [] };
         }
@@ -229,7 +241,7 @@ export async function getPendingPromoterRequests() {
 
 export async function avaliarPedidoPromotores(userId: number, aprovado: boolean) {
     try {
-        const session = await getActiveSession();
+        const session = await getSession();
         if (!session || session.role !== 'ADMIN') {
             return { success: false, message: 'Não autorizado.' };
         }
@@ -250,7 +262,7 @@ export async function avaliarPedidoPromotores(userId: number, aprovado: boolean)
 
 export async function suspenderEvento(eventoId: number) {
     try {
-        const session = await getActiveSession();
+        const session = await getSession();
         if (!session || session.role !== 'ADMIN') {
             return { success: false, message: 'Não autorizado.' };
         }
@@ -269,7 +281,7 @@ export async function suspenderEvento(eventoId: number) {
 
 export async function reativarEvento(eventoId: number) {
     try {
-        const session = await getActiveSession();
+        const session = await getSession();
         if (!session || session.role !== 'ADMIN') {
             return { success: false, message: 'Não autorizado.' };
         }

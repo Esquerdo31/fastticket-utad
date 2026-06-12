@@ -255,6 +255,7 @@ export default function CheckoutPage() {
             <main className="max-w-5xl mx-auto px-6 py-8">
                 {/* Botão de Voltar */}
                 <button
+                    type="button"
                     onClick={() => router.push(`/evento/${evento.id}`)}
                     className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-medium text-sm mb-8"
                 >
@@ -304,6 +305,7 @@ export default function CheckoutPage() {
 
                                         <div className="flex items-center bg-slate-100 rounded-lg p-1 w-fit">
                                             <button
+                                                type="button"
                                                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
                                                 className="w-8 h-8 rounded-md hover:bg-white hover:shadow-sm flex items-center justify-center text-slate-600 transition-all"
                                                 disabled={quantity <= 1}
@@ -312,6 +314,7 @@ export default function CheckoutPage() {
                                             </button>
                                             <span className="w-8 text-center font-bold text-sm">{quantity}</span>
                                             <button
+                                                type="button"
                                                 onClick={() => setQuantity(q => Math.min(10, q + 1))}
                                                 className="w-8 h-8 rounded-md hover:bg-white hover:shadow-sm flex items-center justify-center text-slate-600 transition-all"
                                                 disabled={quantity >= 10 || quantity >= lote.quantidadeDisponivel}
@@ -435,6 +438,7 @@ export default function CheckoutPage() {
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={handleCheckout}
                                     disabled={processing || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
                                     className={`w-full py-4 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 
@@ -448,6 +452,7 @@ export default function CheckoutPage() {
                                 {/* Botão de Simulação de Pagamento (Apenas em Dev) */}
                                 {process.env.NODE_ENV === 'development' && (
                                     <button
+                                        type="button"
                                         onClick={handleSimulatePayment}
                                         disabled={processing || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN"}
                                         className="w-full mt-3 py-3 border-2 border-dashed border-violet-500 text-violet-700 hover:bg-violet-50 font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"

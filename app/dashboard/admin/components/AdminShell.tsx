@@ -93,6 +93,7 @@ export default function AdminShell({ userName, summary, users, eventos, promoter
                             const isActive = activeTab === item.id;
                             return (
                                 <button
+                                    type="button"
                                     key={item.id}
                                     onClick={() => handleTabChange(item.id)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 text-left cursor-pointer font-semibold text-xs tracking-wide ${isActive
@@ -111,6 +112,7 @@ export default function AdminShell({ userName, summary, users, eventos, promoter
                 {/* Sidebar Footer */}
                 <div className="p-4 border-t border-emerald-900/60 space-y-1">
                     <button
+                        type="button"
                         onClick={() => alert('Suporte FastTicket UTAD: admin-support@utad.pt')}
                         className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-emerald-300 hover:text-white hover:bg-emerald-900/40 transition-all text-xs font-semibold text-left"
                     >
@@ -118,6 +120,7 @@ export default function AdminShell({ userName, summary, users, eventos, promoter
                         <span>Support</span>
                     </button>
                     <button
+                        type="button"
                         disabled={isPending}
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-red-300 hover:text-white hover:bg-red-900/40 transition-all text-xs font-semibold text-left"
@@ -151,7 +154,7 @@ export default function AdminShell({ userName, summary, users, eventos, promoter
 
                     {/* Right utilities & Super Admin profile card */}
                     <div className="flex items-center gap-4 pl-4 border-l border-slate-100">
-                        <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                        <button type="button" className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
                             <span className="material-symbols-outlined">settings</span>
                         </button>
 

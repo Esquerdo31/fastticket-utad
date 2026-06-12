@@ -75,6 +75,7 @@ export default function Header() {
                         
                         <div className="relative">
                             <button 
+                                type="button"
                                 onClick={() => setShowDropdown(!showDropdown)}
                                 className={`flex items-center gap-1.5 pl-4 border-l border-slate-200/80 cursor-pointer hover:opacity-85 active:scale-95 transition-all focus:outline-none ${
                                     pathname?.startsWith('/dashboard')
@@ -90,7 +91,7 @@ export default function Header() {
 
                             {showDropdown && (
                                 <>
-                                    <div className="fixed inset-0 z-30" onClick={() => setShowDropdown(false)}></div>
+                                    <button type="button" tabIndex={-1} aria-hidden="true" className="fixed inset-0 z-30 cursor-default" onClick={() => setShowDropdown(false)} />
                                     <div className="absolute right-0 mt-2.5 w-60 bg-white border border-slate-200/80 rounded-2xl shadow-xl py-2 z-40 text-left animate-fadeIn">
                                         <div className="px-4 py-3 border-b border-slate-100">
                                             <div className="flex items-center gap-2 mb-1.5">
@@ -105,7 +106,7 @@ export default function Header() {
                                             <Link 
                                                 href="/dashboard" 
                                                 onClick={() => setShowDropdown(false)}
-                                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-[#006837] transition-all duration-150 font-medium"
+                                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-800 transition-all duration-150 font-medium"
                                             >
                                                 <span className="material-symbols-outlined text-[20px] text-slate-400">dashboard</span>
                                                 O meu Painel
@@ -113,7 +114,7 @@ export default function Header() {
                                             <Link 
                                                 href="/dashboard?tab=profile" 
                                                 onClick={() => setShowDropdown(false)}
-                                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-[#006837] transition-all duration-150 font-medium"
+                                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-800 transition-all duration-150 font-medium"
                                             >
                                                 <span className="material-symbols-outlined text-[20px] text-slate-400">settings</span>
                                                 Definições
@@ -122,6 +123,7 @@ export default function Header() {
                                         <div className="border-t border-slate-100 my-1"></div>
                                         <div className="py-1">
                                             <button 
+                                                type="button"
                                                 onClick={() => {
                                                     setShowDropdown(false);
                                                     handleLogout();

@@ -7,6 +7,11 @@ import { getTicketsData, getBillingData } from '@/app/actions/tickets';
 import { getParceriasPromotor } from '@/app/actions/promotores';
 import DashboardShell from './components/DashboardShell';
 
+export const metadata = {
+    title: "Painel do Utilizador - UTAD FastTicket",
+    description: "Gerir os meus bilhetes, faturas e perfil na plataforma UTAD FastTicket."
+};
+
 export default async function UserDashboard({
     searchParams,
 }: {

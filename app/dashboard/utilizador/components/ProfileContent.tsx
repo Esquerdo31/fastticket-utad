@@ -128,7 +128,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                                     className="w-full h-full object-cover"
                                 />
                             </div>
-                            <button className={`absolute bottom-1 right-1 w-8 h-8 ${primaryBg} text-white rounded-full border-2 border-white flex items-center justify-center hover:opacity-90 transition-colors`}>
+                            <button type="button" className={`absolute bottom-1 right-1 w-8 h-8 ${primaryBg} text-white rounded-full border-2 border-white flex items-center justify-center hover:opacity-90 transition-colors`}>
                                 <span className="material-symbols-outlined text-sm">edit</span>
                             </button>
                         </div>
@@ -228,10 +228,11 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                         )}
 
                         <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-100">
-                            <button onClick={handleDiscard} className="px-4 py-2 text-sm font-semibold text-slate-600 rounded-lg hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer">
+                            <button type="button" onClick={handleDiscard} className="px-4 py-2 text-sm font-semibold text-slate-600 rounded-lg hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer">
                                 Descartar
                             </button>
                             <button
+                                type="button"
                                 onClick={handleSave}
                                 disabled={isPending}
                                 className={`px-6 py-2.5 ${buttonPrimary} text-white text-sm font-semibold rounded-lg hover:shadow-md active:scale-95 transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed`}
@@ -249,6 +250,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                             <h4 className="font-bold text-slate-900 mb-2">Alterar Password</h4>
                             <p className="text-xs text-slate-500 mb-4 leading-relaxed">Mantenha a sua conta segura atualizando a sua chave de acesso periodicamente.</p>
                             <button 
+                                type="button"
                                 onClick={() => {
                                     setShowPasswordModal(true);
                                     setCurrentPassword('');
@@ -266,7 +268,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                             <span className="material-symbols-outlined text-red-600 mb-3 block">logout</span>
                             <h4 className="font-bold text-slate-900 mb-2">Terminar Sessão</h4>
                             <p className="text-xs text-slate-500 mb-4 leading-relaxed">Sair de todos os dispositivos ativos e limpar cache de sessão atual.</p>
-                            <button onClick={onLogout} className="text-sm font-bold text-red-600 hover:text-red-700 hover:bg-red-50 transition-all flex items-center gap-1 px-3 py-2 -ml-3 rounded-lg cursor-pointer">
+                            <button type="button" onClick={onLogout} className="text-sm font-bold text-red-600 hover:text-red-700 hover:bg-red-50 transition-all flex items-center gap-1 px-3 py-2 -ml-3 rounded-lg cursor-pointer">
                                 Terminar todas as sessões <span className="material-symbols-outlined text-[16px]">exit_to_app</span>
                             </button>
                         </div>

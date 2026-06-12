@@ -4,6 +4,11 @@ import { getActiveSession } from '@/app/actions/auth';
 import { getAdminDashboardData, getAdminUsers, getAdminEvents, getPendingPromoterRequests } from '@/app/actions/admin';
 import AdminShell from './components/AdminShell';
 
+export const metadata = {
+    title: "Painel do Administrador - UTAD FastTicket",
+    description: "Gerir utilizadores, eventos, aprovações e suspensões na plataforma UTAD FastTicket."
+};
+
 export default async function AdminDashboardPage() {
     const session = await getActiveSession();
 

@@ -14,15 +14,11 @@ export default function WishlistButton({ eventoId, userId, initialIsWishlisted }
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [message, setMessage] = useState("");
-    const [confirmedWishlisted, setConfirmedWishlisted] = useState(initialIsWishlisted);
+
     const [optimisticWishlisted, setOptimisticWishlisted] = useOptimistic(
-        confirmedWishlisted,
+        initialIsWishlisted,
         (_currentState, nextState: boolean) => nextState
     );
-
-    useEffect(() => {
-        setConfirmedWishlisted(initialIsWishlisted);
-    }, [initialIsWishlisted]);
 
     const handleToggle = () => {
         setMessage("");
@@ -33,8 +29,7 @@ export default function WishlistButton({ eventoId, userId, initialIsWishlisted }
             return;
         }
 
-        const previousState = confirmedWishlisted;
-        const nextState = !previousState;
+        const nextState = !optimisticWishlisted;
 
         startTransition(async () => {
             setOptimisticWishlisted(nextState);
@@ -44,16 +39,13 @@ export default function WishlistButton({ eventoId, userId, initialIsWishlisted }
 
                 if (!result.success) {
                     console.error("[WishlistButton] toggleWishlist falhou", result);
-                    setConfirmedWishlisted(previousState);
                     setMessage(result.message || "Nao foi possivel atualizar favoritos.");
                     return;
                 }
 
-                setConfirmedWishlisted(Boolean(result.isWishlisted));
                 router.refresh();
             } catch (error) {
                 console.error("[WishlistButton] erro inesperado ao atualizar favoritos", error);
-                setConfirmedWishlisted(previousState);
                 setMessage("Nao foi possivel atualizar favoritos.");
             }
         });

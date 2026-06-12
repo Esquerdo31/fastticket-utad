@@ -160,6 +160,7 @@ export default function AdminApprovals({ eventos, promoterRequests, onRefresh }:
                                 </div>
                                 <div className="flex gap-2 pt-3 border-t border-slate-200/60">
                                     <button 
+                                        type="button"
                                         disabled={isPending}
                                         onClick={() => handleRejeitarPromotor(req.id)}
                                         className="flex-1 py-2 text-xs font-bold text-red-600 bg-red-50 border border-red-100 hover:bg-red-100 transition-all rounded-lg active:scale-[0.98]"
@@ -167,6 +168,7 @@ export default function AdminApprovals({ eventos, promoterRequests, onRefresh }:
                                         Recusar
                                     </button>
                                     <button 
+                                        type="button"
                                         disabled={isPending}
                                         onClick={() => handleAprovarPromotor(req.id)}
                                         className="flex-1 py-2 text-xs font-bold text-white bg-violet-700 hover:bg-violet-800 transition-all rounded-lg shadow-sm active:scale-[0.98] flex items-center justify-center gap-1"
@@ -226,6 +228,7 @@ export default function AdminApprovals({ eventos, promoterRequests, onRefresh }:
                                 </div>
                                 <div className="flex gap-2 pt-3 border-t border-slate-200/60">
                                     <button 
+                                        type="button"
                                         disabled={isPending}
                                         onClick={() => handleRejeitar(ev.id)}
                                         className="flex-1 py-2 text-xs font-bold text-red-600 bg-red-50 border border-red-100 hover:bg-red-100 transition-all rounded-lg active:scale-[0.98]"
@@ -233,6 +236,7 @@ export default function AdminApprovals({ eventos, promoterRequests, onRefresh }:
                                         Recusar
                                     </button>
                                     <button 
+                                        type="button"
                                         disabled={isPending}
                                         onClick={() => handleAprovar(ev.id)}
                                         className="flex-1 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all rounded-lg shadow-sm active:scale-[0.98] flex items-center justify-center gap-1"
@@ -291,6 +295,7 @@ export default function AdminApprovals({ eventos, promoterRequests, onRefresh }:
                                     <td className="p-4 text-right pr-6">
                                         {ev.estado === 'SUSPENSO' ? (
                                             <button 
+                                                type="button"
                                                 disabled={isPending}
                                                 onClick={() => handleReativar(ev.id)}
                                                 className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 transition-colors text-xs font-bold rounded-lg"
@@ -300,6 +305,7 @@ export default function AdminApprovals({ eventos, promoterRequests, onRefresh }:
                                             </button>
                                         ) : (
                                             <button 
+                                                type="button"
                                                 disabled={isPending}
                                                 onClick={() => handleSuspender(ev.id)}
                                                 className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-100 transition-colors text-xs font-bold rounded-lg"

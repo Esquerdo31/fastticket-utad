@@ -75,7 +75,7 @@ export default function AdminDashboard({ userName, summary, onTabChange }: Admin
                 {/* Total Users */}
                 <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative group hover:border-emerald-600 transition-all">
                     <div className="flex justify-between items-start">
-                        <div className="p-3 bg-slate-50 text-slate-700 rounded-2xl group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors">
+                        <div className="p-3 bg-slate-50 text-slate-700 rounded-2xl group-hover:bg-slate-100 group-hover:text-emerald-700 transition-colors">
                             <span className="material-symbols-outlined text-2xl">group</span>
                         </div>
                         <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-200">
@@ -91,7 +91,7 @@ export default function AdminDashboard({ userName, summary, onTabChange }: Admin
                 {/* Active Events */}
                 <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative group hover:border-emerald-600 transition-all">
                     <div className="flex justify-between items-start">
-                        <div className="p-3 bg-slate-50 text-slate-700 rounded-2xl group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors">
+                        <div className="p-3 bg-slate-50 text-slate-700 rounded-2xl group-hover:bg-slate-100 group-hover:text-emerald-700 transition-colors">
                             <span className="material-symbols-outlined text-2xl">calendar_month</span>
                         </div>
                         <span className="bg-blue-50 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full border border-blue-100 uppercase tracking-wider">
@@ -107,7 +107,7 @@ export default function AdminDashboard({ userName, summary, onTabChange }: Admin
                 {/* Financial Volume */}
                 <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative group hover:border-emerald-600 transition-all">
                     <div className="flex justify-between items-start">
-                        <div className="p-3 bg-slate-50 text-slate-700 rounded-2xl group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors">
+                        <div className="p-3 bg-slate-50 text-slate-700 rounded-2xl group-hover:bg-slate-100 group-hover:text-emerald-700 transition-colors">
                             <span className="material-symbols-outlined text-2xl">payments</span>
                         </div>
                         <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-200">
@@ -123,7 +123,7 @@ export default function AdminDashboard({ userName, summary, onTabChange }: Admin
                 {/* Payments Success Rate */}
                 <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative group hover:border-emerald-600 transition-all">
                     <div className="flex justify-between items-start">
-                        <div className="p-3 bg-slate-50 text-slate-700 rounded-2xl group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors">
+                        <div className="p-3 bg-slate-50 text-slate-700 rounded-2xl group-hover:bg-slate-100 group-hover:text-emerald-700 transition-colors">
                             <span className="material-symbols-outlined text-2xl">verified</span>
                         </div>
                         <div className="w-6 h-1 bg-emerald-500 rounded-full mt-2" />
@@ -147,12 +147,14 @@ export default function AdminDashboard({ userName, summary, onTabChange }: Admin
                         </div>
                         <div className="flex p-0.5 bg-slate-100 rounded-xl border border-slate-200/60">
                             <button 
+                                type="button"
                                 onClick={() => setChartMode('mensal')} 
                                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${chartMode === 'mensal' ? 'bg-emerald-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                             >
                                 Mensal
                             </button>
                             <button 
+                                type="button"
                                 onClick={() => setChartMode('anual')} 
                                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${chartMode === 'anual' ? 'bg-emerald-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                             >
@@ -249,6 +251,7 @@ export default function AdminDashboard({ userName, summary, onTabChange }: Admin
                     </div>
 
                     <button 
+                        type="button"
                         onClick={() => onTabChange('logs')}
                         className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 rounded-xl transition-all active:scale-[0.98]"
                     >
@@ -282,6 +285,7 @@ export default function AdminDashboard({ userName, summary, onTabChange }: Admin
 
                     <div className="flex flex-wrap gap-3">
                         <button
+                            type="button"
                             disabled={downloading}
                             onClick={handleExportReport}
                             className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-700/10 active:scale-[0.98] transition-all flex items-center gap-1.5 disabled:opacity-50"
@@ -290,6 +294,7 @@ export default function AdminDashboard({ userName, summary, onTabChange }: Admin
                             {downloading ? 'A Exportar...' : 'Exportar Relatório Global'}
                         </button>
                         <button
+                            type="button"
                             onClick={() => onTabChange('logs')}
                             className="px-5 py-2.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-bold rounded-xl active:scale-[0.98] transition-all flex items-center gap-1.5"
                         >

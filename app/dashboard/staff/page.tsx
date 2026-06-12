@@ -4,6 +4,11 @@ import { getActiveSession } from '@/app/actions/auth';
 import prisma from '@/lib/prisma';
 import StaffShell from './components/StaffShell';
 
+export const metadata = {
+    title: "Painel do Staff - UTAD FastTicket",
+    description: "Validar bilhetes e controlar a lotação de eventos em tempo real na plataforma UTAD FastTicket."
+};
+
 export default async function StaffDashboardPage() {
     const session = await getActiveSession();
 

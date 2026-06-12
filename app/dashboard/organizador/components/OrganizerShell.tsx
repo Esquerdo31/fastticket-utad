@@ -109,11 +109,16 @@ export default function OrganizerShell({
                     <span className="bg-violet-100 text-violet-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest hidden sm:inline-block">Organizador</span>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div onClick={() => handleTabChange('profile')} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                    <button 
+                        type="button"
+                        onClick={() => handleTabChange('profile')} 
+                        className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none"
+                    >
                         <span className="text-sm font-semibold text-violet-700">{userName}</span>
                         <span className="material-symbols-outlined text-violet-700">account_circle</span>
-                    </div>
+                    </button>
                     <button 
+                        type="button"
                         onClick={handleLogout} 
                         disabled={isPending}
                         className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1 pl-4 border-l border-slate-200 cursor-pointer disabled:opacity-50"
@@ -142,6 +147,7 @@ export default function OrganizerShell({
                             const isActive = activeTab === item.id;
                             return (
                                 <button
+                                    type="button"
                                     key={item.id}
                                     onClick={() => handleTabChange(item.id)}
                                     className={`w-full flex items-center gap-3 px-6 py-4 transition-all duration-200 text-left cursor-pointer ${isActive
@@ -187,6 +193,7 @@ export default function OrganizerShell({
                     const isActive = activeTab === item.id;
                     return (
                         <button
+                            type="button"
                             key={item.id}
                             onClick={() => handleTabChange(item.id)}
                             className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 transition-all cursor-pointer active:scale-95 ${isActive ? 'text-violet-700 font-bold bg-violet-50' : 'text-slate-500 hover:text-violet-700 hover:bg-violet-50'}`}

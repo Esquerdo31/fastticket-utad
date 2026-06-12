@@ -384,6 +384,7 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                         </p>
                     </div>
                     <button 
+                        type="button"
                         onClick={() => onTabChange('promotor')}
                         className="bg-[#006837] hover:bg-emerald-800 hover:shadow-lg hover:shadow-emerald-800/20 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all active:scale-95 shadow-md shadow-emerald-800/10 cursor-pointer"
                     >
@@ -448,6 +449,7 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                                             <span className="text-sm font-semibold">{event.time}</span>
                                         </div>
                                         <button 
+                                            type="button"
                                             onClick={() => setSelectedEvent(event)}
                                             className="flex items-center gap-2 bg-[#006837] text-white px-4 py-2 rounded-lg text-sm font-bold active:scale-95 transition-transform hover:bg-[#00522b] cursor-pointer"
                                         >
@@ -503,6 +505,7 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                     <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100 flex flex-col relative max-h-[90vh] animate-scaleUp">
                         {/* Close button */}
                         <button 
+                            type="button"
                             onClick={() => setSelectedEvent(null)}
                             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors z-10 cursor-pointer"
                         >
@@ -556,6 +559,7 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                                                 ID: #{ticket.id.toString().padStart(5, '0')} | {ticket.qrCodeToken.slice(0, 16)}...
                                             </p>
                                             <button 
+                                                type="button"
                                                 onClick={() => handleDownloadPDF(ticket)}
                                                 className="mt-2 flex items-center justify-center gap-1.5 px-4 py-2 border border-[#006837] text-[#006837] hover:bg-[#006837] hover:text-white rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer"
                                             >
@@ -573,12 +577,14 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                         {/* Modal Footer */}
                         <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
                             <button 
+                                type="button"
                                 onClick={() => setSelectedEvent(null)}
                                 className="flex-1 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-sm font-bold transition-colors cursor-pointer"
                             >
                                 Fechar
                             </button>
                             <button 
+                                type="button"
                                 onClick={() => {
                                     setSelectedEvent(null);
                                     onTabChange('tickets');

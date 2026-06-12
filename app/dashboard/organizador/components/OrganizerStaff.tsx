@@ -107,8 +107,9 @@ export default function OrganizerStaff({ eventos }: { eventos: any[] }) {
 
                         <form onSubmit={handleCreateStaff} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Nome Completo</label>
+                                <label htmlFor="staff-nome" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Nome Completo</label>
                                 <input
+                                    id="staff-nome"
                                     type="text"
                                     placeholder="Ex: João Silva"
                                     value={nome}
@@ -118,8 +119,9 @@ export default function OrganizerStaff({ eventos }: { eventos: any[] }) {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Email de Acesso</label>
+                                <label htmlFor="staff-email" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Email de Acesso</label>
                                 <input
+                                    id="staff-email"
                                     type="email"
                                     placeholder="Ex: joao.staff@fastticket.pt"
                                     value={email}
@@ -129,8 +131,9 @@ export default function OrganizerStaff({ eventos }: { eventos: any[] }) {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Palavra-passe Temporária</label>
+                                <label htmlFor="staff-pass" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Palavra-passe Temporária</label>
                                 <input
+                                    id="staff-pass"
                                     type="password"
                                     placeholder="Mínimo 6 caracteres"
                                     value={passwordField}
@@ -140,8 +143,9 @@ export default function OrganizerStaff({ eventos }: { eventos: any[] }) {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Associar ao Evento</label>
+                                <label htmlFor="staff-evento" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Associar ao Evento</label>
                                 <select
+                                    id="staff-evento"
                                     value={eventoId}
                                     onChange={(e) => setEventoId(e.target.value)}
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 transition-all text-sm appearance-none"
@@ -207,6 +211,7 @@ export default function OrganizerStaff({ eventos }: { eventos: any[] }) {
                                             </div>
                                         </div>
                                         <button
+                                            type="button"
                                             onClick={() => handleRemoveStaff(st.id, st.eventoId)}
                                             className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100 active:scale-95 cursor-pointer"
                                             title="Remover acesso ao evento"

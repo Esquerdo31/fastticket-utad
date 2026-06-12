@@ -241,6 +241,7 @@ const UTADFastTicket = () => {
                             <div className="flex items-center justify-between mb-8">
                                 <h2 className="font-bold text-lg text-[#0f172a]">Filtros</h2>
                                 <button
+                                    type="button"
                                     onClick={resetFilters}
                                     className="text-[#006837] text-sm font-semibold hover:underline"
                                 >
@@ -392,7 +393,7 @@ const UTADFastTicket = () => {
                                                     </p>
                                                     <p className="text-lg font-extrabold text-[#006837]">{event.price}</p>
                                                 </div>
-                                                <button className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center hover:bg-[#006837] transition-colors group/btn">
+                                                <button type="button" className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center hover:bg-[#006837] transition-colors group/btn">
                                                     <span className="material-symbols-outlined text-slate-600 group-hover/btn:text-white transition-colors">arrow_forward</span>
                                                 </button>
                                             </div>
@@ -412,6 +413,7 @@ const UTADFastTicket = () => {
                         {totalPages > 1 && (
                             <nav className="mt-16 mb-8 flex justify-center items-center gap-2">
                                 <button
+                                    type="button"
                                     disabled={currentPage === 1}
                                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                     className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
@@ -420,6 +422,7 @@ const UTADFastTicket = () => {
                                 </button>
                                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                                     <button
+                                        type="button"
                                         key={p}
                                         onClick={() => setCurrentPage(p)}
                                         className={`w-9 h-9 flex items-center justify-center rounded-lg font-bold text-sm transition-colors ${
@@ -432,6 +435,7 @@ const UTADFastTicket = () => {
                                     </button>
                                 ))}
                                 <button
+                                    type="button"
                                     disabled={currentPage === totalPages}
                                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                     className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:pointer-events-none"

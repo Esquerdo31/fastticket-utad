@@ -28,6 +28,11 @@ export type OrganizerStats = {
 };
 
 export async function getOrganizerStats(organizadorId: number): Promise<OrganizerStats> {
+    const session = await getSession();
+    if (!session || (session.userId !== organizadorId && session.role !== 'ADMIN')) {
+        throw new Error("Não autorizado.");
+    }
+
     const [paidOrders, bilhetesVendidos, bilhetesUsados, eventos] = await Promise.all([
         prisma.pedido.findMany({
             where: {
@@ -172,6 +177,11 @@ export async function getOrganizerStats(organizadorId: number): Promise<Organize
 
 export async function getOrganizerDashboardData(userId: number) {
     try {
+        const session = await getSession();
+        if (!session || (session.userId !== userId && session.role !== 'ADMIN')) {
+            return { success: false, message: "Não autorizado." };
+        }
+
         const userObj = await prisma.utilizador.findUnique({
             where: { id: userId },
             select: { pedidoPromotores: true } as any

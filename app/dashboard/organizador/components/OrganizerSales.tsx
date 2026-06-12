@@ -152,6 +152,7 @@ export default function OrganizerSales({
                     <p className="text-slate-500 text-sm">Acompanhe detalhadamente o desempenho financeiro, vendas de lotes, promotores e transações.</p>
                 </div>
                 <button 
+                    type="button"
                     onClick={exportToCSV}
                     disabled={filteredPurchases.length === 0}
                     className="shrink-0 bg-violet-700 hover:bg-violet-800 text-white font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-violet-700/10 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -296,9 +297,10 @@ export default function OrganizerSales({
                         return (
                             <div key={evento.id} className="transition-all duration-200">
                                 {/* Event Summary Header */}
-                                <div 
+                                <button
+                                    type="button"
                                     onClick={() => toggleEventDetails(evento.id)} 
-                                    className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors cursor-pointer select-none"
+                                    className="w-full text-left p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors cursor-pointer select-none focus:outline-none"
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-xl bg-violet-50 flex items-center justify-center text-violet-700 shrink-0">
@@ -321,7 +323,7 @@ export default function OrganizerSales({
                                             keyboard_arrow_down
                                         </span>
                                     </div>
-                                </div>
+                                </button>
 
                                 {/* Event Lots Breakdown (Collapsible) */}
                                 {isExpanded && (

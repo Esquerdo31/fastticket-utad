@@ -140,6 +140,7 @@ export default function AdminLogs({ users, eventos }: AdminLogsProps) {
             <div className="flex gap-2 pb-2 overflow-x-auto whitespace-nowrap">
                 {['ALL', 'SECURITY', 'PAYMENT', 'USER', 'EVENT'].map(t => (
                     <button
+                        type="button"
                         key={t}
                         onClick={() => setFilter(t)}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${

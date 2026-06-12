@@ -291,7 +291,7 @@ export default function TicketsContent({ tickets }: TicketsContentProps) {
             {/* Filters */}
             <div className="flex gap-2 mb-6 flex-wrap">
                 {filterButtons.map(btn => (
-                    <button key={btn.id} onClick={() => setFilter(btn.id)}
+                    <button type="button" key={btn.id} onClick={() => setFilter(btn.id)}
                         className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${filter === btn.id ? 'bg-[#006837] text-white shadow-md shadow-[#006837]/20' : 'bg-white text-slate-600 border border-slate-200 hover:border-[#006837]/30 hover:text-[#006837]'}`}>
                         {btn.label}<span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${filter === btn.id ? 'bg-white/20' : 'bg-slate-100'}`}>{btn.count}</span>
                     </button>
@@ -329,7 +329,7 @@ export default function TicketsContent({ tickets }: TicketsContentProps) {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 shrink-0">
-                                        <button onClick={() => setExpandedTicket(isExpanded ? null : ticket.id)}
+                                        <button type="button" onClick={() => setExpandedTicket(isExpanded ? null : ticket.id)}
                                             className="flex items-center gap-2 px-4 py-2.5 bg-[#006837] text-white rounded-lg text-sm font-bold hover:bg-emerald-800 active:scale-95 transition-all">
                                             <span className="material-symbols-outlined text-[18px]">qr_code_2</span>{isExpanded ? 'Esconder' : 'QR Code'}
                                         </button>
@@ -451,6 +451,7 @@ export default function TicketsContent({ tickets }: TicketsContentProps) {
                                                         <p className="text-xs font-medium">Apresente este QR Code na entrada do evento para validar o seu acesso.</p>
                                                     </div>
                                                     <button 
+                                                        type="button"
                                                         onClick={() => handleDownloadPDF(ticket)}
                                                         className="flex items-center justify-center gap-2 px-5 py-3 border-2 border-[#006837] text-[#006837] hover:bg-[#006837] hover:text-white rounded-lg text-xs font-bold transition-all shrink-0 active:scale-95 cursor-pointer"
                                                     >

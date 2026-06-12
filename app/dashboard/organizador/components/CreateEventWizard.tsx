@@ -362,7 +362,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                                                 Ativo ({vendidos} vendidos)
                                                             </div>
                                                         ) : (
-                                                            <button type="button" onClick={() => removeLote(i)} className="absolute top-3 right-3 p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100 cursor-pointer active:scale-95">
+                                                            <button type="button" onClick={() => removeLote(i)} className="absolute top-3 right-3 p-1 text-slate-400 hover:text-red-500 hover:bg-slate-100 rounded transition-all opacity-0 group-hover:opacity-100 cursor-pointer active:scale-95">
                                                                 <span className="material-symbols-outlined text-[20px]">close</span>
                                                             </button>
                                                         )

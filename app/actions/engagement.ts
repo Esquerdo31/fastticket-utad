@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 import { getEventStatus } from "@/lib/eventStatus";
 
 export async function getAvailabilityStatus(eventoId: number) {
+    const session = await getSession();
     const lotes = await prisma.loteBilhete.findMany({
         where: { eventoId },
         select: {

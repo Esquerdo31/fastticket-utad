@@ -88,7 +88,7 @@ export default function BillingContent({ orders, summary }: BillingContentProps)
             {/* Filters */}
             <div className="flex gap-2 mb-6 flex-wrap">
                 {filterButtons.map(btn => (
-                    <button key={btn.id} onClick={() => setFilter(btn.id)}
+                    <button type="button" key={btn.id} onClick={() => setFilter(btn.id)}
                         className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${filter === btn.id ? 'bg-[#006837] text-white shadow-md shadow-[#006837]/20' : 'bg-white text-slate-600 border border-slate-200 hover:border-[#006837]/30 hover:text-[#006837]'}`}>
                         {btn.label}<span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${filter === btn.id ? 'bg-white/20' : 'bg-slate-100'}`}>{btn.count}</span>
                     </button>
@@ -102,7 +102,7 @@ export default function BillingContent({ orders, summary }: BillingContentProps)
                     const isExpanded = expandedOrder === order.id;
                     return (
                         <div key={order.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                            <button onClick={() => setExpandedOrder(isExpanded ? null : order.id)} className="w-full text-left p-5 md:p-6">
+                            <button type="button" onClick={() => setExpandedOrder(isExpanded ? null : order.id)} className="w-full text-left p-5 md:p-6">
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">

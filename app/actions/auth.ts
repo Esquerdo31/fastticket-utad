@@ -33,6 +33,7 @@ const registarSchema = z.object({
 // ==========================================
 
 export async function loginUser(prevState: any, formData: FormData) {
+    const session = await getSession();
     const rawData = {
         email: formData.get("login-email") as string,
         password: formData.get("login-password") as string,
@@ -75,6 +76,7 @@ export async function loginUser(prevState: any, formData: FormData) {
 // ==========================================
 
 export async function registerUser(prevState: any, formData: FormData) {
+    const session = await getSession();
     const rawData = {
         role: formData.get("profile_type") as string,
         nome: formData.get("reg-name") as string,
