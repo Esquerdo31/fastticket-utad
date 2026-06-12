@@ -6,7 +6,7 @@ import { decrypt } from './lib/session';
  * Redireciona utilizadores não autenticados das áreas protegidas (dashboards)
  * para a página inicial com o modal de login aberto.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const sessionCookie = request.cookies.get('session')?.value;
     const payload = sessionCookie ? await decrypt(sessionCookie) : null;
 
