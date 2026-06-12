@@ -9,8 +9,10 @@ type SessionPayload = {
     expiresAt: Date;
 };
 
-const secretKey = process.env.JWT_SECRET || "minha-chave-secreta-em-desenvolvimento";
-const encodedKey = new TextEncoder().encode(secretKey);
+const secretKey = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production'
+    ? (() => { throw new Error('JWT_SECRET não está definido. Adicione-o ao .env para proteger as sessões.'); })()
+    : 'dev-only-insecure-secret-do-not-use-in-production');
+const encodedKey = new TextEncoder().encode(secretKey as string);
 
 export async function encrypt(payload: SessionPayload) {
     return new SignJWT(payload)

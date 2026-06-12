@@ -2,19 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getActiveSession, logoutUser } from '../../actions/auth';
+import { getActiveSession } from '../../actions/auth';
+import Header from '../../components/Header';
 import { getEventoById } from '../../actions/event';
 import { getEventStatus, getEventStatusLabel, getEventStatusColor } from '@/lib/eventStatus';
 import { joinWaitlist } from '../../actions/engagement';
 import WishlistButton from '../../components/WishlistButton';
-import Link from 'next/link';
 
 export default function EventDetailsDynamic() {
     const params = useParams();
     const router = useRouter();
 
     // --- Estados ---
-    const [searchTerm, setSearchTerm] = useState('');
+
     const [selectedTicket, setSelectedTicket] = useState<number | null>(null);
     const [userSession, setUserSession] = useState<any>(null);
     const [evento, setEvento] = useState<any>(null);
@@ -56,10 +56,7 @@ export default function EventDetailsDynamic() {
         }
     }, [params.id, router]);
 
-    const handleLogout = async () => {
-        await logoutUser();
-        setUserSession(null);
-    };
+
 
     const handleJoinWaitlist = async () => {
         if (!userSession?.userId) {
@@ -69,7 +66,7 @@ export default function EventDetailsDynamic() {
 
         setJoiningWaitlist(true);
         setWaitlistMessage('');
-        const res = await joinWaitlist(evento.id, userSession.userId);
+        const res = await joinWaitlist(evento.id);
         if (res.success) {
             setEvento((current: any) => current ? { ...current, isWaitlisted: true } : current);
         }
@@ -107,50 +104,7 @@ export default function EventDetailsDynamic() {
 
     return (
         <div className="bg-slate-50 font-sans text-slate-800 min-h-screen">
-            {/* TopAppBar */}
-            <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 antialiased">
-                <div className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-                    <div className="flex items-center gap-8">
-                        <Link href="/" className="text-2xl font-bold tracking-tighter text-[#006837] hover:opacity-80 transition-opacity">
-                            UTAD FastTicket
-                        </Link>
-                        <nav className="hidden md:flex gap-6">
-                            <a href="/eventos" className="text-[#006837] border-b-2 border-[#006837] pb-1 font-semibold">Eventos</a>
-                        </nav>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="relative hidden lg:block">
-                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                            <input
-                                type="text"
-                                placeholder="Procurar eventos..."
-                                className="pl-10 pr-4 py-2 bg-slate-100 rounded-lg border-none focus:ring-2 focus:ring-[#006837]/20 text-sm w-64 outline-none"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        {userSession ? (
-                            <div className="flex items-center gap-4">
-                                <Link href="/wishlist" className="text-sm font-bold text-red-600 bg-red-50 px-4 py-2 rounded-lg whitespace-nowrap border border-red-100 hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-sm">favorite</span>
-                                    Favoritos
-                                </Link>
-                                <Link href="/dashboard" className="text-sm font-bold text-white bg-[#006837] px-4 py-2 rounded-lg whitespace-nowrap shadow-md hover:bg-emerald-800 transition-colors flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-sm">person</span>
-                                    {userSession.nome || userSession.email.split("@")[0]}
-                                </Link>
-                                <button type="button" onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:text-red-800 transition-colors bg-red-50 px-3 py-2 rounded-lg border border-red-100">
-                                    Sair
-                                </button>
-                            </div>
-                        ) : (
-                            <button type="button" onClick={() => router.push('/login')} className="px-5 py-2 bg-[#006837] text-white font-medium rounded-lg hover:bg-emerald-800 active:scale-95 duration-200 transition-all shadow-md">
-                                Sign In
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </header>
+            <Header />
 
             <main className="min-h-screen">
                 {/* Event Banner Section */}
@@ -237,6 +191,8 @@ export default function EventDetailsDynamic() {
                                         style={{ border: 0 }}
                                         loading="lazy"
                                         allowFullScreen
+                                        title="Mapa de localização do evento"
+                                        sandbox="allow-scripts allow-same-origin allow-popups"
                                         src={`https://maps.google.com/maps?q=${encodeURIComponent(evento.location || 'UTAD, Vila Real')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
                                     />
                                 </div>

@@ -404,11 +404,13 @@ export async function deleteEvento(eventoId: number) {
             return { success: false, message: "Não é possível apagar este evento porque já existem bilhetes emitidos." };
         }
 
-        // Delete related records first
-        await prisma.promotor.deleteMany({ where: { eventoId } });
-        await prisma.eventoStaff.deleteMany({ where: { eventoId } });
-        await prisma.loteBilhete.deleteMany({ where: { eventoId } });
-        await prisma.evento.delete({ where: { id: eventoId } });
+        // Delete related records in a transaction to prevent orphaned data
+        await prisma.$transaction(async (tx) => {
+            await tx.promotor.deleteMany({ where: { eventoId } });
+            await tx.eventoStaff.deleteMany({ where: { eventoId } });
+            await tx.loteBilhete.deleteMany({ where: { eventoId } });
+            await tx.evento.delete({ where: { id: eventoId } });
+        });
 
         return { success: true, message: "Evento apagado com sucesso." };
     } catch (error: any) {

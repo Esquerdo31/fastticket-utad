@@ -2,7 +2,7 @@
 
 import prisma from "../../lib/prisma";
 import * as bcrypt from "bcryptjs";
-import { getSession } from "../../lib/session";
+import { getSession, createSession } from "../../lib/session";
 
 export async function getProfileData(userId: number) {
     try {
@@ -53,6 +53,9 @@ export async function updateProfileData(userId: number, data: { nome: string; em
                 email: data.email,
             }
         });
+
+        // Refrescar o cookie da sessão com os dados atualizados
+        await createSession(userId, data.email, data.nome, session.role);
 
         return { success: true, message: "Perfil atualizado com sucesso!" };
     } catch (error: any) {

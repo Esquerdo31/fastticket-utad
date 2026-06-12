@@ -182,8 +182,9 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
 
                         <div className="space-y-5 mb-8">
                             <div>
-                                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Nome Completo</label>
+                                <label htmlFor="profile-fullName" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Nome Completo</label>
                                 <input
+                                    id="profile-fullName"
                                     type="text"
                                     name="fullName"
                                     value={formData.fullName}
@@ -194,8 +195,9 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Email Académico</label>
+                                    <label htmlFor="profile-email" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Email Académico</label>
                                     <input
+                                        id="profile-email"
                                         type="email"
                                         name="email"
                                         value={formData.email}
@@ -204,8 +206,9 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Telemóvel</label>
+                                    <label htmlFor="profile-phone" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Telemóvel</label>
                                     <input
+                                        id="profile-phone"
                                         type="text"
                                         name="phone"
                                         value={formData.phone}
@@ -290,8 +293,9 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                         <div className="space-y-4 mb-6">
                             {user.role !== 'GUEST' && (
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Password Atual</label>
+                                    <label htmlFor="profile-current-password" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Password Atual</label>
                                     <input 
+                                        id="profile-current-password"
                                         type="password" 
                                         value={currentPassword} 
                                         onChange={e => setCurrentPassword(e.target.value)} 
@@ -301,8 +305,9 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                                 </div>
                             )}
                             <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Nova Password</label>
+                                <label htmlFor="profile-new-password" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Nova Password</label>
                                 <input 
+                                    id="profile-new-password"
                                     type="password" 
                                     value={newPassword} 
                                     onChange={e => setNewPassword(e.target.value)} 
@@ -311,8 +316,9 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Confirmar Nova Password</label>
+                                <label htmlFor="profile-confirm-new-password" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Confirmar Nova Password</label>
                                 <input 
+                                    id="profile-confirm-new-password"
                                     type="password" 
                                     value={confirmNewPassword} 
                                     onChange={e => setConfirmNewPassword(e.target.value)} 

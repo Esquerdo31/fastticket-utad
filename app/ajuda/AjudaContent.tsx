@@ -112,9 +112,9 @@ export default function AjudaContent() {
                 {/* FAQ List */}
                 <div className="space-y-4">
                     {filteredFaq.length > 0 ? (
-                        filteredFaq.map((item, index) => (
+                        filteredFaq.map((item) => (
                             <div 
-                                key={index} 
+                                key={item.question} 
                                 className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-white/15 transition-all space-y-2"
                             >
                                 <div className="flex items-center gap-2">

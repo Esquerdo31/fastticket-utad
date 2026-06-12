@@ -1,9 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { decrypt } from '../../../lib/session';
+
+// Mapa seguro de MIME types para extensões (evita path traversal via nome de ficheiro)
+const mimeToExt: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+};
 
 export async function POST(request: NextRequest) {
     try {
+        // 1. Verificar autenticação — apenas organizadores e admins podem fazer upload
+        const sessionCookie = request.cookies.get('session')?.value;
+        if (!sessionCookie) {
+            return NextResponse.json({ success: false, message: 'Não autenticado.' }, { status: 401 });
+        }
+
+        const session = await decrypt(sessionCookie);
+        if (!session || (session.role !== 'ORGANIZADOR' && session.role !== 'ADMIN')) {
+            return NextResponse.json({ success: false, message: 'Não autorizado. Apenas organizadores podem fazer upload.' }, { status: 403 });
+        }
+
+        // 2. Ler e validar o ficheiro
         const formData = await request.formData();
         const file = formData.get('file') as File;
 
@@ -11,8 +31,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, message: 'Nenhum ficheiro enviado.' }, { status: 400 });
         }
 
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
+        if (!mimeToExt[file.type]) {
             return NextResponse.json({ success: false, message: 'Formato inválido. Use JPG, PNG ou WebP.' }, { status: 400 });
         }
 
@@ -23,7 +42,8 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const ext = file.name.split('.').pop() || 'jpg';
+        // 3. Gerar nome seguro derivado do MIME type (não do nome original do ficheiro)
+        const ext = mimeToExt[file.type];
         const filename = `evento-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
         const uploadDir = path.join(process.cwd(), 'public', 'uploads');

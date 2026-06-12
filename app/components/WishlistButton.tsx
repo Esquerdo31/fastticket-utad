@@ -35,7 +35,7 @@ export default function WishlistButton({ eventoId, userId, initialIsWishlisted }
             setOptimisticWishlisted(nextState);
 
             try {
-                const result = await toggleWishlist(eventoId, userId);
+                const result = await toggleWishlist(eventoId);
 
                 if (!result.success) {
                     console.error("[WishlistButton] toggleWishlist falhou", result);

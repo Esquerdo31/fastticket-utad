@@ -148,8 +148,8 @@ export default function UTADFastTicketPage() {
                             {/* Hero dots */}
                             {dbEvents.length > 1 && (
                                 <div className="flex items-center gap-2 mt-8">
-                                    {dbEvents.map((_, i) => (
-                                        <button type="button" key={i} onClick={() => goToHero(i)} className="relative h-1 rounded-full overflow-hidden transition-all" style={{ width: i === heroIdx ? 40 : 10 }}>
+                                    {dbEvents.map((ev, i) => (
+                                        <button type="button" key={ev.id} onClick={() => goToHero(i)} className="relative h-1 rounded-full overflow-hidden transition-all" style={{ width: i === heroIdx ? 40 : 10 }}>
                                             <div className={`absolute inset-0 rounded-full ${i === heroIdx ? 'bg-white/30' : 'bg-white/15 hover:bg-white/25'}`} />
                                             {i === heroIdx && <div className="absolute inset-0 rounded-full bg-emerald-400 hero-progress" key={`hp-${heroIdx}`} />}
                                         </button>

@@ -120,8 +120,8 @@ export default function SobreContent({ initialSession }: SobreContentProps) {
                     <section className="py-12 border-y border-white/5 bg-[#161b22]/30">
                         <div className="max-w-7xl mx-auto px-6">
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-                                {stats.map((stat, idx) => (
-                                    <div key={idx} className="flex flex-col items-center lg:items-start text-center lg:text-left p-4">
+                                {stats.map((stat) => (
+                                    <div key={stat.label} className="flex flex-col items-center lg:items-start text-center lg:text-left p-4">
                                         <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 mb-4">
                                             <MaterialIcon name={stat.icon} className="text-2xl" />
                                         </div>
@@ -142,8 +142,8 @@ export default function SobreContent({ initialSession }: SobreContentProps) {
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-8">
-                            {pillars.map((p, idx) => (
-                                <div key={idx} className="group relative bg-[#161b22]/50 border border-white/5 hover:border-emerald-500/30 rounded-2xl p-8 transition-all hover:-translate-y-1 shadow-lg overflow-hidden">
+                            {pillars.map((p) => (
+                                <div key={p.title} className="group relative bg-[#161b22]/50 border border-white/5 hover:border-emerald-500/30 rounded-2xl p-8 transition-all hover:-translate-y-1 shadow-lg overflow-hidden">
                                     <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl ${p.color} blur-2xl opacity-40 group-hover:opacity-75 transition-opacity`} />
                                     <div className="relative z-10 flex gap-5">
                                         <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
@@ -209,7 +209,7 @@ export default function SobreContent({ initialSession }: SobreContentProps) {
                         <div className="space-y-4">
                             {faqs.map((faq, idx) => (
                                 <div 
-                                    key={idx} 
+                                    key={faq.q} 
                                     className="bg-[#161b22]/50 border border-white/5 rounded-xl overflow-hidden transition-colors duration-200"
                                 >
                                     <button 

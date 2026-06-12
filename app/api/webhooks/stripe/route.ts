@@ -21,8 +21,12 @@ export async function POST(req: Request) {
                 return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
             }
         } else {
-            // Apenas para ambiente de desenvolvimento local (caso não passes secret)
-            // NOTA: Inseguro em produção!
+            // Bloquear payloads não assinados em produção
+            if (process.env.NODE_ENV === 'production') {
+                console.error('[Stripe Webhook] ❌ STRIPE_WEBHOOK_SECRET não configurado em produção!');
+                return new NextResponse('Webhook secret not configured', { status: 500 });
+            }
+            console.warn('[Stripe Webhook] ⚠️ A aceitar eventos sem verificação de assinatura (DEV ONLY).');
             event = JSON.parse(body) as Stripe.Event;
         }
 

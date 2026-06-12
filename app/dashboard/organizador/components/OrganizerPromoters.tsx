@@ -175,25 +175,25 @@ export default function OrganizerPromoters({ eventos }: { eventos: any[] }) {
                         
                         <form onSubmit={handleAddPromotor} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">E-mail da Conta (do Parceiro)</label>
-                                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:border-violet-700 bg-slate-50" placeholder="ex: nucleo@utad.pt" />
+                                <label htmlFor="promoter-email" className="block text-xs font-bold text-slate-500 uppercase mb-1">E-mail da Conta (do Parceiro)</label>
+                                <input id="promoter-email" type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:border-violet-700 bg-slate-50" placeholder="ex: nucleo@utad.pt" />
                                 <p className="text-[10px] text-slate-400 mt-1">O parceiro já tem de ter criado uma conta na plataforma.</p>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Slug do Link</label>
-                                <input type="text" required value={slug} onChange={e => setSlug(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:border-violet-700 bg-slate-50 font-mono text-sm" placeholder="ex: nucleo-informatica" />
+                                <label htmlFor="promoter-slug" className="block text-xs font-bold text-slate-500 uppercase mb-1">Slug do Link</label>
+                                <input id="promoter-slug" type="text" required value={slug} onChange={e => setSlug(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:border-violet-700 bg-slate-50 font-mono text-sm" placeholder="ex: nucleo-informatica" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Comissão</label>
-                                    <select value={tipoComissao} onChange={e => setTipoComissao(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:border-violet-700 bg-slate-50">
+                                    <label htmlFor="promoter-tipo-comissao" className="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Comissão</label>
+                                    <select id="promoter-tipo-comissao" value={tipoComissao} onChange={e => setTipoComissao(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:border-violet-700 bg-slate-50">
                                         <option value="PERCENTAGEM">Percentagem (%)</option>
                                         <option value="FIXO">Valor Fixo (€)</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Valor</label>
-                                    <input type="number" step="0.01" required value={valorComissao} onChange={e => setValorComissao(Number(e.target.value))} className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:border-violet-700 bg-slate-50" />
+                                    <label htmlFor="promoter-valor-comissao" className="block text-xs font-bold text-slate-500 uppercase mb-1">Valor</label>
+                                    <input id="promoter-valor-comissao" type="number" step="0.01" required value={valorComissao} onChange={e => setValorComissao(Number(e.target.value))} className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:border-violet-700 bg-slate-50" />
                                 </div>
                             </div>
 

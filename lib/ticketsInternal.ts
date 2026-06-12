@@ -31,6 +31,14 @@ export async function processarPagamentoWebhook(metadata: {
             return { success: false, message: `Stock insuficiente.` };
         }
 
+        // 1.1 Verificar se o período de vendas do lote ainda está ativo (U2)
+        const now = new Date();
+        const loteAny = lote as any;
+        if (loteAny.vendaFim && new Date(loteAny.vendaFim) < now) {
+            console.error(`[Webhook] Período de vendas do lote ${loteId} já terminou.`);
+            return { success: false, message: 'O período de vendas deste lote já terminou.' };
+        }
+
         // 2. Criar Pedido + Bilhetes numa transação
         const resultado = await prisma.$transaction(async (tx) => {
             // 2.1 Criar o Pedido como PAGO

@@ -25,10 +25,10 @@ export async function getAvailabilityStatus(eventoId: number) {
     };
 }
 
-export async function toggleWishlist(eventoId: number, userId?: number) {
+export async function toggleWishlist(eventoId: number) {
     try {
         const session = await getSession();
-        const utilizadorId = userId ?? session?.userId;
+        const utilizadorId = session?.userId;
 
         if (!utilizadorId) {
             return { success: false, message: "Precisa de iniciar sessao para guardar favoritos.", isWishlisted: false };
@@ -66,9 +66,9 @@ export async function toggleWishlist(eventoId: number, userId?: number) {
     }
 }
 
-export async function joinWaitlist(eventoId: number, userId?: number) {
+export async function joinWaitlist(eventoId: number) {
     const session = await getSession();
-    const utilizadorId = userId ?? session?.userId;
+    const utilizadorId = session?.userId;
 
     if (!utilizadorId) {
         return { success: false, message: "Precisa de iniciar sessao para entrar na lista de espera." };

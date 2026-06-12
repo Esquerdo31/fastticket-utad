@@ -128,6 +128,10 @@ export async function registerUser(prevState: any, formData: FormData) {
 // ==========================================
 
 export async function logoutUser() {
+    const session = await getSession();
+    if (!session) {
+        return { success: false, message: "Não autenticado." };
+    }
     await deleteSession();
     return { success: true };
 }

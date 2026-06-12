@@ -23,6 +23,85 @@ const checkoutSchema = z.object({
 });
 
 // ==========================================
+// Helper: Resolver ou criar utilizador guest (U3 — código extraído)
+// ==========================================
+async function resolveUserId(guestData?: {
+    guestEmail?: string;
+    guestName?: string;
+    guestPassword?: string;
+}): Promise<{ userId: number } | { error: string }> {
+    const session = await getSession();
+
+    if (session) {
+        if (session.role === 'ORGANIZADOR' || session.role === 'STAFF' || session.role === 'ADMIN') {
+            return { error: 'Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.' };
+        }
+        return { userId: session.userId };
+    }
+
+    // Fluxo de convidado
+    if (!guestData?.guestEmail || !guestData?.guestName) {
+        return { error: 'Não autenticado. Para comprar como convidado, forneça o seu nome e e-mail.' };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(guestData.guestEmail)) {
+        return { error: 'Formato de e-mail inválido.' };
+    }
+    if (guestData.guestName.trim().length < 2) {
+        return { error: 'O nome deve ter pelo menos 2 caracteres.' };
+    }
+    if (guestData.guestPassword && guestData.guestPassword.length < 6) {
+        return { error: 'A palavra-passe deve ter pelo menos 6 caracteres.' };
+    }
+
+    const existingUser = await prisma.utilizador.findUnique({
+        where: { email: guestData.guestEmail.trim().toLowerCase() }
+    });
+
+    if (existingUser) {
+        return { error: 'Este e-mail já se encontra registado. Por favor, inicie sessão para concluir a compra.' };
+    }
+
+    const hashedPassword = guestData.guestPassword && guestData.guestPassword.trim().length >= 6
+        ? await bcrypt.hash(guestData.guestPassword.trim(), 10)
+        : await bcrypt.hash(crypto.randomUUID(), 10);
+
+    const guestUser = await prisma.utilizador.create({
+        data: {
+            nome: guestData.guestName.trim(),
+            email: guestData.guestEmail.trim().toLowerCase(),
+            passwordHash: hashedPassword,
+            role: 'PARTICIPANTE'
+        }
+    });
+
+    // Iniciar sessão automaticamente para o redirecionamento funcionar com o cookie correto
+    await createSession(guestUser.id, guestUser.email, guestUser.nome, guestUser.role);
+    return { userId: guestUser.id };
+}
+
+// ==========================================
+// Helper: Validar período de vendas do lote (U2)
+// ==========================================
+function validarPeriodoVendas(lote: any): string | null {
+    const now = new Date();
+
+    if (lote.vendaInicio && new Date(lote.vendaInicio) > now) {
+        const dataStr = new Date(lote.vendaInicio).toLocaleDateString('pt-PT', {
+            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        return `As vendas para o lote "${lote.nome}" ainda não abriram. Início das vendas: ${dataStr}.`;
+    }
+
+    if (lote.vendaFim && new Date(lote.vendaFim) < now) {
+        return `O período de vendas para o lote "${lote.nome}" já terminou.`;
+    }
+
+    return null; // Período válido
+}
+
+// ==========================================
 // Server Action — Criar Sessão de Checkout Stripe
 // Adaptado do pagamentoController.ts do Rafa
 // ==========================================
@@ -44,59 +123,14 @@ export async function criarSessaoCheckout(data: {
     guestPassword?: string;
 }) {
     try {
-        let finalUserId: number;
-
-        // 1. Verificar autenticação
-        const session = await getSession();
-        if (!session) {
-            if (!data.guestEmail || !data.guestName) {
-                return { success: false, message: 'Não autenticado. Para comprar como convidado, forneça o seu nome e e-mail.' };
-            }
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(data.guestEmail)) {
-                return { success: false, message: 'Formato de e-mail inválido.' };
-            }
-            if (data.guestName.trim().length < 2) {
-                return { success: false, message: 'O nome deve ter pelo menos 2 caracteres.' };
-            }
-            if (data.guestPassword && data.guestPassword.length < 6) {
-                return { success: false, message: 'A palavra-passe deve ter pelo menos 6 caracteres.' };
-            }
-
-            const existingUser = await prisma.utilizador.findUnique({
-                where: { email: data.guestEmail.trim().toLowerCase() }
-            });
-
-            if (existingUser) {
-                return { success: false, message: 'Este e-mail já se encontra registado. Por favor, inicie sessão para concluir a compra.' };
-            }
-
-            const hashedPassword = data.guestPassword && data.guestPassword.trim().length >= 6
-                ? await bcrypt.hash(data.guestPassword.trim(), 10)
-                : await bcrypt.hash(crypto.randomUUID(), 10);
-
-            const guestUser = await prisma.utilizador.create({
-                data: {
-                    nome: data.guestName.trim(),
-                    email: data.guestEmail.trim().toLowerCase(),
-                    passwordHash: hashedPassword,
-                    role: 'PARTICIPANTE'
-                }
-            });
-
-            finalUserId = guestUser.id;
-
-            // Iniciar sessão automaticamente para o redirecionamento funcionar com o cookie correto
-            await createSession(guestUser.id, guestUser.email, guestUser.nome, guestUser.role);
-        } else {
-            if (session.role === 'ORGANIZADOR' || session.role === 'STAFF' || session.role === 'ADMIN') {
-                return { success: false, message: 'Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.' };
-            }
-            finalUserId = session.userId;
+        // 1. Resolver utilizador (autenticado ou guest)
+        const userResult = await resolveUserId(data);
+        if ('error' in userResult) {
+            return { success: false, message: userResult.error };
         }
+        const finalUserId = userResult.userId;
 
-        // 2. Validar dados com Zod (ignoring actualQuantity/promotorSlug for this strict parse or omitting it)
+        // 2. Validar dados com Zod
         const parseResult = checkoutSchema.safeParse(data);
         if (!parseResult.success) {
             const errors = parseResult.error.flatten().fieldErrors;
@@ -116,6 +150,16 @@ export async function criarSessaoCheckout(data: {
         }
         if (dbEvento.estado === 'SUSPENSO') {
             return { success: false, message: 'Este evento encontra-se temporariamente suspenso. Não é possível comprar bilhetes.' };
+        }
+
+        // Verificar período de vendas do lote (U2)
+        const lote = await prisma.loteBilhete.findUnique({ where: { id: loteId } });
+        if (!lote) {
+            return { success: false, message: 'Lote de bilhetes não encontrado.' };
+        }
+        const periodoErro = validarPeriodoVendas(lote);
+        if (periodoErro) {
+            return { success: false, message: periodoErro };
         }
 
         // Procurar o ID do promotor se houver slug
@@ -188,56 +232,12 @@ export async function simularPagamento(data: {
             return { success: false, message: 'A simulação de pagamentos só é permitida em ambiente de desenvolvimento.' };
         }
 
-        let finalUserId: number;
-
-        const session = await getSession();
-        if (!session) {
-            if (!data.guestEmail || !data.guestName) {
-                return { success: false, message: 'Não autenticado. Para comprar como convidado, forneça o seu nome e e-mail.' };
-            }
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(data.guestEmail)) {
-                return { success: false, message: 'Formato de e-mail inválido.' };
-            }
-            if (data.guestName.trim().length < 2) {
-                return { success: false, message: 'O nome deve ter pelo menos 2 caracteres.' };
-            }
-            if (data.guestPassword && data.guestPassword.length < 6) {
-                return { success: false, message: 'A palavra-passe deve ter pelo menos 6 caracteres.' };
-            }
-
-            const existingUser = await prisma.utilizador.findUnique({
-                where: { email: data.guestEmail.trim().toLowerCase() }
-            });
-
-            if (existingUser) {
-                return { success: false, message: 'Este e-mail já se encontra registado. Por favor, inicie sessão para concluir a compra.' };
-            }
-
-            const hashedPassword = data.guestPassword && data.guestPassword.trim().length >= 6
-                ? await bcrypt.hash(data.guestPassword.trim(), 10)
-                : await bcrypt.hash(crypto.randomUUID(), 10);
-
-            const guestUser = await prisma.utilizador.create({
-                data: {
-                    nome: data.guestName.trim(),
-                    email: data.guestEmail.trim().toLowerCase(),
-                    passwordHash: hashedPassword,
-                    role: 'PARTICIPANTE'
-                }
-            });
-
-            finalUserId = guestUser.id;
-
-            // Iniciar sessão automaticamente
-            await createSession(guestUser.id, guestUser.email, guestUser.nome, guestUser.role);
-        } else {
-            if (session.role === 'ORGANIZADOR' || session.role === 'STAFF' || session.role === 'ADMIN') {
-                return { success: false, message: 'Contas de organizador, staff ou administradores não podem realizar compras de bilhetes.' };
-            }
-            finalUserId = session.userId;
+        // 1. Resolver utilizador (autenticado ou guest)
+        const userResult = await resolveUserId(data);
+        if ('error' in userResult) {
+            return { success: false, message: userResult.error };
         }
+        const finalUserId = userResult.userId;
 
         // Verificar se o evento está suspenso
         const dbEvento = await prisma.evento.findUnique({
@@ -261,12 +261,18 @@ export async function simularPagamento(data: {
             }
         }
 
-        // 2. Procurar o lote para saber o preço
+        // 2. Procurar o lote para saber o preço e validar período de vendas
         const lote = await prisma.loteBilhete.findUnique({
             where: { id: data.loteId }
         });
         if (!lote) {
             return { success: false, message: 'Lote de bilhetes não encontrado.' };
+        }
+
+        // Verificar período de vendas do lote (U2)
+        const periodoErro = validarPeriodoVendas(lote);
+        if (periodoErro) {
+            return { success: false, message: periodoErro };
         }
 
         const valorTotal = lote.preco * data.quantidade;

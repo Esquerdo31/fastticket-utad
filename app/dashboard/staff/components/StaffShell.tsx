@@ -538,8 +538,8 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
                                     <p className="text-xs text-slate-400">Nenhum bilhete comprado para este evento ainda.</p>
                                 ) : (
                                     <div className="space-y-2 max-h-[220px] overflow-y-auto">
-                                        {simulatedTickets.map((t, idx) => (
-                                            <div key={idx} className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex justify-between items-center text-xs">
+                                        {simulatedTickets.map((t) => (
+                                            <div key={t.token} className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex justify-between items-center text-xs">
                                                 <div className="truncate pr-2">
                                                     <p className="font-bold text-slate-800 truncate">{t.participante || 'Participante'}</p>
                                                     <p className="text-[10px] text-slate-500 truncate">{t.lote} • <span className="font-mono">{t.token.slice(0, 10)}...</span></p>

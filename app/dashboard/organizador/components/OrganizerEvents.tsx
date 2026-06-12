@@ -261,8 +261,9 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                         </p>
                         <div className="space-y-4 mb-6">
                             <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Escreva "Confirmar" para prosseguir</label>
+                                <label htmlFor="confirm-publish-input" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Escreva "Confirmar" para prosseguir</label>
                                 <input 
+                                    id="confirm-publish-input"
                                     type="text" 
                                     value={confirmText} 
                                     onChange={e => setConfirmText(e.target.value)} 

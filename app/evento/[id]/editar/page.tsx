@@ -34,6 +34,7 @@ function getDiasEvento(start: string, end: string) {
 type Tab = 'detalhes' | 'bilheteira' | 'media' | 'personalizacao' | 'config';
 interface Lote { 
     id?: number; 
+    tempId?: string;
     nome: string; 
     descricao: string; 
     preco: number; 
@@ -113,6 +114,7 @@ export default function EditarEventoPage() {
                 setTicketGlow((d as any).ticketGlow ?? false);
                 setLotes(d.lotes.map((l: any) => ({
                     id: l.id,
+                    tempId: l.id.toString(),
                     nome: l.nome,
                     descricao: l.descricao || '',
                     preco: l.preco,
@@ -155,6 +157,7 @@ export default function EditarEventoPage() {
                         setOriginalEstado(res2.data.estado);
                         setLotes(res2.data.lotes.map((l: any) => ({
                             id: l.id,
+                            tempId: l.id.toString(),
                             nome: l.nome,
                             descricao: l.descricao || '',
                             preco: l.preco,
@@ -285,7 +288,7 @@ export default function EditarEventoPage() {
         setUploading(false);
     };
 
-    const addLote = () => setLotes([...lotes, { nome: '', descricao: '', preco: 0, lotacaoTotal: 10, tipo: 'DIARIO', diasValidos: '', vendaInicio: '', vendaFim: '' }]);
+    const addLote = () => setLotes([...lotes, { tempId: Math.random().toString(), nome: '', descricao: '', preco: 0, lotacaoTotal: 10, tipo: 'DIARIO', diasValidos: '', vendaInicio: '', vendaFim: '' }]);
     const removeLote = (i: number) => { if (lotes.length > 1) setLotes(lotes.filter((_, idx) => idx !== i)); };
     const updateLote = (i: number, f: keyof Lote, v: string|number) => { const u = [...lotes]; (u[i] as any)[f] = v; setLotes(u); };
     const totalBilhetes = lotes.reduce((s, l) => s + l.lotacaoTotal, 0);
@@ -358,10 +361,10 @@ export default function EditarEventoPage() {
                             <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
                                 <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><span className="material-symbols-outlined text-violet-700">info</span>Informações Básicas</h2>
                                 <div className="space-y-6">
-                                    <div><label className={labelCls}>Título do Evento</label><input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} className={inputCls} placeholder="Nome do evento" /></div>
+                                    <div><label htmlFor="edit-event-title" className={labelCls}>Título do Evento</label><input id="edit-event-title" type="text" value={titulo} onChange={e => setTitulo(e.target.value)} className={inputCls} placeholder="Nome do evento" /></div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div><label className={labelCls}>Categoria</label>
-                                            <select value={categoria} onChange={e => setCategoria(e.target.value)} className={inputCls}><option>Conferência</option><option>Festa Académica</option><option>Desporto</option><option>Workshop</option><option>Outro</option></select>
+                                        <div><label htmlFor="edit-event-category" className={labelCls}>Categoria</label>
+                                            <select id="edit-event-category" value={categoria} onChange={e => setCategoria(e.target.value)} className={inputCls}><option>Conferência</option><option>Festa Académica</option><option>Desporto</option><option>Workshop</option><option>Outro</option></select>
                                         </div>
                                         <div><label className={labelCls}>Formato</label>
                                             <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
@@ -369,7 +372,7 @@ export default function EditarEventoPage() {
                                                 <button type="button" onClick={() => setFormato('online')} className={`flex-1 py-3 font-bold text-sm rounded-lg transition-all ${formato === 'online' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500'}`}>Online</button>
                                             </div>
                                         </div>
-                                        <div><label className={labelCls}>Localização</label><input type="text" value={localizacao} onChange={e => setLocalizacao(e.target.value)} className={inputCls} /></div>
+                                        <div><label htmlFor="edit-event-location" className={labelCls}>Localização</label><input id="edit-event-location" type="text" value={localizacao} onChange={e => setLocalizacao(e.target.value)} className={inputCls} /></div>
                                     </div>
                                     <div>
                                         <label className={labelCls}>Mapa de Localização</label>
@@ -380,15 +383,17 @@ export default function EditarEventoPage() {
                                                 style={{ border: 0 }} 
                                                 loading="lazy" 
                                                 allowFullScreen 
+                                                title="Mapa de localização do evento"
+                                                sandbox="allow-scripts allow-same-origin allow-popups"
                                                 src={`https://maps.google.com/maps?q=${encodeURIComponent(localizacao || 'UTAD, Vila Real')}&t=&z=16&ie=UTF8&iwloc=&output=embed`} 
                                             />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div><label className={labelCls}>Data e Hora de Início</label><input type="datetime-local" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className={inputCls} /></div>
-                                        <div><label className={labelCls}>Data e Hora de Fim</label><input type="datetime-local" value={dataFim} onChange={e => setDataFim(e.target.value)} className={inputCls} /></div>
+                                        <div><label htmlFor="edit-event-start-date" className={labelCls}>Data e Hora de Início</label><input id="edit-event-start-date" type="datetime-local" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className={inputCls} /></div>
+                                        <div><label htmlFor="edit-event-end-date" className={labelCls}>Data e Hora de Fim</label><input id="edit-event-end-date" type="datetime-local" value={dataFim} onChange={e => setDataFim(e.target.value)} className={inputCls} /></div>
                                     </div>
-                                    <div><label className={labelCls}>Descrição Completa</label><textarea rows={12} value={descricao} onChange={e => setDescricao(e.target.value)} className={`${inputCls} resize-y`} placeholder="Descreva o evento em detalhe..." /></div>
+                                    <div><label htmlFor="edit-event-description" className={labelCls}>Descrição Completa</label><textarea id="edit-event-description" rows={12} value={descricao} onChange={e => setDescricao(e.target.value)} className={`${inputCls} resize-y`} placeholder="Descreva o evento em detalhe..." /></div>
                                 </div>
                             </div>
                         </div>
@@ -408,7 +413,7 @@ export default function EditarEventoPage() {
                                         const hasSoldTickets = vendidos > 0;
 
                                         return (
-                                            <div key={i} className="bg-slate-50 rounded-xl p-6 border border-slate-200 relative group">
+                                            <div key={lote.tempId || lote.id || i} className="bg-slate-50 rounded-xl p-6 border border-slate-200 relative group">
                                                 {lotes.length > 1 && (
                                                     hasSoldTickets ? (
                                                         <div className="absolute top-3 right-3 p-1 bg-amber-50 rounded px-2.5 py-1 border border-amber-200 text-amber-700 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider shadow-sm select-none" title="Lote com bilhetes emitidos (não pode ser removido)">
@@ -421,25 +426,25 @@ export default function EditarEventoPage() {
                                                 )}
                                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                                     <div className="md:col-span-2">
-                                                        <label className={labelCls}>Nome do Lote</label>
-                                                        <input type="text" value={lote.nome} onChange={e => updateLote(i, 'nome', e.target.value)} disabled={hasSoldTickets} className={inputCls + " disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"} placeholder="Ex: Geral, VIP" />
+                                                        <label htmlFor={`edit-lote-nome-${i}`} className={labelCls}>Nome do Lote</label>
+                                                        <input id={`edit-lote-nome-${i}`} type="text" value={lote.nome} onChange={e => updateLote(i, 'nome', e.target.value)} disabled={hasSoldTickets} className={inputCls + " disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"} placeholder="Ex: Geral, VIP" />
                                                     </div>
                                                     <div>
-                                                        <label className={labelCls}>Preço (€)</label>
-                                                        <input type="number" min={0} step={0.01} value={lote.preco} onChange={e => updateLote(i, 'preco', parseFloat(e.target.value) || 0)} disabled={hasSoldTickets} className={inputCls + " disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"} />
+                                                        <label htmlFor={`edit-lote-preco-${i}`} className={labelCls}>Preço (€)</label>
+                                                        <input id={`edit-lote-preco-${i}`} type="number" min={0} step={0.01} value={lote.preco} onChange={e => updateLote(i, 'preco', parseFloat(e.target.value) || 0)} disabled={hasSoldTickets} className={inputCls + " disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"} />
                                                         {hasSoldTickets && (
                                                             <span className="text-[9px] text-slate-400 font-medium mt-1 block">Bloqueado (bilhetes vendidos)</span>
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <label className={labelCls}>Quantidade</label>
-                                                        <input type="number" min={hasSoldTickets ? vendidos : 1} value={lote.lotacaoTotal} onChange={e => updateLote(i, 'lotacaoTotal', parseInt(e.target.value) || 0)} className={inputCls} />
+                                                        <label htmlFor={`edit-lote-qtd-${i}`} className={labelCls}>Quantidade</label>
+                                                        <input id={`edit-lote-qtd-${i}`} type="number" min={hasSoldTickets ? vendidos : 1} value={lote.lotacaoTotal} onChange={e => updateLote(i, 'lotacaoTotal', parseInt(e.target.value) || 0)} className={inputCls} />
                                                         {hasSoldTickets && (
                                                             <span className="text-[9px] text-amber-600 font-bold mt-1 block">Mínimo: {vendidos} (vendidos)</span>
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="mt-4"><label className={labelCls}>Descrição (Opcional)</label><input type="text" value={lote.descricao} onChange={e => updateLote(i, 'descricao', e.target.value)} className={inputCls} placeholder="Descrição do lote" /></div>
+                                                <div className="mt-4"><label htmlFor={`edit-lote-desc-${i}`} className={labelCls}>Descrição (Opcional)</label><input id={`edit-lote-desc-${i}`} type="text" value={lote.descricao} onChange={e => updateLote(i, 'descricao', e.target.value)} className={inputCls} placeholder="Descrição do lote" /></div>
                                                 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
                                                     <div>
@@ -491,8 +496,9 @@ export default function EditarEventoPage() {
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
                                                     <div>
-                                                        <label className={labelCls}>Início das Vendas (Opcional)</label>
+                                                        <label htmlFor={`edit-lote-venda-inicio-${i}`} className={labelCls}>Início das Vendas (Opcional)</label>
                                                         <input 
+                                                            id={`edit-lote-venda-inicio-${i}`}
                                                             type="datetime-local" 
                                                             value={lote.vendaInicio || ''} 
                                                             onChange={e => updateLote(i, 'vendaInicio', e.target.value)} 
@@ -500,8 +506,9 @@ export default function EditarEventoPage() {
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className={labelCls}>Fim das Vendas (Opcional)</label>
+                                                        <label htmlFor={`edit-lote-venda-fim-${i}`} className={labelCls}>Fim das Vendas (Opcional)</label>
                                                         <input 
+                                                            id={`edit-lote-venda-fim-${i}`}
                                                             type="datetime-local" 
                                                             value={lote.vendaFim || ''} 
                                                             onChange={e => updateLote(i, 'vendaFim', e.target.value)} 

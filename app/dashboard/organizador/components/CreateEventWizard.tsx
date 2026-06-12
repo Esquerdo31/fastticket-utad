@@ -4,6 +4,7 @@ import { createEvento, getEventoById, updateEvento } from '@/app/actions/evento'
 
 interface Lote { 
     id?: number;
+    tempId?: string;
     nome: string; 
     descricao: string; 
     preco: number; 
@@ -46,7 +47,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
     const [dataFim, setDataFim] = useState('');
     const [descricao, setDescricao] = useState('');
     const [localizacao, setLocalizacao] = useState('');
-    const [lotes, setLotes] = useState<Lote[]>([{ nome: 'Geral', descricao: '', preco: 0, lotacaoTotal: 50, tipo: 'DIARIO', diasValidos: '', vendaInicio: '', vendaFim: '' }]);
+    const [lotes, setLotes] = useState<Lote[]>([{ tempId: 'initial-lote', nome: 'Geral', descricao: '', preco: 0, lotacaoTotal: 50, tipo: 'DIARIO', diasValidos: '', vendaInicio: '', vendaFim: '' }]);
 
     // Confirmação de Publicação
     const [showPublishConfirmModal, setShowPublishConfirmModal] = useState(false);
@@ -74,6 +75,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                 setThumbnailUrl(res.data.thumbnailUrl || '');
                 setLotes(res.data.lotes.map((l: any) => ({ 
                     id: l.id,
+                    tempId: l.id.toString(),
                     nome: l.nome, 
                     descricao: l.descricao, 
                     preco: l.preco, 
@@ -98,6 +100,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
     const addLote = () => {
         const days = getDiasEvento(dataInicio, dataFim);
         setLotes([...lotes, { 
+            tempId: Math.random().toString(),
             nome: '', 
             descricao: '', 
             preco: 0, 
@@ -267,13 +270,13 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                     </div>
                                     <div className="space-y-6">
                                         <div>
-                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Título do Evento</label>
-                                            <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Conferência Internacional de Inovação Digital" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800 placeholder:text-slate-400" />
+                                            <label htmlFor="event-title" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Título do Evento</label>
+                                            <input id="event-title" type="text" value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Conferência Internacional de Inovação Digital" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800 placeholder:text-slate-400" />
                                         </div>
                                         <div className="grid grid-cols-2 gap-6">
                                             <div>
-                                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Categoria</label>
-                                                <select value={categoria} onChange={e => setCategoria(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800">
+                                                <label htmlFor="event-category" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Categoria</label>
+                                                <select id="event-category" value={categoria} onChange={e => setCategoria(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800">
                                                     <option>Conferência</option><option>Festa Académica</option><option>Desporto</option><option>Workshop</option>
                                                 </select>
                                             </div>
@@ -287,16 +290,16 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                         </div>
                                         <div className="grid grid-cols-2 gap-6">
                                             <div>
-                                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Data e Hora de Início</label>
-                                                <input type="datetime-local" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800" />
+                                                <label htmlFor="event-start-date" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Data e Hora de Início</label>
+                                                <input id="event-start-date" type="datetime-local" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800" />
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Data e Hora de Fim</label>
-                                                <input type="datetime-local" value={dataFim} onChange={e => setDataFim(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800" />
+                                                <label htmlFor="event-end-date" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Data e Hora de Fim</label>
+                                                <input id="event-end-date" type="datetime-local" value={dataFim} onChange={e => setDataFim(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Descrição do Evento</label>
+                                            <label htmlFor="event-description" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Descrição do Evento</label>
                                             <div className="border border-slate-200 rounded-xl overflow-hidden">
                                                 <div className="bg-slate-50 border-b border-slate-200 p-2 flex items-center gap-2">
                                                     <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded cursor-pointer active:scale-95 transition-all"><span className="material-symbols-outlined text-[18px]">format_bold</span></button>
@@ -305,7 +308,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                                     <div className="w-px h-4 bg-slate-300 mx-1" />
                                                     <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded cursor-pointer active:scale-95 transition-all"><span className="material-symbols-outlined text-[18px]">link</span></button>
                                                 </div>
-                                                <textarea rows={6} value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Descreva os detalhes do seu evento aqui..." className="w-full p-4 focus:outline-none text-sm text-slate-800 resize-none" />
+                                                <textarea id="event-description" rows={6} value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Descreva os detalhes do seu evento aqui..." className="w-full p-4 focus:outline-none text-sm text-slate-800 resize-none" />
                                             </div>
                                         </div>
                                     </div>
@@ -317,7 +320,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                     </div>
                                     <div className="space-y-6">
                                         <div className="relative">
-                                            <input type="text" value={localizacao} onChange={e => setLocalizacao(e.target.value)} placeholder="Pesquisar endereço ou local (ex: Aula Magna UTAD)" className="w-full p-4 pl-12 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800 placeholder:text-slate-400" />
+                                            <input aria-label="Pesquisar localização do evento" type="text" value={localizacao} onChange={e => setLocalizacao(e.target.value)} placeholder="Pesquisar endereço ou local (ex: Aula Magna UTAD)" className="w-full p-4 pl-12 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm text-slate-800 placeholder:text-slate-400" />
                                             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
                                         </div>
                                         <div className="w-full h-64 rounded-xl overflow-hidden relative border border-slate-200 bg-slate-100">
@@ -327,6 +330,8 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                                 style={{ border: 0 }} 
                                                 loading="lazy" 
                                                 allowFullScreen 
+                                                title="Mapa de localização do evento"
+                                                sandbox="allow-scripts allow-same-origin allow-popups"
                                                 src={`https://maps.google.com/maps?q=${encodeURIComponent(localizacao || 'UTAD, Vila Real')}&t=&z=16&ie=UTF8&iwloc=&output=embed`} 
                                             />
                                         </div>
@@ -354,7 +359,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                             const hasSoldTickets = vendidos > 0;
 
                                             return (
-                                                <div key={i} className="bg-slate-50 rounded-xl p-6 border border-slate-200 relative group">
+                                                <div key={lote.tempId || lote.id || i} className="bg-slate-50 rounded-xl p-6 border border-slate-200 relative group">
                                                     {lotes.length > 1 && (
                                                         hasSoldTickets ? (
                                                             <div className="absolute top-3 right-3 p-1 bg-amber-50 rounded px-2.5 py-1 border border-amber-200 text-amber-700 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider shadow-sm select-none" title="Lote com bilhetes emitidos (não pode ser removido)">
@@ -369,12 +374,12 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                                     )}
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                                         <div className="md:col-span-2">
-                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Nome do Lote</label>
-                                                            <input type="text" value={lote.nome} onChange={e => updateLote(i, 'nome', e.target.value)} disabled={hasSoldTickets} placeholder="Ex: Geral, VIP, Estudante" className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed" />
+                                                            <label htmlFor={`lote-nome-${i}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Nome do Lote</label>
+                                                            <input id={`lote-nome-${i}`} type="text" value={lote.nome} onChange={e => updateLote(i, 'nome', e.target.value)} disabled={hasSoldTickets} placeholder="Ex: Geral, VIP, Estudante" className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed" />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Quantidade</label>
-                                                            <input type="number" min={hasSoldTickets ? vendidos : 1} value={lote.lotacaoTotal} onChange={e => updateLote(i, 'lotacaoTotal', parseInt(e.target.value) || 0)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                            <label htmlFor={`lote-qtd-${i}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Quantidade</label>
+                                                            <input id={`lote-qtd-${i}`} type="number" min={hasSoldTickets ? vendidos : 1} value={lote.lotacaoTotal} onChange={e => updateLote(i, 'lotacaoTotal', parseInt(e.target.value) || 0)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
                                                             {hasSoldTickets && (
                                                                 <span className="text-[9px] text-amber-600 font-bold mt-1 block">Mínimo: {vendidos} (vendidos)</span>
                                                             )}
@@ -382,15 +387,15 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                                     </div>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <div>
-                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Preço (€)</label>
-                                                            <input type="number" min={0} step={0.01} value={lote.preco} onChange={e => updateLote(i, 'preco', parseFloat(e.target.value) || 0)} disabled={hasSoldTickets} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed" />
+                                                            <label htmlFor={`lote-preco-${i}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Preço (€)</label>
+                                                            <input id={`lote-preco-${i}`} type="number" min={0} step={0.01} value={lote.preco} onChange={e => updateLote(i, 'preco', parseFloat(e.target.value) || 0)} disabled={hasSoldTickets} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed" />
                                                             {hasSoldTickets && (
                                                                 <span className="text-[9px] text-slate-400 font-medium mt-1 block">Bloqueado (bilhetes vendidos)</span>
                                                             )}
                                                         </div>
                                                         <div>
-                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Descrição (Opcional)</label>
-                                                            <input type="text" value={lote.descricao} onChange={e => updateLote(i, 'descricao', e.target.value)} placeholder="Ex: Acesso geral ao evento" className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                            <label htmlFor={`lote-desc-${i}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Descrição (Opcional)</label>
+                                                            <input id={`lote-desc-${i}`} type="text" value={lote.descricao} onChange={e => updateLote(i, 'descricao', e.target.value)} placeholder="Ex: Acesso geral ao evento" className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
                                                         </div>
                                                     </div>
 
@@ -443,12 +448,12 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                                     </div>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
                                                         <div>
-                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Início das Vendas (Opcional)</label>
-                                                            <input type="datetime-local" value={lote.vendaInicio || ''} onChange={e => updateLote(i, 'vendaInicio', e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                            <label htmlFor={`lote-venda-inicio-${i}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Início das Vendas (Opcional)</label>
+                                                            <input id={`lote-venda-inicio-${i}`} type="datetime-local" value={lote.vendaInicio || ''} onChange={e => updateLote(i, 'vendaInicio', e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Fim das Vendas (Opcional)</label>
-                                                            <input type="datetime-local" value={lote.vendaFim || ''} onChange={e => updateLote(i, 'vendaFim', e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                            <label htmlFor={`lote-venda-fim-${i}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Fim das Vendas (Opcional)</label>
+                                                            <input id={`lote-venda-fim-${i}`} type="datetime-local" value={lote.vendaFim || ''} onChange={e => updateLote(i, 'vendaFim', e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -505,7 +510,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                             <h4 className="font-bold text-slate-700 mb-3">Bilheteira ({lotes.length} lotes)</h4>
                                             <div className="space-y-2">
                                                 {lotes.map((l, i) => (
-                                                    <div key={i} className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                                     <div key={l.tempId || l.id || i} className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
                                                         <div>
                                                             <p className="font-bold text-slate-800">{l.nome}</p>
                                                             <p className="text-xs text-slate-500">{l.lotacaoTotal} bilhetes</p>
@@ -616,8 +621,9 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                         </p>
                         <div className="space-y-4 mb-6">
                             <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Escreva "Confirmar" para prosseguir</label>
+                                <label htmlFor="confirm-publish-wizard" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Escreva "Confirmar" para prosseguir</label>
                                 <input 
+                                    id="confirm-publish-wizard"
                                     type="text" 
                                     value={confirmText} 
                                     onChange={e => setConfirmText(e.target.value)} 
