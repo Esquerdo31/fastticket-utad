@@ -65,12 +65,6 @@ export default function UTADFastTicketPage() {
 
     const heroEvent = dbEvents[heroIdx];
 
-    const socialLinks = [
-        { alt: "Facebook", src: "https://lh3.googleusercontent.com/aida-public/AB6AXuDWaTco4V6jlYxONyqFNccNuNy_xt4_UmPHBPUmK4IF5mDscRR7mcDFY5rfE_jiu5wBa-6EIoYCYiLKbHxUXWeCLmudh4O96uhDxSOFxirPJ7AS5ZHdST-Rlia22drDUk1EBYeM5n_MQE-WEuewwsz7KSSskbbM8f4C3ePWxppUnlBjJQhL9CGylD_I_AsrTcBeUO316Wxm-0FE0vbzlSNskoAkPET__QAH4beVKXN9mimZTK6WCMHuREb1k5ULKhTFFAWHpgTXL9M" },
-        { alt: "Instagram", src: "https://lh3.googleusercontent.com/aida-public/AB6AXuC8lnSHDUuUJuphF4ehXrcUAxAzALbzDw4w-x9pGrf8maZastY6MNd55X82SK1EJUmjMxj150Gcn5SBijW1ZCPLJLqTFVSxtBjiwYD5DEl4AbFDX0gVPpU6C--Haczr_MTqvCaEzQr1gKnffkgm2EirEmCwborsWFGbOO4V0QEoejausS-6403FSdfyCG3yIL6eciAztE74NgQ-EDqdmUMIZs3LuDRtudZ93YrfsBw19OLNiAkwzNI7ef8l-0FsIApjP1i31NqVVNw" },
-        { alt: "X", src: "https://lh3.googleusercontent.com/aida-public/AB6AXuDovgI6w4MHmPrZzCYMijUivl_BglYlISoclbMy1melCg66fxl0YD73OI3iPogzGE6efqrHkFXWHs3UFAglzXgn1TCTi3XZZmqyvU4uJmWiUcyzYoi2FaAtl05-KafaVWOLTtrnt0u5Bc4C7UrG_BROZv6EJiZFkJbrvdG2gVjCkS018iyr34Guqb65AOXk5AXZWhjF0I7mYCBYX5Qmo8SsD3nabsVAM_Xnf6b_zkdo01mYefA5YmSMTJJb_6M0uDdKkFs4vytBcZQ" },
-    ];
-
     // Carousel scroll helpers
     const scrollCarousel = (dir: 'left' | 'right') => {
         if (!carouselRef.current) return;
@@ -222,20 +216,12 @@ export default function UTADFastTicketPage() {
                                 <div className="text-lg font-bold text-white uppercase tracking-widest mb-2">UTAD FastTicket</div>
                                 <p className="max-w-sm text-sm">A plataforma digital oficial para gestão e aquisição de bilhetes para a comunidade de Vila Real.</p>
                             </div>
-                            <div className="flex gap-3">
-                                {socialLinks.map(({ alt, src }) => (
-                                    <Link key={alt} href="#" className="w-9 h-9 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors" aria-label={alt}>
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={src} alt={alt} width={18} height={18} />
-                                    </Link>
-                                ))}
-                            </div>
                         </div>
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                             <div className="flex flex-wrap gap-6">
-                                {["Política de Privacidade", "Termos de Serviço", "Acesso Institucional"].map((label) => (
-                                    <Link key={label} href="#" className="hover:text-white transition-colors text-xs font-medium">{label}</Link>
-                                ))}
+                                <Link href="/sobre" className="hover:text-white transition-colors text-xs font-medium">Sobre</Link>
+                                <Link href="/eventos" className="hover:text-white transition-colors text-xs font-medium">Explorar Eventos</Link>
+                                <Link href="/ajuda" className="hover:text-white transition-colors text-xs font-medium">Ajuda</Link>
                             </div>
                             <p className="text-xs">© 2026 UTAD FastTicket. Academia Portuguesa.</p>
                         </div>

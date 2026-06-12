@@ -84,6 +84,8 @@ const UTADFastTicket = () => {
     const [location, setLocation] = useState('Todos');
     const [sortBy, setSortBy] = useState('Mais Recentes');
     const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 6;
 
     const [events, setEvents] = useState<EventCard[]>([]);
 
@@ -196,6 +198,16 @@ const UTADFastTicket = () => {
                 return 0;
             });
     }, [events, searchTerm, selectedCategories, selectedDate, location, selectedPrices, sortBy]);
+
+    const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+    const paginatedEvents = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredEvents.slice(start, start + itemsPerPage);
+    }, [filteredEvents, currentPage]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, selectedCategories, selectedDate, location, selectedPrices, sortBy]);
 
     return (
         <div className="bg-[#f5f7f8] font-sans text-[#0f172a] antialiased min-h-screen pt-16">
@@ -338,7 +350,7 @@ const UTADFastTicket = () => {
 
                         {/* Event Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {filteredEvents.map((event) => {
+                            {paginatedEvents.map((event) => {
                                 const status = getEventStatus({
                                     estado: event.estado,
                                     dataInicio: event.dataInicio,
@@ -397,17 +409,33 @@ const UTADFastTicket = () => {
                         </div>
 
                         {/* Pagination */}
-                        {filteredEvents.length > 0 && (
+                        {totalPages > 1 && (
                             <nav className="mt-16 mb-8 flex justify-center items-center gap-2">
-                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+                                <button
+                                    disabled={currentPage === 1}
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                                >
                                     <span className="material-symbols-outlined text-slate-600 text-sm">chevron_left</span>
                                 </button>
-                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#006837] text-white font-bold text-sm">1</button>
-                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors">2</button>
-                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors">3</button>
-                                <span className="mx-1 text-slate-400">...</span>
-                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors">8</button>
-                                <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                                    <button
+                                        key={p}
+                                        onClick={() => setCurrentPage(p)}
+                                        className={`w-9 h-9 flex items-center justify-center rounded-lg font-bold text-sm transition-colors ${
+                                            currentPage === p
+                                                ? 'bg-[#006837] text-white'
+                                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {p}
+                                    </button>
+                                ))}
+                                <button
+                                    disabled={currentPage === totalPages}
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                                >
                                     <span className="material-symbols-outlined text-slate-600 text-sm">chevron_right</span>
                                 </button>
                             </nav>
@@ -417,25 +445,21 @@ const UTADFastTicket = () => {
             </main>
 
             {/* Footer */}
-            <footer className="bg-[#0b2818] py-16">
-                <div className="w-full max-w-[1400px] mx-auto px-6 md:px-8 flex flex-col lg:flex-row justify-between items-start gap-12">
-                    <div className="flex flex-col flex-1 max-w-sm">
-                        <div className="text-lg font-bold text-white tracking-widest mb-4">
-                            UTAD FASTTICKET
+            <footer className="bg-[#080c14] text-slate-500 py-12 border-t border-white/5 w-full">
+                <div className="max-w-7xl mx-auto px-8">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/5 pb-8 mb-8 gap-6">
+                        <div>
+                            <div className="text-lg font-bold text-white uppercase tracking-widest mb-2">UTAD FastTicket</div>
+                            <p className="max-w-sm text-sm">A plataforma digital oficial para gestão e aquisição de bilhetes para a comunidade de Vila Real.</p>
                         </div>
-                        <p className="text-emerald-200/60 text-[13px] leading-relaxed">
-                            Potenciando a experiência académica através da digitalização de eventos e acesso institucional.
-                        </p>
                     </div>
-                    <div className="flex flex-wrap lg:justify-center gap-x-8 gap-y-4 font-sans text-sm flex-1 text-emerald-200/60 pt-1">
-                        <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Institutional Access</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Contact Us</Link>
-                    </div>
-                    <div className="text-emerald-500/80 text-[13px] flex-1 lg:text-right pt-1 flex flex-col">
-                        <span>© 2024 UTAD FastTicket.</span>
-                        <span>The Digital Atheneum.</span>
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="flex flex-wrap gap-6">
+                            <Link href="/sobre" className="hover:text-white transition-colors text-xs font-medium">Sobre</Link>
+                            <Link href="/eventos" className="hover:text-white transition-colors text-xs font-medium text-white font-bold">Explorar Eventos</Link>
+                            <Link href="/ajuda" className="hover:text-white transition-colors text-xs font-medium">Ajuda</Link>
+                        </div>
+                        <p className="text-xs">© 2026 UTAD FastTicket. Academia Portuguesa.</p>
                     </div>
                 </div>
             </footer>

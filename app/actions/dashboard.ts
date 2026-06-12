@@ -90,10 +90,13 @@ export async function getDashboardData(userId: number) {
             };
         }));
 
-        // 3. Recomendados (Top 3 futuros cronologicamente)
+        // 3. Recomendados (Top 3 ativos/publicados)
         const recomendacoes = await prisma.evento.findMany({
+            where: {
+                estado: 'PUBLICADO'
+            },
             take: 3,
-            orderBy: { dataInicio: 'asc' }, // Recomendamos os mais urgentes
+            orderBy: { dataInicio: 'asc' }, // Recomendamos por ordem cronológica
             include: {
                 lotes: true
             }

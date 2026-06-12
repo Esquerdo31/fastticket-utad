@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/app/components/Header";
+import { getActiveSession } from "@/app/actions/auth";
 
 function MaterialIcon({ name, className = "" }: { name: string; className?: string }) {
     return <span className={`material-symbols-outlined ${className}`}>{name}</span>;
@@ -12,21 +13,17 @@ function MaterialIcon({ name, className = "" }: { name: string; className?: stri
 export default function SobrePage() {
     const router = useRouter();
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
+    const [userSession, setUserSession] = useState<any>(null);
 
     useEffect(() => {
         // Set page title for SEO client-side
         document.title = "Sobre Nós - UTAD FastTicket";
+        getActiveSession().then(setUserSession);
     }, []);
 
     const toggleFaq = (index: number) => {
         setActiveFaq(activeFaq === index ? null : index);
     };
-
-    const socialLinks = [
-        { alt: "Facebook", src: "https://lh3.googleusercontent.com/aida-public/AB6AXuDWaTco4V6jlYxONyqFNccNuNy_xt4_UmPHBPUmK4IF5mDscRR7mcDFY5rfE_jiu5wBa-6EIoYCYiLKbHxUXWeCLmudh4O96uhDxSOFxirPJ7AS5ZHdST-Rlia22drDUk1EBYeM5n_MQE-WEuewwsz7KSSskbbM8f4C3ePWxppUnlBjJQhL9CGylD_I_AsrTcBeUO316Wxm-0FE0vbzlSNskoAkPET__QAH4beVKXN9mimZTK6WCMHuREb1k5ULKhTFFAWHpgTXL9M" },
-        { alt: "Instagram", src: "https://lh3.googleusercontent.com/aida-public/AB6AXuC8lnSHDUuUJuphF4ehXrcUAxAzALbzDw4w-x9pGrf8maZastY6MNd55X82SK1EJUmjMxj150Gcn5SBijW1ZCPLJLqTFVSxtBjiwYD5DEl4AbFDX0gVPpU6C--Haczr_MTqvCaEzQr1gKnffkgm2EirEmCwborsWFGbOO4V0QEoejausS-6403FSdfyCG3yIL6eciAztE74NgQ-EDqdmUMIZs3LuDRtudZ93YrfsBw19OLNiAkwzNI7ef8l-0FsIApjP1i31NqVVNw" },
-        { alt: "X", src: "https://lh3.googleusercontent.com/aida-public/AB6AXuDovgI6w4MHmPrZzCYMijUivl_BglYlISoclbMy1melCg66fxl0YD73OI3iPogzGE6efqrHkFXWHs3UFAglzXgn1TCTi3XZZmqyvU4uJmWiUcyzYoi2FaAtl05-KafaVWOLTtrnt0u5Bc4C7UrG_BROZv6EJiZFkJbrvdG2gVjCkS018iyr34Guqb65AOXk5AXZWhjF0I7mYCBYX5Qmo8SsD3nabsVAM_Xnf6b_zkdo01mYefA5YmSMTJJb_6M0uDdKkFs4vytBcZQ" },
-    ];
 
     const stats = [
         { value: "100%", label: "Digital & Paperless", desc: "Sem desperdício de papel.", icon: "eco" },
@@ -247,25 +244,27 @@ export default function SobrePage() {
                     </section>
 
                     {/* Final CTA Section */}
-                    <section className="py-16 max-w-7xl mx-auto px-6 mb-12">
-                        <div className="bg-gradient-to-br from-[#09351c] to-[#161b22] border border-emerald-500/20 rounded-3xl p-8 md:p-16 text-center relative overflow-hidden shadow-2xl">
-                            <div className="absolute -top-12 -left-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                            <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-                            
-                            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">Pronto para começar?</h2>
-                            <p className="text-slate-300 text-sm md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-                                Regista-te já para explorares os eventos disponíveis ou cria a tua conta de organizador para colocares à venda os bilhetes para a tua próxima festa académica.
-                            </p>
-                            <div className="flex flex-wrap justify-center gap-4 relative z-10">
-                                <Link href="/registar" className="bg-white text-emerald-950 px-8 py-3.5 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg">
-                                    Criar Conta Estudante
-                                </Link>
-                                <Link href="/login" className="bg-transparent border border-white/20 text-white hover:bg-white/10 px-8 py-3.5 rounded-xl font-bold transition-all">
-                                    Entrar como Organizador
-                                </Link>
+                    {!userSession && (
+                        <section className="py-16 max-w-7xl mx-auto px-6 mb-12">
+                            <div className="bg-gradient-to-br from-[#09351c] to-[#161b22] border border-emerald-500/20 rounded-3xl p-8 md:p-16 text-center relative overflow-hidden shadow-2xl">
+                                <div className="absolute -top-12 -left-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                                <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+                                
+                                <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">Pronto para começar?</h2>
+                                <p className="text-slate-300 text-sm md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
+                                    Regista-te já para explorares os eventos disponíveis ou cria a tua conta de organizador para colocares à venda os bilhetes para a tua próxima festa académica.
+                                </p>
+                                <div className="flex flex-wrap justify-center gap-4 relative z-10">
+                                    <Link href="/registar" className="bg-white text-emerald-950 px-8 py-3.5 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg">
+                                        Criar Conta Estudante
+                                    </Link>
+                                    <Link href="/login" className="bg-transparent border border-white/20 text-white hover:bg-white/10 px-8 py-3.5 rounded-xl font-bold transition-all">
+                                        Entrar como Organizador
+                                    </Link>
+                                </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
+                    )}
                 </main>
 
                 {/* Footer */}
@@ -276,20 +275,12 @@ export default function SobrePage() {
                                 <div className="text-lg font-bold text-white uppercase tracking-widest mb-2">UTAD FastTicket</div>
                                 <p className="max-w-sm text-sm">A plataforma digital oficial para gestão e aquisição de bilhetes para a comunidade de Vila Real.</p>
                             </div>
-                            <div className="flex gap-3">
-                                {socialLinks.map(({ alt, src }) => (
-                                    <Link key={alt} href="#" className="w-9 h-9 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors" aria-label={alt}>
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={src} alt={alt} width={18} height={18} />
-                                    </Link>
-                                ))}
-                            </div>
                         </div>
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                             <div className="flex flex-wrap gap-6">
-                                {["Política de Privacidade", "Termos de Serviço", "Acesso Institucional"].map((label) => (
-                                    <Link key={label} href="#" className="hover:text-white transition-colors text-xs font-medium">{label}</Link>
-                                ))}
+                                <Link href="/sobre" className="hover:text-white transition-colors text-xs font-medium text-white font-bold">Sobre</Link>
+                                <Link href="/eventos" className="hover:text-white transition-colors text-xs font-medium">Explorar Eventos</Link>
+                                <Link href="/ajuda" className="hover:text-white transition-colors text-xs font-medium">Ajuda</Link>
                             </div>
                             <p className="text-xs">© 2026 UTAD FastTicket. Academia Portuguesa.</p>
                         </div>

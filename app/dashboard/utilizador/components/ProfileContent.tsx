@@ -20,10 +20,6 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
         phone: '' // Campo visual, não guardado na BD por agora
     });
 
-    const [emailNotif, setEmailNotif] = useState(true);
-    const [smsNotif, setSmsNotif] = useState(false);
-    const [pushNotif, setPushNotif] = useState(true);
-
     const [isPending, startTransition] = useTransition();
     const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -149,23 +145,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                     </div>
 
                     {/* Conditional Status Card based on Role */}
-                    {!isOrg && user.role !== 'STAFF' ? (
-                        <div className="bg-[#004d29] rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
-                            <span className="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl opacity-10 rotate-12 select-none">school</span>
-                            <div className="relative z-10">
-                                <h3 className="font-bold text-lg mb-2">Estado Académico</h3>
-                                <p className="text-emerald-100/90 text-sm mb-6 leading-relaxed">
-                                    O seu registo está ativo para o ano letivo 2025/2026.
-                                </p>
-                                <div>
-                                    <div className="w-full h-2 bg-emerald-900/50 rounded-full overflow-hidden mb-2">
-                                        <div className="h-full bg-white rounded-full w-[85%]"></div>
-                                    </div>
-                                    <p className="text-[10px] font-bold tracking-widest uppercase text-emerald-200">85% do curso concluído</p>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
+                    {isOrg && (
                         <div className="bg-violet-900 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
                             <span className="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl opacity-10 rotate-12 select-none">verified_user</span>
                             <div className="relative z-10">
@@ -258,73 +238,6 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                             >
                                 {isPending ? 'A guardar...' : 'Guardar Alterações'}
                             </button>
-                        </div>
-                    </div>
-
-                    {/* Card de Preferências de Notificação */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                        <div className="flex items-center gap-3 mb-6">
-                            <span className="material-symbols-outlined text-slate-800">notifications_active</span>
-                            <h3 className="text-lg font-bold text-slate-900">Preferências de Notificação</h3>
-                        </div>
-
-                        <div className="space-y-4">
-                            {/* Toggle Email */}
-                            <div className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-xl">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-full ${isOrg ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-[#006837]'} flex items-center justify-center`}>
-                                        <span className="material-symbols-outlined text-[20px]">mail</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-slate-900">Notificações por Email</h4>
-                                        <p className="text-xs text-slate-500">Alertas de bilhetes e prazos académicos</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setEmailNotif(!emailNotif)}
-                                    className={`w-12 h-6 rounded-full transition-all duration-300 flex items-center px-1 cursor-pointer hover:shadow-md ${emailNotif ? toggleBg : 'bg-slate-300 hover:bg-slate-400'}`}
-                                >
-                                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${emailNotif ? 'translate-x-6' : 'translate-x-0'}`} />
-                                </button>
-                            </div>
-
-                            {/* Toggle SMS */}
-                            <div className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-xl">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                                        <span className="material-symbols-outlined text-[20px]">chat</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-slate-900">Alertas via SMS</h4>
-                                        <p className="text-xs text-slate-500">Avisos urgentes e validação 2FA</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setSmsNotif(!smsNotif)}
-                                    className={`w-12 h-6 rounded-full transition-all duration-300 flex items-center px-1 cursor-pointer hover:shadow-md ${smsNotif ? toggleBg : 'bg-slate-300 hover:bg-slate-400'}`}
-                                >
-                                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${smsNotif ? 'translate-x-6' : 'translate-x-0'}`} />
-                                </button>
-                            </div>
-
-                            {/* Toggle Push */}
-                            <div className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-xl">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-full ${isOrg ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-[#006837]'} flex items-center justify-center`}>
-                                        <span className="material-symbols-outlined text-[20px]">smartphone</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-slate-900">Notificações Push</h4>
-                                        <p className="text-xs text-slate-500">Mensagens diretas no portal mobile</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setPushNotif(!pushNotif)}
-                                    className={`w-12 h-6 rounded-full transition-all duration-300 flex items-center px-1 cursor-pointer hover:shadow-md ${pushNotif ? toggleBg : 'bg-slate-300 hover:bg-slate-400'}`}
-                                >
-                                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${pushNotif ? 'translate-x-6' : 'translate-x-0'}`} />
-                                </button>
-                            </div>
                         </div>
                     </div>
 

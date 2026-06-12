@@ -81,7 +81,7 @@ export default function DashboardShell({ userName, nextEvents, suggestions, user
                 <div className="flex items-center gap-6">
                     <div className="hidden md:flex gap-8 items-center">
                         <Link className="text-[#006837] font-bold tracking-tight hover:bg-emerald-50 rounded-lg px-3 py-2 -mx-3 transition-all cursor-pointer" href="/eventos">Explorar Eventos</Link>
-                        <a className="text-slate-600 hover:bg-slate-50 transition-colors px-2 py-1 rounded font-medium" href="#">Ajuda</a>
+                        <Link className="text-slate-600 hover:bg-slate-50 transition-colors px-2 py-1 rounded font-medium cursor-pointer" href="/ajuda">Ajuda</Link>
                     </div>
                     <div className="flex items-center gap-4">
                         <div
