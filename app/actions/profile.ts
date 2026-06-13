@@ -78,8 +78,9 @@ export async function changePassword(userId: number, data: { currentPassword?: s
             return { success: false, message: "Utilizador não encontrado." };
         }
 
-        // Se o utilizador já tiver uma palavra-passe registada, validá-la primeiro
-        if (user.passwordHash) {
+        // Se o utilizador já tiver uma palavra-passe registada (bcrypt hash começa com $2), validá-la primeiro
+        const hasPassword = user.passwordHash && user.passwordHash.startsWith('$2');
+        if (hasPassword) {
             if (!data.currentPassword) {
                 return { success: false, message: "A palavra-passe atual é obrigatória." };
             }
@@ -106,5 +107,28 @@ export async function changePassword(userId: number, data: { currentPassword?: s
         return { success: true, message: "Palavra-passe alterada com sucesso!" };
     } catch (error: any) {
         return { success: false, message: error.message };
+    }
+}
+
+export async function checkUserHasPassword(userId: number) {
+    try {
+        const session = await getSession();
+        if (!session || session.userId !== userId) {
+            return { success: false, hasPassword: false };
+        }
+
+        const user = await prisma.utilizador.findUnique({
+            where: { id: userId },
+            select: { passwordHash: true }
+        });
+
+        if (!user) {
+            return { success: false, hasPassword: false };
+        }
+
+        const hasPassword = user.passwordHash && user.passwordHash.startsWith('$2');
+        return { success: true, hasPassword: !!hasPassword };
+    } catch (error) {
+        return { success: false, hasPassword: false };
     }
 }

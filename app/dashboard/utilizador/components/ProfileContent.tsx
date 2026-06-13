@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useRef, useEffect } from 'react';
-import { updateProfileData, changePassword } from '@/app/actions/profile';
+import { updateProfileData, changePassword, checkUserHasPassword } from '@/app/actions/profile';
 
 interface ProfileContentProps {
     user: {
@@ -30,6 +30,18 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [modalMessage, setModalMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [isModalPending, startModalTransition] = useTransition();
+    const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+
+    // Fetch password status on mount
+    useEffect(() => {
+        async function fetchPasswordStatus() {
+            const res = await checkUserHasPassword(user.id);
+            if (res.success) {
+                setHasPassword(res.hasPassword);
+            }
+        }
+        fetchPasswordStatus();
+    }, [user.id]);
 
     // Profile photo state
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -130,6 +142,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                 setCurrentPassword('');
                 setNewPassword('');
                 setConfirmNewPassword('');
+                setHasPassword(true);
                 setTimeout(() => {
                     setShowPasswordModal(false);
                     setModalMessage(null);
@@ -349,7 +362,7 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                         </div>
 
                         <div className="space-y-4 mb-6">
-                            {user.role !== 'GUEST' && (
+                            {hasPassword !== false && user.role !== 'GUEST' && (
                                 <div>
                                     <label htmlFor="profile-current-password" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Password Atual</label>
                                     <input 

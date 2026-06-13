@@ -58,6 +58,10 @@ export async function loginUser(prevState: any, formData: FormData) {
             return { success: false, message: "Utilizador não encontrado." };
         }
 
+        if (!user.passwordHash || !user.passwordHash.startsWith('$2')) {
+            return { success: false, message: "Esta conta não tem uma palavra-passe configurada. Utilize o link enviado por e-mail para aceder ou defina uma palavra-passe no perfil." };
+        }
+
         const passwordValid = await bcrypt.compare(password, user.passwordHash);
         if (!passwordValid) {
             return { success: false, message: "Palavra-passe errada." };

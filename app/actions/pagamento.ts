@@ -65,7 +65,7 @@ async function resolveUserId(guestData?: {
 
     const hashedPassword = guestData.guestPassword && guestData.guestPassword.trim().length >= 6
         ? await bcrypt.hash(guestData.guestPassword.trim(), 10)
-        : await bcrypt.hash(crypto.randomUUID(), 10);
+        : "NO_PASSWORD";
 
     const guestUser = await prisma.utilizador.create({
         data: {
