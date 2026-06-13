@@ -114,7 +114,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
         const u = [...lotes]; (u[i] as any)[field] = value; setLotes(u);
     };
 
-    const submitEvent = () => {
+    const submitEvent = (estadoOverwrite?: 'RASCUNHO' | 'PUBLICADO') => {
         startTransition(async () => {
             const payload = {
                 titulo,
@@ -128,7 +128,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                 thumbnailUrl: thumbnailUrl || undefined,
                 formato,
                 categoria,
-                estado: isEditMode ? undefined : 'PUBLICADO'
+                estado: estadoOverwrite || (isEditMode ? undefined : 'PUBLICADO')
             };
             const res = isEditMode
                 ? await updateEvento(editEventId!, payload)
@@ -139,6 +139,50 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
             } else {
                 setError(res.message || 'Erro ao guardar evento.');
                 setShowPublishConfirmModal(false);
+            }
+        });
+    };
+
+    const handleSaveDraft = () => {
+        setError('');
+        if (!titulo.trim()) { setError('O título do evento é obrigatório para salvar como rascunho.'); return; }
+        if (titulo.trim().length < 3) { setError('O título do evento deve ter pelo menos 3 caracteres.'); return; }
+        if (!descricao.trim()) { setError('A descrição do evento é obrigatória para salvar como rascunho.'); return; }
+        if (descricao.trim().length < 10) { setError('A descrição do evento deve ter pelo menos 10 caracteres.'); return; }
+        if (!dataInicio) { setError('A data de início é obrigatória.'); return; }
+        if (!dataFim) { setError('A data de fim é obrigatória.'); return; }
+        if (new Date(dataFim) <= new Date(dataInicio)) { setError('A data de fim deve ser posterior à data de início.'); return; }
+        if (formato === 'presencial' && !localizacao.trim()) { setError('A localização é obrigatória para salvar como rascunho.'); return; }
+
+        const days = getDiasEvento(dataInicio, dataFim);
+        const mappedLotes = lotes.map(l => ({
+            ...l,
+            tipo: l.tipo || 'DIARIO',
+            diasValidos: l.diasValidos || (l.tipo === 'GERAL' ? days.join(',') : (days[0] || ''))
+        }));
+
+        startTransition(async () => {
+            const payload = {
+                titulo,
+                descricao,
+                dataInicio,
+                dataFim,
+                localizacao,
+                organizadorId: userId,
+                lotes: mappedLotes,
+                bannerUrl: bannerUrl || undefined,
+                thumbnailUrl: thumbnailUrl || undefined,
+                formato,
+                categoria,
+                estado: 'RASCUNHO'
+            };
+            const res = isEditMode
+                ? await updateEvento(editEventId!, payload)
+                : await createEvento(payload);
+            if (res.success) {
+                onEventCreated();
+            } else {
+                setError(res.message || 'Erro ao guardar rascunho.');
             }
         });
     };
@@ -603,7 +647,9 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                     <span className="material-symbols-outlined text-[16px]">arrow_back</span>Voltar
                                 </button>
                             )}
-                            <button type="button" className="w-full mt-2 text-sm font-medium text-violet-300/60 hover:text-violet-300 hover:bg-white/5 rounded-lg py-2 transition-all text-center cursor-pointer active:scale-95">Salvar como Rascunho</button>
+                            <button type="button" onClick={handleSaveDraft} disabled={isPending} className="w-full mt-2 text-sm font-medium text-violet-300/60 hover:text-violet-300 hover:bg-white/5 rounded-lg py-2 transition-all text-center cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                                {isPending ? 'A guardar...' : 'Salvar como Rascunho'}
+                            </button>
                         </div>
                     </div>
                 </div>
