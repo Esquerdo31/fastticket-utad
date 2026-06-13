@@ -2,16 +2,16 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import { createEvento, getEventoById, updateEvento } from '@/app/actions/evento';
 
-interface Lote { 
+interface Lote {
     id?: number;
     tempId?: string;
-    nome: string; 
-    descricao: string; 
-    preco: number; 
-    lotacaoTotal: number; 
+    nome: string;
+    descricao: string;
+    preco: number;
+    lotacaoTotal: number;
     quantidadeDisponivel?: number;
-    tipo?: string; 
-    diasValidos?: string; 
+    tipo?: string;
+    diasValidos?: string;
     vendaInicio?: string;
     vendaFim?: string;
 }
@@ -24,7 +24,7 @@ function getDiasEvento(start: string, end: string) {
     const dias = [];
     let current = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
     const limit = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-    
+
     let safetyCounter = 0;
     while (current <= limit && safetyCounter < 30) {
         const y = current.getFullYear();
@@ -40,7 +40,7 @@ function getDiasEvento(start: string, end: string) {
 export default function CreateEventWizard({ userName, userId, onEventCreated, editEventId }: Props) {
     const isEditMode = !!editEventId;
     const [step, setStep] = useState(1);
-    const [formato, setFormato] = useState<'presencial'|'online'>('presencial');
+    const [formato, setFormato] = useState<'presencial' | 'online'>('presencial');
     const [titulo, setTitulo] = useState('');
     const [categoria, setCategoria] = useState('Conferência');
     const [dataInicio, setDataInicio] = useState('');
@@ -73,12 +73,12 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                 setFormato(res.data.formato || 'presencial');
                 setBannerUrl(res.data.bannerUrl || '');
                 setThumbnailUrl(res.data.thumbnailUrl || '');
-                setLotes(res.data.lotes.map((l: any) => ({ 
+                setLotes(res.data.lotes.map((l: any) => ({
                     id: l.id,
                     tempId: l.id.toString(),
-                    nome: l.nome, 
-                    descricao: l.descricao, 
-                    preco: l.preco, 
+                    nome: l.nome,
+                    descricao: l.descricao,
+                    preco: l.preco,
                     lotacaoTotal: l.lotacaoTotal,
                     quantidadeDisponivel: l.quantidadeDisponivel,
                     tipo: (l as any).tipo || 'DIARIO',
@@ -99,14 +99,14 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
 
     const addLote = () => {
         const days = getDiasEvento(dataInicio, dataFim);
-        setLotes([...lotes, { 
+        setLotes([...lotes, {
             tempId: Math.random().toString(),
-            nome: '', 
-            descricao: '', 
-            preco: 0, 
-            lotacaoTotal: 10, 
-            tipo: 'DIARIO', 
-            diasValidos: days[0] || '' 
+            nome: '',
+            descricao: '',
+            preco: 0,
+            lotacaoTotal: 10,
+            tipo: 'DIARIO',
+            diasValidos: days[0] || ''
         }]);
     };
     const removeLote = (i: number) => { if (lotes.length > 1) setLotes(lotes.filter((_, idx) => idx !== i)); };
@@ -116,15 +116,15 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
 
     const submitEvent = () => {
         startTransition(async () => {
-            const payload = { 
-                titulo, 
-                descricao, 
-                dataInicio, 
-                dataFim, 
-                localizacao, 
-                organizadorId: userId, 
-                lotes, 
-                bannerUrl: bannerUrl || undefined, 
+            const payload = {
+                titulo,
+                descricao,
+                dataInicio,
+                dataFim,
+                localizacao,
+                organizadorId: userId,
+                lotes,
+                bannerUrl: bannerUrl || undefined,
                 thumbnailUrl: thumbnailUrl || undefined,
                 formato,
                 categoria,
@@ -153,16 +153,17 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
             if (!dataInicio) { setError('A data de início é obrigatória.'); return; }
             if (!dataFim) { setError('A data de fim é obrigatória.'); return; }
             if (new Date(dataFim) <= new Date(dataInicio)) { setError('A data de fim deve ser posterior à data de início.'); return; }
-            
+
             const now = new Date();
             const checkTime = new Date(now.getTime() - 15 * 60 * 1000); // 15 min buffer
             if (!isEditMode && new Date(dataInicio) < checkTime) {
                 setError('A data de início do evento não pode ser no passado.');
                 return;
             }
-
-            if (!localizacao.trim()) { setError('A localização é obrigatória.'); return; }
-            if (localizacao.trim().length < 2) { setError('A localização do evento deve ter pelo menos 2 caracteres.'); return; }
+            if (formato === 'presencial') {
+                if (!localizacao.trim()) { setError('A localização é obrigatória.'); return; }
+                if (localizacao.trim().length < 2) { setError('A localização do evento deve ter pelo menos 2 caracteres.'); return; }
+            }
 
             const days = getDiasEvento(dataInicio, dataFim);
             setLotes(prev => prev.map(l => {
@@ -248,7 +249,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                 {/* Stepper */}
                 <div className="flex items-center justify-between mb-10 max-w-3xl mx-auto relative">
                     <div className="absolute top-5 left-0 w-full h-px bg-slate-200 -z-10" />
-                    {[{n:1,l:'Detalhes'},{n:2,l:'Bilheteira'},{n:3,l:'Publicação'}].map(s=>(
+                    {[{ n: 1, l: 'Detalhes' }, { n: 2, l: 'Bilheteira' }, { n: 3, l: 'Publicação' }].map(s => (
                         <div key={s.n} className="flex flex-col items-center gap-2 bg-[#f8fafc] px-4">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${step >= s.n ? 'bg-violet-700 text-white shadow-sm' : 'bg-slate-200 text-slate-500'}`}>{step > s.n ? '✓' : s.n}</div>
                             <span className={`text-xs font-bold tracking-widest uppercase transition-colors ${step >= s.n ? 'text-violet-700' : 'text-slate-400'}`}>{s.l}</span>
@@ -324,15 +325,15 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
                                         </div>
                                         <div className="w-full h-64 rounded-xl overflow-hidden relative border border-slate-200 bg-slate-100">
-                                            <iframe 
-                                                width="100%" 
-                                                height="100%" 
-                                                style={{ border: 0 }} 
-                                                loading="lazy" 
-                                                allowFullScreen 
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                style={{ border: 0 }}
+                                                loading="lazy"
+                                                allowFullScreen
                                                 title="Mapa de localização do evento"
                                                 sandbox="allow-scripts allow-same-origin allow-popups"
-                                                src={`https://maps.google.com/maps?q=${encodeURIComponent(localizacao || 'UTAD, Vila Real')}&t=&z=16&ie=UTF8&iwloc=&output=embed`} 
+                                                src={`https://maps.google.com/maps?q=${encodeURIComponent(localizacao || 'UTAD, Vila Real')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
                                             />
                                         </div>
                                     </div>
@@ -431,36 +432,36 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                                                     className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                                                                 >
                                                                     {getDiasEvento(dataInicio, dataFim).map(day => {
-                                                                    // Format using JS date or simple slice
-                                                                    const dateObj = new Date(day + 'T00:00:00');
-                                                                    const label = dateObj.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });
-                                                                    return (
-                                                                        <option key={day} value={day}>
-                                                                            {label}
-                                                                        </option>
-                                                                    );
-                                                                })}
-                                                                {getDiasEvento(dataInicio, dataFim).length === 0 && (
-                                                                    <option value="">(Defina primeiro as datas do evento)</option>
-                                                                )}
-                                                            </select>
-                                                        )}
-                                                    </div>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
-                                                        <div>
-                                                            <label htmlFor={`lote-venda-inicio-${i}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Início das Vendas (Opcional)</label>
-                                                            <input id={`lote-venda-inicio-${i}`} type="datetime-local" value={lote.vendaInicio || ''} onChange={e => updateLote(i, 'vendaInicio', e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                                        // Format using JS date or simple slice
+                                                                        const dateObj = new Date(day + 'T00:00:00');
+                                                                        const label = dateObj.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });
+                                                                        return (
+                                                                            <option key={day} value={day}>
+                                                                                {label}
+                                                                            </option>
+                                                                        );
+                                                                    })}
+                                                                    {getDiasEvento(dataInicio, dataFim).length === 0 && (
+                                                                        <option value="">(Defina primeiro as datas do evento)</option>
+                                                                    )}
+                                                                </select>
+                                                            )}
                                                         </div>
-                                                        <div>
-                                                            <label htmlFor={`lote-venda-fim-${i}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Fim das Vendas (Opcional)</label>
-                                                            <input id={`lote-venda-fim-${i}`} type="datetime-local" value={lote.vendaFim || ''} onChange={e => updateLote(i, 'vendaFim', e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
+                                                            <div>
+                                                                <label htmlFor={`lote-venda-inicio-${i}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Início das Vendas (Opcional)</label>
+                                                                <input id={`lote-venda-inicio-${i}`} type="datetime-local" value={lote.vendaInicio || ''} onChange={e => updateLote(i, 'vendaInicio', e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                            </div>
+                                                            <div>
+                                                                <label htmlFor={`lote-venda-fim-${i}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Fim das Vendas (Opcional)</label>
+                                                                <input id={`lote-venda-fim-${i}`} type="datetime-local" value={lote.vendaFim || ''} onChange={e => updateLote(i, 'vendaFim', e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm" />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                                 <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
                                     <h3 className="font-bold text-slate-900 mb-4">Resumo da Bilheteira</h3>
@@ -510,7 +511,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                                             <h4 className="font-bold text-slate-700 mb-3">Bilheteira ({lotes.length} lotes)</h4>
                                             <div className="space-y-2">
                                                 {lotes.map((l, i) => (
-                                                     <div key={l.tempId || l.id || i} className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                                    <div key={l.tempId || l.id || i} className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
                                                         <div>
                                                             <p className="font-bold text-slate-800">{l.nome}</p>
                                                             <p className="text-xs text-slate-500">{l.lotacaoTotal} bilhetes</p>
@@ -607,7 +608,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                     </div>
                 </div>
             </div>
-            
+
             {/* Modal de Confirmação de Publicação */}
             {showPublishConfirmModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
@@ -622,30 +623,30 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                         <div className="space-y-4 mb-6">
                             <div>
                                 <label htmlFor="confirm-publish-wizard" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Escreva "Confirmar" para prosseguir</label>
-                                <input 
+                                <input
                                     id="confirm-publish-wizard"
-                                    type="text" 
-                                    value={confirmText} 
-                                    onChange={e => setConfirmText(e.target.value)} 
-                                    placeholder="Escreva 'Confirmar'" 
+                                    type="text"
+                                    value={confirmText}
+                                    onChange={e => setConfirmText(e.target.value)}
+                                    placeholder="Escreva 'Confirmar'"
                                     className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700/20 focus:border-violet-700 text-sm font-semibold placeholder:text-slate-400"
                                 />
                             </div>
                         </div>
                         <div className="flex gap-3">
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 onClick={() => {
                                     setShowPublishConfirmModal(false);
                                     setConfirmText('');
-                                }} 
+                                }}
                                 className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-sm transition-all"
                             >
                                 Cancelar
                             </button>
-                            <button 
-                                type="button" 
-                                onClick={submitEvent} 
+                            <button
+                                type="button"
+                                onClick={submitEvent}
                                 disabled={confirmText !== 'Confirmar' || isPending}
                                 className="flex-1 bg-violet-700 hover:bg-violet-850 text-white font-bold py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-violet-700/20 cursor-pointer"
                             >
