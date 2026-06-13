@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 import { decrypt } from '../../../lib/session';
 
 // Mapa seguro de MIME types para extensões (evita path traversal via nome de ficheiro)
@@ -39,20 +37,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, message: 'Ficheiro demasiado grande. Máximo 5MB.' }, { status: 400 });
         }
 
+        // 3. Converter o ficheiro para Base64 Data URL (compatível com sistemas de ficheiros Read-Only de serverless)
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
+        const base64 = buffer.toString('base64');
+        const dataUrl = `data:${file.type};base64,${base64}`;
 
-        // 3. Gerar nome seguro derivado do MIME type (não do nome original do ficheiro)
-        const ext = mimeToExt[file.type];
-        const filename = `evento-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-        await mkdir(uploadDir, { recursive: true });
-
-        const filepath = path.join(uploadDir, filename);
-        await writeFile(filepath, buffer);
-
-        return NextResponse.json({ success: true, url: `/uploads/${filename}` });
+        return NextResponse.json({ success: true, url: dataUrl });
     } catch (error: any) {
         console.error('Erro no upload:', error);
         return NextResponse.json({ success: false, message: 'Erro no upload.' }, { status: 500 });

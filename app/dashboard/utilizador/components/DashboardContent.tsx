@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { slugify } from '@/lib/slug';
 
 interface TicketItem {
     id: number;
@@ -474,7 +475,7 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                     <h2 className="text-2xl font-bold tracking-tight text-slate-800">Recomendações</h2>
                     <div className="space-y-4">
                         {suggestions.map((suggestion) => (
-                            <Link href={`/evento/${suggestion.id}`} key={suggestion.id} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 hover:border-[#006837]/40 hover:shadow-md transition-all group cursor-pointer">
+                            <Link href={`/evento/${suggestion.id}-${slugify(suggestion.title)}`} key={suggestion.id} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 hover:border-[#006837]/40 hover:shadow-md transition-all group cursor-pointer">
                                 <div className="h-32 relative bg-gradient-to-br from-[#0b2818] to-[#006837] p-6 flex items-center justify-center text-center">
                                     <div className="absolute top-3 left-3">
                                         <span className="bg-white/20 backdrop-blur-sm border border-white/30 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">

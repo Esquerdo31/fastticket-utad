@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { getEventStatus, getEventStatusLabel, getEventStatusColor } from '@/lib/eventStatus';
 import { publicarEvento } from '@/app/actions/evento';
+import { slugify } from '@/lib/slug';
 
 interface EventoStat {
     id: number;
@@ -169,7 +170,7 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                                 return (
                                     <tr key={evento.id} className="hover:bg-slate-50/50 transition-colors group">
                                         <td className="p-4 pl-6">
-                                            <Link href={`/evento/${evento.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+                                            <Link href={`/evento/${evento.id}-${slugify(evento.titulo)}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
                                                 <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-violet-700 shrink-0">
                                                     <span className="material-symbols-outlined text-[20px]">campaign</span>
                                                 </div>
@@ -229,7 +230,7 @@ export default function OrganizerEvents({ eventos, onCreateEvent, onEditEvent }:
                                                         <span className="material-symbols-outlined text-[20px]">publish</span>
                                                     </button>
                                                 )}
-                                                <Link href={`/evento/${evento.id}/editar`} className="p-2 text-violet-600 hover:bg-violet-50 hover:text-violet-800 rounded-lg transition-all active:scale-95 cursor-pointer" title="Editar evento">
+                                                <Link href={`/evento/${evento.id}-${slugify(evento.titulo)}/editar`} className="p-2 text-violet-600 hover:bg-violet-50 hover:text-violet-800 rounded-lg transition-all active:scale-95 cursor-pointer" title="Editar evento">
                                                     <span className="material-symbols-outlined text-[20px]">edit</span>
                                                 </Link>
                                             </div>

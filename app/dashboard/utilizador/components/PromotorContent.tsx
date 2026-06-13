@@ -2,6 +2,7 @@
 
 import React, { useState, useTransition } from 'react';
 import { responderConvitePromotor } from '@/app/actions/promotores';
+import { slugify } from '@/lib/slug';
 
 interface PromotorItem {
     id: number;
@@ -53,7 +54,7 @@ export default function PromotorContent({ parcerias, onRefresh }: PromotorConten
 
     const handleCopyLink = (partnership: PromotorItem) => {
         const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-        const referralLink = `${origin}/evento/${partnership.eventoId}?ref=${partnership.linkSlug}`;
+        const referralLink = `${origin}/evento/${partnership.eventoId}-${slugify(partnership.eventoTitulo)}?ref=${partnership.linkSlug}`;
         
         navigator.clipboard.writeText(referralLink).then(() => {
             setCopiedId(partnership.id);
@@ -219,7 +220,7 @@ export default function PromotorContent({ parcerias, onRefresh }: PromotorConten
                                                 <div className="min-w-0 flex-1">
                                                     <p className="text-[9px] uppercase tracking-wider text-slate-400 font-bold mb-0.5">O Seu Link de Afiliado</p>
                                                     <p className="text-xs font-mono font-bold text-slate-600 truncate">
-                                                        {typeof window !== 'undefined' ? `${window.location.origin}/evento/${partnership.eventoId}?ref=${partnership.linkSlug}` : `/evento/${partnership.eventoId}?ref=${partnership.linkSlug}`}
+                                                        {typeof window !== 'undefined' ? `${window.location.origin}/evento/${partnership.eventoId}-${slugify(partnership.eventoTitulo)}?ref=${partnership.linkSlug}` : `/evento/${partnership.eventoId}-${slugify(partnership.eventoTitulo)}?ref=${partnership.linkSlug}`}
                                                     </p>
                                                 </div>
                                                 <button

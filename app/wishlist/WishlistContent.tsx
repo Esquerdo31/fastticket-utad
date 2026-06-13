@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import Header from '@/app/components/Header';
 import { toggleWishlist } from '../actions/engagement';
+import { slugify } from '@/lib/slug';
 
 interface WishlistContentProps {
     initialResult: {
@@ -92,7 +93,7 @@ export default function WishlistContent({ initialResult, session }: WishlistCont
                         {eventos.map((evento: any) => (
                             <Link
                                 key={evento.id}
-                                href={`/evento/${evento.id}`}
+                                href={`/evento/${evento.id}-${slugify(evento.title)}`}
                                 className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all cursor-pointer relative"
                             >
                                 <div className={`relative flex h-44 items-center justify-center overflow-hidden p-6 text-center ${evento.bannerUrl && evento.mostrarBanner ? "" : "bg-gradient-to-br from-[#0b2818] to-[#006837]"}`}>

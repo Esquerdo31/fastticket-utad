@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { getEventos } from "./actions/event";
 import { getEventStatus } from "@/lib/eventStatus";
 import Header from "@/app/components/Header";
+import { slugify } from "@/lib/slug";
 
 function MaterialIcon({ name, className = "" }: { name: string; className?: string }) {
     return <span className={`material-symbols-outlined ${className}`}>{name}</span>;
@@ -131,7 +132,7 @@ export default function UTADFastTicketPage() {
                                         <span className="flex items-center gap-1.5"><MaterialIcon name="location_on" className="text-emerald-400 text-base" />{heroEvent.location}</span>
                                         <span className="flex items-center gap-1.5 text-emerald-300 font-bold"><MaterialIcon name="local_activity" className="text-base" />{heroEvent.price}</span>
                                     </div>
-                                    <Link href={`/evento/${heroEvent.id}`} className="inline-flex items-center gap-2 bg-[#006837] text-white px-7 py-3.5 rounded-xl font-bold hover:bg-emerald-700 active:scale-95 transition-all shadow-xl shadow-emerald-900/30">
+                                    <Link href={`/evento/${heroEvent.id}-${slugify(heroEvent.title)}`} className="inline-flex items-center gap-2 bg-[#006837] text-white px-7 py-3.5 rounded-xl font-bold hover:bg-emerald-700 active:scale-95 transition-all shadow-xl shadow-emerald-900/30">
                                         Comprar Bilhete <MaterialIcon name="arrow_forward" className="text-lg" />
                                     </Link>
                                 </div>
@@ -182,7 +183,7 @@ export default function UTADFastTicketPage() {
 
                             <div ref={carouselRef} className="carousel-scroll flex gap-4 overflow-x-auto px-6 pb-4" style={{ paddingLeft: 'max(1.5rem, calc((100vw - 1280px) / 2 + 1.5rem))' }}>
                                 {dbEvents.map((ev) => (
-                                    <Link href={`/evento/${ev.id}`} key={ev.id} className="carousel-card group flex-shrink-0 w-[220px] md:w-[260px]">
+                                    <Link href={`/evento/${ev.id}-${slugify(ev.title)}`} key={ev.id} className="carousel-card group flex-shrink-0 w-[220px] md:w-[260px]">
                                         <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-3 bg-[#1c2333] border border-white/5 group-hover:border-emerald-500/30 transition-all group-hover:shadow-xl group-hover:shadow-emerald-500/5">
                                             {ev.bannerUrl || ev.thumbnailUrl ? (
                                                 <img src={ev.thumbnailUrl || ev.bannerUrl} alt={ev.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

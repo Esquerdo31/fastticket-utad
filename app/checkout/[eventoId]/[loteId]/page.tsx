@@ -6,12 +6,13 @@ import Link from 'next/link';
 import { getEventoById } from '../../../actions/event';
 import { criarSessaoCheckout, simularPagamento } from '../../../actions/pagamento';
 import { getActiveSession } from '../../../actions/auth';
+import { slugify } from '@/lib/slug';
 
 export default function CheckoutPage() {
     const params = useParams();
     const router = useRouter();
 
-    const eventoId = Number(params.eventoId);
+    const eventoId = Number((params.eventoId as string).split('-')[0]);
     const loteId = Number(params.loteId);
 
     const [evento, setEvento] = useState<any>(null);
@@ -256,7 +257,7 @@ export default function CheckoutPage() {
                 {/* Botão de Voltar */}
                 <button
                     type="button"
-                    onClick={() => router.push(`/evento/${evento.id}`)}
+                    onClick={() => router.push(`/evento/${evento.id}-${slugify(evento.title)}`)}
                     className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-medium text-sm mb-8"
                 >
                     <span className="material-symbols-outlined text-[18px]">arrow_back</span>

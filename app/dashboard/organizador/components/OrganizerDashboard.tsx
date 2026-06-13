@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { slugify } from '@/lib/slug';
 import { solicitarAcessoPromotores } from '@/app/actions/organizador';
 import type { OrganizerStats } from '@/app/actions/organizador';
 import OrganizerStatsPanel from './OrganizerStatsPanel';
@@ -183,7 +184,7 @@ export default function OrganizerDashboard({ userName, summary, nextEvents, orga
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {nextEvents.length > 0 ? nextEvents.map((evento) => (
-                        <Link href={`/evento/${evento.id}`} key={evento.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-lg hover:border-violet-200 hover:-translate-y-0.5 transition-all group cursor-pointer">
+                        <Link href={`/evento/${evento.id}-${slugify(evento.titulo)}`} key={evento.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-lg hover:border-violet-200 hover:-translate-y-0.5 transition-all group cursor-pointer">
                             <div className="p-6 flex-1">
                                 <div className="flex justify-between items-start mb-4">
                                     <span className="bg-violet-100 text-violet-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">

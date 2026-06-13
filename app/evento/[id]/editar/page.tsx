@@ -49,7 +49,7 @@ interface Lote {
 export default function EditarEventoPage() {
     const params = useParams();
     const router = useRouter();
-    const eventoId = Number(params.id);
+    const eventoId = Number((params.id as string).split('-')[0]);
 
     const [tab, setTab] = useState<Tab>('detalhes');
     const [titulo, setTitulo] = useState('');

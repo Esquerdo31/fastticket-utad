@@ -24,10 +24,11 @@ export default function EventDetailsDynamic() {
 
     useEffect(() => {
         if (typeof window !== 'undefined' && params.id) {
+            const cleanId = Number((params.id as string).split('-')[0]);
             const urlParams = new URLSearchParams(window.location.search);
             const ref = urlParams.get('ref');
             if (ref) {
-                localStorage.setItem(`promotor_ref_${Number(params.id)}`, ref);
+                localStorage.setItem(`promotor_ref_${cleanId}`, ref);
             }
         }
     }, [params.id]);
@@ -35,7 +36,8 @@ export default function EventDetailsDynamic() {
     useEffect(() => {
         getActiveSession().then(setUserSession);
         if (params.id) {
-            getEventoById(Number(params.id))
+            const cleanId = Number((params.id as string).split('-')[0]);
+            getEventoById(cleanId)
                 .then(res => {
                     if (res.success && res.data) {
                         setEvento(res.data);

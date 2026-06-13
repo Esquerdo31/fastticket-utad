@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { slugify } from '@/lib/slug';
 
 interface TicketItem {
     id: number;
@@ -333,7 +334,7 @@ export default function TicketsContent({ tickets }: TicketsContentProps) {
                                             className="flex items-center gap-2 px-4 py-2.5 bg-[#006837] text-white rounded-lg text-sm font-bold hover:bg-emerald-800 active:scale-95 transition-all">
                                             <span className="material-symbols-outlined text-[18px]">qr_code_2</span>{isExpanded ? 'Esconder' : 'QR Code'}
                                         </button>
-                                        <Link href={`/evento/${ticket.eventoId}`} className="p-2.5 border border-slate-200 rounded-lg text-slate-500 hover:text-[#006837] hover:border-[#006837]/30 transition-colors">
+                                        <Link href={`/evento/${ticket.eventoId}-${slugify(ticket.eventoTitulo)}`} className="p-2.5 border border-slate-200 rounded-lg text-slate-500 hover:text-[#006837] hover:border-[#006837]/30 transition-colors">
                                             <span className="material-symbols-outlined text-[18px]">open_in_new</span>
                                         </Link>
                                     </div>

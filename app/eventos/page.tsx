@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getEventos } from '../actions/event';
 import { getEventStatus, getEventStatusLabel, getEventStatusColor } from '@/lib/eventStatus';
 import Header from '@/app/components/Header';
+import { slugify } from '@/lib/slug';
 
 type EventCard = {
     id: number;
@@ -359,7 +360,7 @@ const UTADFastTicket = () => {
                                     lotes: event.lotes
                                 });
                                 return (
-                                    <Link href={`/evento/${event.id}`} key={event.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-100 flex flex-col">
+                                    <Link href={`/evento/${event.id}-${slugify(event.title)}`} key={event.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-100 flex flex-col">
                                         <div className={`relative h-44 overflow-hidden ${!event.bannerUrl ? 'bg-gradient-to-br from-[#0b2818] to-[#006837]' : ''} flex items-center justify-center p-6 text-center`}>
                                             {event.bannerUrl && <img src={event.bannerUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />}
                                             {event.bannerUrl && <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />}
