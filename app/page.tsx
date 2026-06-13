@@ -224,7 +224,7 @@ export default function UTADFastTicketPage() {
                                 <Link href="/eventos" className="hover:text-white transition-colors text-xs font-medium">Explorar Eventos</Link>
                                 <Link href="/ajuda" className="hover:text-white transition-colors text-xs font-medium">Ajuda</Link>
                             </div>
-                            <p className="text-xs">© 2026 UTAD FastTicket. Academia Portuguesa.</p>
+                            <p className="text-xs">© 2026 UTAD FastTicket. Projeto Universitário Português.</p>
                         </div>
                     </div>
                 </footer>
