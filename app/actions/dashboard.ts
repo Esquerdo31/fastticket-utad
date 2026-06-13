@@ -115,7 +115,8 @@ export async function getDashboardData(userId: number) {
                 id: ev.id,
                 title: ev.titulo,
                 description: ev.descricao,
-                date: dateStr
+                date: dateStr,
+                bannerUrl: ev.bannerUrl || null
             };
         });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { logoutUser } from '@/app/actions/auth';
@@ -59,6 +59,30 @@ export default function OrganizerShell({
     const [editEventId, setEditEventId] = useState<number | null>(null);
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        const saved = localStorage.getItem(`profileAvatar_${user.id}`);
+        if (saved) setAvatarUrl(saved);
+
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === `profileAvatar_${user.id}` && e.newValue) {
+                setAvatarUrl(e.newValue);
+            }
+        };
+        const handleAvatarChanged = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (detail?.userId === user.id && detail?.avatarUrl) {
+                setAvatarUrl(detail.avatarUrl);
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        window.addEventListener('avatarChanged', handleAvatarChanged);
+        return () => {
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('avatarChanged', handleAvatarChanged);
+        };
+    }, [user.id]);
 
     React.useEffect(() => {
         if (initialTab) {
@@ -115,7 +139,11 @@ export default function OrganizerShell({
                         className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none"
                     >
                         <span className="text-sm font-semibold text-violet-700">{userName}</span>
-                        <span className="material-symbols-outlined text-violet-700">account_circle</span>
+                        {avatarUrl ? (
+                            <img src={avatarUrl} alt="Avatar" className="w-7 h-7 rounded-full object-cover border-2 border-violet-200" />
+                        ) : (
+                            <span className="material-symbols-outlined text-violet-700">account_circle</span>
+                        )}
                     </button>
                     <button 
                         type="button"

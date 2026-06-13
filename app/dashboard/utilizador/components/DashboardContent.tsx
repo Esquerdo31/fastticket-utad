@@ -355,6 +355,7 @@ interface SuggestionItem {
     title: string;
     description: string;
     date: string;
+    bannerUrl?: string | null;
 }
 
 interface DashboardContentProps {
@@ -476,13 +477,25 @@ export default function DashboardContent({ userName, nextEvents, suggestions, pa
                     <div className="space-y-4">
                         {suggestions.map((suggestion) => (
                             <Link href={`/evento/${suggestion.id}-${slugify(suggestion.title)}`} key={suggestion.id} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 hover:border-[#006837]/40 hover:shadow-md transition-all group cursor-pointer">
-                                <div className="h-32 relative bg-gradient-to-br from-[#0b2818] to-[#006837] p-6 flex items-center justify-center text-center">
+                                <div className="h-40 relative overflow-hidden flex items-center justify-center text-center">
+                                    {suggestion.bannerUrl ? (
+                                        <>
+                                            <img 
+                                                src={suggestion.bannerUrl} 
+                                                alt={suggestion.title}
+                                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+                                        </>
+                                    ) : (
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[#0b2818] to-[#006837]" />
+                                    )}
                                     <div className="absolute top-3 left-3">
                                         <span className="bg-white/20 backdrop-blur-sm border border-white/30 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
                                             Recomendado
                                         </span>
                                     </div>
-                                    <h4 className="font-bold text-white leading-tight drop-shadow-md">{suggestion.title}</h4>
+                                    <h4 className="font-bold text-white leading-tight drop-shadow-md relative z-10 px-6">{suggestion.title}</h4>
                                 </div>
                                 <div className="p-5">
                                     <div className="flex items-center gap-1.5 text-[#006837] text-xs font-bold mb-2">

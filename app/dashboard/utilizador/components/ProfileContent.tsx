@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useRef, useEffect } from 'react';
 import { updateProfileData, changePassword } from '@/app/actions/profile';
 
 interface ProfileContentProps {
@@ -30,6 +30,53 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [modalMessage, setModalMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [isModalPending, startModalTransition] = useTransition();
+
+    // Profile photo state
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [customAvatar, setCustomAvatar] = useState<string | null>(null);
+
+    // Load saved avatar from localStorage on mount
+    useEffect(() => {
+        const savedAvatar = localStorage.getItem(`profileAvatar_${user.id}`);
+        if (savedAvatar) {
+            setCustomAvatar(savedAvatar);
+        }
+    }, [user.id]);
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            setSaveMessage({ type: 'error', text: 'Formato inválido. Use JPG, PNG ou WebP.' });
+            return;
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            setSaveMessage({ type: 'error', text: 'Ficheiro demasiado grande. Máximo 5MB.' });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const dataUrl = event.target?.result as string;
+            setCustomAvatar(dataUrl);
+            localStorage.setItem(`profileAvatar_${user.id}`, dataUrl);
+            // Dispatch custom event for same-tab listeners (storage event only fires cross-tab)
+            window.dispatchEvent(new CustomEvent('avatarChanged', { detail: { userId: user.id, avatarUrl: dataUrl } }));
+            setSaveMessage({ type: 'success', text: 'Foto de perfil atualizada!' });
+        };
+        reader.readAsDataURL(file);
+
+        // Reset input so the same file can be selected again
+        e.target.value = '';
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -105,8 +152,19 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
     const toggleBg = isOrg ? 'bg-violet-700' : 'bg-[#006837]';
     const buttonPrimary = isOrg ? 'bg-violet-700 hover:bg-violet-800 shadow-violet-700/20' : 'bg-[#006837] hover:bg-emerald-800 shadow-emerald-900/20';
 
+    const avatarSrc = customAvatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(user.nome)}&backgroundColor=e2e8f0`;
+
     return (
         <>
+            {/* Hidden file input for profile photo */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarChange}
+            />
+
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-slate-900 mb-2">Definições de Perfil</h1>
@@ -123,12 +181,12 @@ export default function ProfileContent({ user, onLogout }: ProfileContentProps) 
                         <div className="relative mb-4">
                             <div className="w-32 h-32 rounded-full border-4 border-slate-50 overflow-hidden bg-slate-100">
                                 <img
-                                    src={`https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(user.nome)}&backgroundColor=e2e8f0`}
+                                    src={avatarSrc}
                                     alt="Avatar"
                                     className="w-full h-full object-cover"
                                 />
                             </div>
-                            <button type="button" className={`absolute bottom-1 right-1 w-8 h-8 ${primaryBg} text-white rounded-full border-2 border-white flex items-center justify-center hover:opacity-90 transition-colors`}>
+                            <button type="button" onClick={handleAvatarClick} className={`absolute bottom-1 right-1 w-8 h-8 ${primaryBg} text-white rounded-full border-2 border-white flex items-center justify-center hover:opacity-90 transition-colors cursor-pointer`}>
                                 <span className="material-symbols-outlined text-sm">edit</span>
                             </button>
                         </div>

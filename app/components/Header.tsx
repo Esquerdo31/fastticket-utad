@@ -11,9 +11,37 @@ export default function Header() {
     const [userSession, setUserSession] = useState<any>(null);
     const [isPending, startTransition] = useTransition();
     const [showDropdown, setShowDropdown] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
     useEffect(() => {
-        getActiveSession().then(setUserSession);
+        getActiveSession().then((session) => {
+            setUserSession(session);
+            if (session?.userId) {
+                const saved = localStorage.getItem(`profileAvatar_${session.userId}`);
+                if (saved) setAvatarUrl(saved);
+            }
+        });
+    }, []);
+
+    // Listen for avatar changes from other components
+    useEffect(() => {
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key && e.key.startsWith('profileAvatar_') && e.newValue) {
+                setAvatarUrl(e.newValue);
+            }
+        };
+        const handleAvatarChanged = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (detail?.avatarUrl) {
+                setAvatarUrl(detail.avatarUrl);
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        window.addEventListener('avatarChanged', handleAvatarChanged);
+        return () => {
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('avatarChanged', handleAvatarChanged);
+        };
     }, []);
 
     const handleLogout = () => {
@@ -85,7 +113,11 @@ export default function Header() {
                                 title="Menu de Utilizador"
                             >
                                 <span className="text-xs md:text-sm font-bold max-w-[100px] md:max-w-[150px] truncate">{userSession.nome || userSession.email.split("@")[0]}</span>
-                                <span className="material-symbols-outlined text-emerald-700 text-[22px]">account_circle</span>
+                                {avatarUrl ? (
+                                    <img src={avatarUrl} alt="Avatar" className="w-7 h-7 rounded-full object-cover border-2 border-emerald-200" />
+                                ) : (
+                                    <span className="material-symbols-outlined text-emerald-700 text-[22px]">account_circle</span>
+                                )}
                                 <span className="material-symbols-outlined text-[16px] text-slate-400">keyboard_arrow_down</span>
                             </button>
 
@@ -144,7 +176,7 @@ export default function Header() {
                         href="/login" 
                         className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-700/10 hover:shadow-lg active:scale-95 transition-all duration-200"
                     >
-                        Sign In
+                        Iniciar Sessão
                     </Link>
                 )}
             </div>

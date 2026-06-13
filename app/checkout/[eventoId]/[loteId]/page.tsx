@@ -247,8 +247,8 @@ export default function CheckoutPage() {
                         UTAD FastTicket
                     </Link>
                     <nav className="flex gap-6 text-sm font-semibold text-slate-500">
-                        <Link href="/eventos" className="hover:text-[#006837]">Events</Link>
-                        <Link href="/dashboard" className="hover:text-[#006837]">Tickets</Link>
+                        <Link href="/eventos" className="hover:text-[#006837]">Eventos</Link>
+                        <Link href="/dashboard" className="hover:text-[#006837]">Bilhetes</Link>
                     </nav>
                 </div>
             </header>
@@ -261,7 +261,7 @@ export default function CheckoutPage() {
                     className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-medium text-sm mb-8"
                 >
                     <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                    Return to Events
+                    Voltar ao Evento
                 </button>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -272,8 +272,8 @@ export default function CheckoutPage() {
                         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col sm:flex-row shadow-sm">
                             <div className="bg-[#006837] sm:w-1/3 p-6 relative overflow-hidden flex flex-col justify-center text-white min-h-[160px]">
                                 <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-                                <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-300/80 mb-2 z-10">Official Portal</span>
-                                <h2 className="text-2xl font-bold leading-tight z-10">Secure Academic<br />Checkout</h2>
+                                <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-300/80 mb-2 z-10">Portal Oficial</span>
+                                <h2 className="text-2xl font-bold leading-tight z-10">Checkout<br />Académico Seguro</h2>
                             </div>
                             <div className="p-8 flex flex-col justify-center sm:w-2/3">
                                 <h2 className="text-2xl font-extrabold text-slate-800 mb-2">Verifica a tua Compra</h2>
@@ -285,7 +285,7 @@ export default function CheckoutPage() {
 
                         {/* Selected Tickets */}
                         <div>
-                            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Selected Tickets</h3>
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Bilhetes Selecionados</h3>
 
                             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -386,7 +386,7 @@ export default function CheckoutPage() {
 
                         <div className="flex items-center gap-3 text-xs text-slate-400 font-medium">
                             <span className="material-symbols-outlined text-[16px]">lock</span>
-                            <p>Powered by Stripe. Your payment data is never stored on our servers.</p>
+                            <p>Processado por Stripe. Os seus dados de pagamento nunca são armazenados nos nossos servidores.</p>
                         </div>
                     </div>
 
@@ -394,7 +394,7 @@ export default function CheckoutPage() {
                     <div className="lg:col-span-4">
                         <div className="bg-white border border-[#006837] rounded-2xl shadow-xl shadow-[#006837]/5 overflow-hidden sticky top-28">
                             <div className="bg-[#006837] px-6 py-5">
-                                <h3 className="text-white font-bold text-lg">Order Summary</h3>
+                                <h3 className="text-white font-bold text-lg">Resumo da Encomenda</h3>
                             </div>
 
                             <div className="p-6">
@@ -406,11 +406,11 @@ export default function CheckoutPage() {
                                     {!isFree && (
                                         <>
                                             <div className="flex justify-between">
-                                                <span>Service Fees</span>
+                                                <span>Taxas de Serviço</span>
                                                 <span className="font-medium text-slate-800">€{serviceFees.toFixed(2)}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span>University Tax</span>
+                                                <span>Taxa Universitária</span>
                                                 <span className="font-medium text-slate-800">€{tax.toFixed(2)}</span>
                                             </div>
                                         </>
@@ -419,22 +419,22 @@ export default function CheckoutPage() {
 
                                 <div className="flex justify-between items-end mb-6">
                                     <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Total Amount</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Valor Total</p>
                                         <div className="text-3xl font-black text-[#006837] leading-none">
                                             €{totalAmount.toFixed(2)}
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[9px] text-slate-400 font-bold uppercase">INC. VAT</p>
-                                        <p className="text-[10px] bg-emerald-100 text-[#006837] px-2 py-0.5 rounded font-bold mt-1">SECURE PAY</p>
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase">IVA INCL.</p>
+                                        <p className="text-[10px] bg-emerald-100 text-[#006837] px-2 py-0.5 rounded font-bold mt-1">PAGAMENTO SEGURO</p>
                                     </div>
                                 </div>
 
                                 <div className="bg-slate-50 rounded-xl p-4 flex gap-3 mb-6 border border-slate-100">
                                     <span className="material-symbols-outlined text-[#006837]">verified_user</span>
                                     <div>
-                                        <h4 className="text-xs font-bold text-slate-800 mb-0.5">SSL Encrypted Connection</h4>
-                                        <p className="text-[10px] text-slate-500 leading-relaxed">Your financial data is handled with institutional-grade security.</p>
+                                        <h4 className="text-xs font-bold text-slate-800 mb-0.5">Conexão Encriptada SSL</h4>
+                                        <p className="text-[10px] text-slate-500 leading-relaxed">Os seus dados financeiros são tratados com segurança de nível institucional.</p>
                                     </div>
                                 </div>
 
@@ -446,7 +446,7 @@ export default function CheckoutPage() {
                                         ${(processing || userSession?.role === "ORGANIZADOR" || userSession?.role === "STAFF" || userSession?.role === "ADMIN") ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#006837] shadow-lg shadow-[#006837]/20 hover:bg-emerald-800'}
                                     `}
                                 >
-                                    {processing ? 'Processing...' : 'Finalize Purchase'}
+                                    {processing ? 'A processar...' : 'Finalizar Compra'}
                                     {!processing && <span className="material-symbols-outlined text-[18px]">arrow_forward</span>}
                                 </button>
 
@@ -464,7 +464,7 @@ export default function CheckoutPage() {
                                 )}
 
                                 <p className="text-center text-[10px] text-slate-400 mt-4 leading-relaxed">
-                                    By clicking Finalize Purchase, you agree to the <a href="#" className="underline hover:text-slate-600">Terms of Service</a> and <a href="#" className="underline hover:text-slate-600">Privacy Policy</a> of UTAD FastTicket.
+                                    Ao clicar em Finalizar Compra, concorda com os <a href="#" className="underline hover:text-slate-600">Termos de Serviço</a> e a <a href="#" className="underline hover:text-slate-600">Política de Privacidade</a> do UTAD FastTicket.
                                 </p>
                             </div>
                         </div>
