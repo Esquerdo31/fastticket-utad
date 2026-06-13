@@ -692,7 +692,7 @@ export default function CreateEventWizard({ userName, userId, onEventCreated, ed
                             </button>
                             <button
                                 type="button"
-                                onClick={submitEvent}
+                                onClick={() => submitEvent('PUBLICADO')}
                                 disabled={confirmText !== 'Confirmar' || isPending}
                                 className="flex-1 bg-violet-700 hover:bg-violet-850 text-white font-bold py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-violet-700/20 cursor-pointer"
                             >
