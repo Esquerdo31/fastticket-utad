@@ -303,10 +303,21 @@ export default function StaffShell({ userName, eventos, user }: StaffShellProps)
             <header className="fixed top-0 z-50 w-full bg-white shadow-sm flex justify-between items-center px-4 sm:px-6 py-3 border-b border-slate-200">
                 <div className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-emerald-600 font-bold text-2xl">qr_code_scanner</span>
-                    <span className="text-lg font-black text-slate-900 tracking-tight">FastTicket Staff</span>
+                    <span className="text-lg font-black text-slate-900 tracking-tight">
+                        {user.role === 'ORGANIZADOR' ? 'FastTicket Scanner' : 'FastTicket Staff'}
+                    </span>
                 </div>
                 <div className="flex items-center gap-3">
                     <span className="text-xs font-semibold text-slate-500 hidden sm:inline">{userName}</span>
+                    {user.role === 'ORGANIZADOR' && (
+                        <button 
+                            type="button"
+                            onClick={() => router.push('/dashboard')} 
+                            className="px-3 py-1.5 bg-violet-50 text-violet-700 border border-violet-100 hover:bg-violet-100 hover:text-violet-850 transition-all active:scale-95 text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
+                        >
+                            <span className="material-symbols-outlined text-sm">dashboard</span> Painel Organizador
+                        </button>
+                    )}
                     <button 
                         type="button"
                         onClick={handleLogout} 

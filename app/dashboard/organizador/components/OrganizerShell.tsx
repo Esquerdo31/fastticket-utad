@@ -14,7 +14,7 @@ import OrganizerPromoters from './OrganizerPromoters';
 import OrganizerStaff from './OrganizerStaff';
 import PromotorContent from '../../utilizador/components/PromotorContent';
 
-type ActiveTab = 'dashboard' | 'events' | 'sales' | 'profile' | 'create-event' | 'edit-event' | 'promoters' | 'staff' | 'promotor';
+type ActiveTab = 'dashboard' | 'events' | 'sales' | 'profile' | 'create-event' | 'edit-event' | 'promoters' | 'staff' | 'promotor' | 'checkin';
 
 interface OrganizerShellProps {
     userName: string;
@@ -91,6 +91,10 @@ export default function OrganizerShell({
     }, [initialTab]);
 
     const handleTabChange = (tab: ActiveTab) => {
+        if (tab === 'checkin') {
+            router.push('/dashboard/staff');
+            return;
+        }
         setActiveTab(tab);
     };
 
@@ -113,12 +117,14 @@ export default function OrganizerShell({
         ...(pedidoPromotores === 'APROVADO' ? [{ id: 'promoters' as ActiveTab, icon: 'groups', label: 'Núcleos & Promotores' }] : []),
         ...(parcerias.length > 0 ? [{ id: 'promotor' as ActiveTab, icon: 'handshake', label: 'Minhas Parcerias' }] : []),
         { id: 'staff', icon: 'badge', label: 'Equipa Staff' },
+        { id: 'checkin', icon: 'qr_code_scanner', label: 'Scanner / Entradas' },
         { id: 'profile', icon: 'person', label: 'Definições' },
     ];
 
     const bottomNavItems: { id: ActiveTab; icon: string; label: string }[] = [
         { id: 'dashboard', icon: 'dashboard', label: 'Painel' },
         { id: 'events', icon: 'campaign', label: 'Eventos' },
+        { id: 'checkin', icon: 'qr_code_scanner', label: 'Scanner' },
         ...(parcerias.length > 0 ? [{ id: 'promotor' as ActiveTab, icon: 'handshake', label: 'Parcerias' }] : []),
         { id: 'sales', icon: 'analytics', label: 'Vendas' },
         { id: 'profile', icon: 'person', label: 'Perfil' },
