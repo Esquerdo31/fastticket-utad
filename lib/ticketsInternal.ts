@@ -1,5 +1,5 @@
 import prisma from "./prisma";
-import { enviarEmailBilhete } from "./email";
+import { enviarEmailBilhetes } from "./email";
 
 /**
  * Esta função é chamada pelo webhook do Stripe e simulações de pagamento de forma interna.
@@ -97,11 +97,7 @@ export async function processarPagamentoWebhook(metadata: {
         });
 
         if (user) {
-            const bilhetesFormatados = resultado.bilhetes.map(b => ({
-                qrCodeToken: b.qrCodeToken,
-                loteNome: lote.nome,
-            }));
-            await enviarEmailBilhete(user.email, user.nome, bilhetesFormatados, lote.evento);
+            await enviarEmailBilhetes(user.email, user.nome, resultado.pedido.id);
         }
 
         return { success: true };

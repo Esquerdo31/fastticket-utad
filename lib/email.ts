@@ -1,41 +1,74 @@
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
 /**
- * Serviço de e-mail simulado para envio de bilhetes do UTAD FastTicket.
- * Imprime os detalhes do bilhete no terminal do servidor.
+ * Simula o envio de e-mail de confirmação com os bilhetes comprados imprimindo no terminal.
+ * Zero dependências externas (sem resend ou nodemailer), ideal para apresentações e ambiente local gratuito.
  */
-export async function enviarEmailBilhete(
-    email: string,
-    nome: string,
-    bilhetes: { qrCodeToken: string; loteNome: string }[],
-    evento: { titulo: string; localizacao: string; dataInicio: Date | string }
-) {
-    const dataInicioFormated = new Date(evento.dataInicio).toLocaleString('pt-PT', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+export async function enviarEmailBilhetes(toEmail: string, clientName: string, pedidoId: number) {
+    const linkPainel = `${baseUrl}/dashboard?tab=tickets`;
+    const subject = '🎫 Os seus Bilhetes já estão disponíveis! - UTAD FastTicket';
 
-    console.log("\n" + "=".repeat(75));
-    console.log(`📧 [EMAIL SIMULATION] Enviando e-mail para: ${email} (${nome})`);
-    console.log(`📝 Assunto: Os seus bilhetes para: "${evento.titulo}"`);
-    console.log("-".repeat(75));
-    console.log(`Olá ${nome},`);
-    console.log(`\nObrigado por adquirir os seus bilhetes para o evento "${evento.titulo}"!`);
-    console.log(`\nDetalhes do Evento:`);
-    console.log(`📍 Localização: ${evento.localizacao}`);
-    console.log(`📅 Data/Hora: ${dataInicioFormated}`);
-    console.log(`\nOs seus bilhetes (${bilhetes.length}):`);
-    
-    bilhetes.forEach((b, idx) => {
-        console.log(`  🎫 Bilhete ${idx + 1}:`);
-        console.log(`     Lote: ${b.loteNome}`);
-        console.log(`     Token de Validação: ${b.qrCodeToken}`);
-        console.log(`     Link de Acesso Rápido: http://localhost:3000/dashboard/utilizador`);
-        console.log("-".repeat(40));
-    });
+    console.log("\n" + "📧".repeat(25));
+    console.log(`📧 [SIMULAÇÃO DE E-MAIL] Envio com Sucesso!`);
+    console.log(`Para: ${toEmail} (${clientName})`);
+    console.log(`Assunto: ${subject}`);
+    console.log(`Pedido: #${pedidoId}`);
+    console.log("-".repeat(50));
+    console.log(`Olá, ${clientName}!`);
+    console.log(`O seu pagamento foi confirmado e os seus bilhetes já foram emitidos.`);
+    console.log(`Podes aceder ao painel para os visualizar através do link:`);
+    console.log(`🔗 Link de Acesso: ${linkPainel}`);
+    console.log("📧".repeat(25) + "\n");
 
-    console.log("\nApresente o código QR (gerado a partir do token) na entrada do evento.");
-    console.log("Tenha um excelente evento!");
-    console.log("=".repeat(75) + "\n");
+    return { success: true, simulated: true };
+}
+
+/**
+ * Simula o envio de e-mail de boas-vindas após registo tradicional.
+ */
+export async function enviarEmailBoasVindas(toEmail: string, clientName: string, role: string) {
+    const linkPainel = `${baseUrl}/dashboard`;
+    const roleText = role === 'ORGANIZADOR' ? 'Organizador de Eventos' : 'Participante';
+    const subject = '🎉 Bem-vindo ao UTAD FastTicket!';
+
+    console.log("\n" + "📧".repeat(25));
+    console.log(`📧 [SIMULAÇÃO DE E-MAIL] Envio com Sucesso!`);
+    console.log(`Para: ${toEmail} (${clientName})`);
+    console.log(`Assunto: ${subject}`);
+    console.log(`Tipo de Conta: ${roleText}`);
+    console.log("-".repeat(50));
+    console.log(`Olá, ${clientName}!`);
+    console.log(`A sua conta foi criada com sucesso como ${roleText}.`);
+    console.log(`Aceda ao seu painel em:`);
+    console.log(`🔗 Link de Acesso: ${linkPainel}`);
+    console.log("📧".repeat(25) + "\n");
+
+    return { success: true, simulated: true };
+}
+
+/**
+ * Simula o envio de e-mail de criação de conta automática após checkout como convidado.
+ */
+export async function enviarEmailCriacaoContaCheckout(toEmail: string, clientName: string, hasPassword: boolean) {
+    const linkPainel = `${baseUrl}/dashboard`;
+    const linkPerfil = `${baseUrl}/dashboard?tab=profile`;
+    const subject = '🎉 Conta Criada! Bem-vindo ao UTAD FastTicket';
+
+    console.log("\n" + "📧".repeat(25));
+    console.log(`📧 [SIMULAÇÃO DE E-MAIL] Envio com Sucesso!`);
+    console.log(`Para: ${toEmail} (${clientName})`);
+    console.log(`Assunto: ${subject}`);
+    console.log("-".repeat(50));
+    console.log(`Olá, ${clientName}!`);
+    console.log(`A sua conta foi criada automaticamente após a compra.`);
+    if (!hasPassword) {
+        console.log(`⚠️ ATENÇÃO: Não definiu palavra-passe. Aceda ao perfil para definir uma:`);
+        console.log(`🔗 Definir Password: ${linkPerfil}`);
+    } else {
+        console.log(`Aceda à sua conta em:`);
+        console.log(`🔗 Link de Acesso: ${linkPainel}`);
+    }
+    console.log("📧".repeat(25) + "\n");
+
+    return { success: true, simulated: true };
 }

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { getSession, createSession } from '../../lib/session';
 import prisma from '../../lib/prisma';
 import * as bcrypt from 'bcryptjs';
+import { enviarEmailCriacaoContaCheckout } from '../../lib/email';
 
 // ==========================================
 // Inicialização do Stripe
@@ -74,6 +75,12 @@ async function resolveUserId(guestData?: {
             passwordHash: hashedPassword,
             role: 'PARTICIPANTE'
         }
+    });
+
+    // Enviar e-mail de boas-vindas / criação de conta do checkout assincronamente
+    const hasPassword = !!(guestData.guestPassword && guestData.guestPassword.trim().length >= 6);
+    enviarEmailCriacaoContaCheckout(guestUser.email, guestUser.nome, hasPassword).catch(err => {
+        console.error("Erro ao enviar e-mail de criação de conta do checkout:", err);
     });
 
     // Iniciar sessão automaticamente para o redirecionamento funcionar com o cookie correto

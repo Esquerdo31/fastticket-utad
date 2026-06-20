@@ -4,7 +4,6 @@ import prisma from "../../lib/prisma";
 import { z } from "zod";
 import { gerarQRCodeBase64 } from "../../lib/qrcode";
 import { getSession } from "../../lib/session";
-import { enviarEmailBilhete } from "../../lib/email";
 
 export async function getTicketsData(userId: number) {
     try {

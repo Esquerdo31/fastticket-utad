@@ -4,6 +4,7 @@ import * as bcrypt from "bcryptjs";
 import { createSession, deleteSession, getSession } from "../../lib/session";
 import prisma from "../../lib/prisma";
 import { z } from "zod";
+import { enviarEmailBoasVindas } from "../../lib/email";
 
 // ==========================================
 // Schemas de Validação (Zod)
@@ -117,6 +118,11 @@ export async function registerUser(prevState: any, formData: FormData) {
                 passwordHash: hashedPassword,
                 role: mappedRole,
             },
+        });
+
+        // Enviar e-mail de boas-vindas assincronamente
+        enviarEmailBoasVindas(newUser.email, newUser.nome, newUser.role).catch(err => {
+            console.error("Erro ao enviar email de boas-vindas:", err);
         });
 
         // Criar sessão (Auto-login após registo) com o Nome
